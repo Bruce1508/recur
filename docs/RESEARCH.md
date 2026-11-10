@@ -110,7 +110,7 @@ Throwaway code, not kept in the repository.
 - **Method:** `pdfjs-dist` 6.5.438 (legacy build) on Node 22.23.4 → `getTextContent()` → group items into lines by y-coordinate → assign numbers to columns by right-edge position → reconcile in integer cents.
 - **Result:** 58 of 58 transactions recovered; opening − withdrawals + deposits equalled the closing balance; all 58 per-row running balances matched; multi-line descriptions joined correctly; total run time about 170 ms including library start-up. `getMetadata()` returned Producer and Creator.
 - **What this proves:** the API shape in the current version, and that geometry-based row reconstruction plus reconciliation is workable.
-- **What it does not prove:** anything about real bank PDFs. Real statements may fragment text per glyph, omit spaces, include hidden text, or use fonts that need character maps. The first real statement must go through extraction in M1 before any parser is written.
+- **What it does not prove:** anything about real bank PDFs. Real statements may fragment text per glyph, omit spaces, include hidden text, or use fonts that need character maps. The first real statement must go through extraction in M5 before any parser is written.
 
 ## 5. Front-end stack and tooling
 
@@ -165,7 +165,7 @@ From the official docs ([memory](https://code.claude.com/docs/en/memory.md), [be
 
 1. **CSV formula escaping breaks negative amounts.** `Papa.unparse(rows, { escapeFormulae: true })` correctly neutralised a description beginning with `=`, but it also turned the amount `-12.50` into `'-12.50`, which is no longer a number. Decision: sanitise text fields ourselves and leave numeric fields untouched.
 2. **`unpdf` needs Node ≥ 24** by its engines field; `pdfjs-dist` works from 22.13. One more reason to use `pdfjs-dist` directly.
-3. **pdf.js ships WASM image decoders** (JPEG 2000, JBIG2, colour management). Text extraction should not need them, which would let the CSP omit `'wasm-unsafe-eval'`. Confirm in M1 with a real statement.
+3. **pdf.js ships WASM image decoders** (JPEG 2000, JBIG2, colour management). Text extraction should not need them, which would let the CSP omit `'wasm-unsafe-eval'`. Confirm in M5 with a real statement.
 
 ## 9. Build, adapt or reuse
 
