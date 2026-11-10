@@ -24,16 +24,16 @@ From the November 2026 gap analysis: Rocket Money states it is available only to
 
 ## 2. Existing open-source projects
 
-| Project | Stack | Licence | Stars | Last commit | Canadian banks | Client-side? | Finds subscriptions? |
-|---|---|---|---|---|---|---|---|
-| [benjamin-awd/monopoly](https://github.com/benjamin-awd/monopoly) (`monopoly-core` 0.23.6) | Python, PyMuPDF, poppler `pdftotext` | AGPL-3.0 | 437 | 2026-11-02 | RBC, TD, Scotiabank, BMO, CIBC (credit and debit); Canadian Tire and Capital One Canada (credit) | No | No |
-| [benjamin-awd/StatementSensei](https://github.com/benjamin-awd/StatementSensei) (0.10.11) | Streamlit UI over monopoly; Tauri desktop wrapper | AGPL-3.0 | 202 | 2026-11-03 | Same as monopoly | No (server-hosted Streamlit, or a desktop install) | No |
-| [jeremysquires/bankstate](https://github.com/jeremysquires/bankstate) (0.3.0) | Python, pypdf, PyMuPDF | MIT | 6 | 2026-11-09 | BMO and RBC (account and card) | No | No |
-| [Bizzaro/Teller](https://github.com/Bizzaro/Teller) | Python → SQLite/CSV | None detected | 69 | Oct 2023 (per GitHub topic listing) | Credit cards: BMO, TD, RBC, Manulife, Amex | No | No |
-| [mwallis45/Bank-PDF-To-CSV](https://github.com/mwallis45/Bank-PDF-To-CSV) | Pyodide 0.25.0 + pypdf in the browser | No licence file | 0 | 2026-10-29 | **None** (Monzo, Lloyds, Barclays) | Yes | No |
-| [ardalann/statement2csv](https://github.com/ardalann/statement2csv) | Create React App, `pdfjs-dist` ^2.1 | GPL-3.0 | 33 | 2020-09-14 | None found in source | Yes | No |
-| [actualbudget/actual](https://github.com/actualbudget/actual) | TypeScript budgeting app | MIT | 30,132 | Active | n/a (no PDF statement import examined) | Local-first app | Detects recurring "schedules" from its own database |
-| [ellite/Wallos](https://github.com/ellite/Wallos) | Self-hosted subscription tracker | GPL-3.0 | 8,820 | Not checked | n/a | No (self-hosted server) | Manual entry (per the earlier analysis) |
+| Project                                                                                    | Stack                                             | Licence         | Stars  | Last commit                         | Canadian banks                                                                                   | Client-side?                                       | Finds subscriptions?                                |
+| ------------------------------------------------------------------------------------------ | ------------------------------------------------- | --------------- | ------ | ----------------------------------- | ------------------------------------------------------------------------------------------------ | -------------------------------------------------- | --------------------------------------------------- |
+| [benjamin-awd/monopoly](https://github.com/benjamin-awd/monopoly) (`monopoly-core` 0.23.6) | Python, PyMuPDF, poppler `pdftotext`              | AGPL-3.0        | 437    | 2026-11-02                          | RBC, TD, Scotiabank, BMO, CIBC (credit and debit); Canadian Tire and Capital One Canada (credit) | No                                                 | No                                                  |
+| [benjamin-awd/StatementSensei](https://github.com/benjamin-awd/StatementSensei) (0.10.11)  | Streamlit UI over monopoly; Tauri desktop wrapper | AGPL-3.0        | 202    | 2026-11-03                          | Same as monopoly                                                                                 | No (server-hosted Streamlit, or a desktop install) | No                                                  |
+| [jeremysquires/bankstate](https://github.com/jeremysquires/bankstate) (0.3.0)              | Python, pypdf, PyMuPDF                            | MIT             | 6      | 2026-11-09                          | BMO and RBC (account and card)                                                                   | No                                                 | No                                                  |
+| [Bizzaro/Teller](https://github.com/Bizzaro/Teller)                                        | Python → SQLite/CSV                               | None detected   | 69     | Oct 2023 (per GitHub topic listing) | Credit cards: BMO, TD, RBC, Manulife, Amex                                                       | No                                                 | No                                                  |
+| [mwallis45/Bank-PDF-To-CSV](https://github.com/mwallis45/Bank-PDF-To-CSV)                  | Pyodide 0.25.0 + pypdf in the browser             | No licence file | 0      | 2026-10-29                          | **None** (Monzo, Lloyds, Barclays)                                                               | Yes                                                | No                                                  |
+| [ardalann/statement2csv](https://github.com/ardalann/statement2csv)                        | Create React App, `pdfjs-dist` ^2.1               | GPL-3.0         | 33     | 2020-09-14                          | None found in source                                                                             | Yes                                                | No                                                  |
+| [actualbudget/actual](https://github.com/actualbudget/actual)                              | TypeScript budgeting app                          | MIT             | 30,132 | Active                              | n/a (no PDF statement import examined)                                                           | Local-first app                                    | Detects recurring "schedules" from its own database |
+| [ellite/Wallos](https://github.com/ellite/Wallos)                                          | Self-hosted subscription tracker                  | GPL-3.0         | 8,820  | Not checked                         | n/a                                                                                              | No (self-hosted server)                            | Manual entry (per the earlier analysis)             |
 
 ### 2.1 monopoly and StatementSensei — the closest prior art
 
@@ -46,7 +46,7 @@ From the November 2026 gap analysis: Rocket Money states it is available only to
   - The TD configuration disables the safety check, with a source comment that totals are per page rather than overall.
 - **Integration difficulty:** high. Running it in the browser would mean Pyodide plus a custom-built PyMuPDF wheel plus a poppler binding that has no known Pyodide build. PyMuPDF's own docs call its Pyodide build experimental and note that `micropip.install()` does not work for it ([docs](https://pymupdf.readthedocs.io/en/latest/pyodide.html)).
 - **Maintenance and security:** well maintained. AGPL-3.0 means any copied code makes this project AGPL.
-- **Verdict: reuse ideas, not code.** Three ideas are worth adopting: (1) a totals/balance safety check, (2) redacted *text* fixtures instead of real PDFs, with dates and amounts preserved so the check still passes, (3) identifying the bank from PDF metadata plus text markers. Facts learned about formats (per-page totals at TD, dates printed once per day, multi-line descriptions, credit-card text that sometimes extracts without spaces) are leads to confirm against real statements. See ADR-006.
+- **Verdict: reuse ideas, not code.** Three ideas are worth adopting: (1) a totals/balance safety check, (2) redacted _text_ fixtures instead of real PDFs, with dates and amounts preserved so the check still passes, (3) identifying the bank from PDF metadata plus text markers. Facts learned about formats (per-page totals at TD, dates printed once per day, multi-line descriptions, credit-card text that sometimes extracts without spaces) are leads to confirm against real statements. See ADR-006.
 
 ### 2.2 bankstate
 
@@ -62,7 +62,7 @@ From the November 2026 gap analysis: Rocket Money states it is available only to
 
 - **Bank-PDF-To-CSV** proves the "runs in your browser" pitch is feasible via Pyodide, but supports only three UK banks and has no licence file. **Verdict: not reusable.**
 - **statement2csv** is the same idea in JavaScript, abandoned since 2020 on a six-year-old `pdfjs-dist` major. **Verdict: not reusable.**
-- Neither covers Canada, which answers part of the open question from the earlier gap analysis. *Digital ToolPad* is closed-source and remains untested; it is an M0 task for Bruce.
+- Neither covers Canada, which answers part of the open question from the earlier gap analysis. _Digital ToolPad_ is closed-source and remains untested; it is an M0 task for Bruce.
 
 ### 2.5 Actual Budget — recurring detection prior art
 
@@ -85,14 +85,14 @@ None appears to be client-side TypeScript.
 
 ## 3. PDF text extraction libraries
 
-| Library | Version (published) | Licence | Positions available? | Notes | Verdict |
-|---|---|---|---|---|---|
-| [`pdfjs-dist`](https://github.com/mozilla/pdf.js) | 6.5.438 (2026-11-01) | Apache-2.0 | Yes: `str`, `transform`, `width`, `height`, `fontName`, `hasEOL` per item | Mozilla-maintained, 54,120 stars. Engines: Node ≥ 22.13 or ≥ 24. Minified library 464 kB, worker 1.3 MB (uncompressed) | **Use** |
-| [`unpdf`](https://github.com/unjs/unpdf) | 2.1.0 (2026-10-30) | MIT | Via the underlying pdf.js proxy | Convenience wrapper that bundles its own pdf.js build; engines Node ≥ 24 | Skip: adds a layer without removing work |
-| `mupdf` (MuPDF.js) | 1.28.6 (2026-11-09) | **AGPL-3.0-or-later** | Yes (structured text) | 14.3 MB unpacked WASM package | Reject: licence and size |
-| `pdf-oxide-wasm` | 0.3.77 | MIT OR Apache-2.0 | Not evaluated | Rust/WASM; its PyPI page claims speed and pass-rate advantages that were **not** independently verified | Not evaluated further; revisit only if pdf.js fails on real statements |
-| `pdf-parse` 2.4.5, `pdf2json` 4.1.1, `pdfreader` 3.0.8 | — | Apache-2.0 / MIT | Varies | Registry metadata only; Node-oriented wrappers | Skip |
-| Pyodide (314.0.7) + Python libraries | — | MPL-2.0 | — | 13.9 MB package before any PDF library; see §2.1 for the PyMuPDF caveat | Reject for MVP |
+| Library                                                | Version (published)  | Licence               | Positions available?                                                      | Notes                                                                                                                  | Verdict                                                                |
+| ------------------------------------------------------ | -------------------- | --------------------- | ------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------- |
+| [`pdfjs-dist`](https://github.com/mozilla/pdf.js)      | 6.5.438 (2026-11-01) | Apache-2.0            | Yes: `str`, `transform`, `width`, `height`, `fontName`, `hasEOL` per item | Mozilla-maintained, 54,120 stars. Engines: Node ≥ 22.13 or ≥ 24. Minified library 464 kB, worker 1.3 MB (uncompressed) | **Use**                                                                |
+| [`unpdf`](https://github.com/unjs/unpdf)               | 2.1.0 (2026-10-30)   | MIT                   | Via the underlying pdf.js proxy                                           | Convenience wrapper that bundles its own pdf.js build; engines Node ≥ 24                                               | Skip: adds a layer without removing work                               |
+| `mupdf` (MuPDF.js)                                     | 1.28.6 (2026-11-09)  | **AGPL-3.0-or-later** | Yes (structured text)                                                     | 14.3 MB unpacked WASM package                                                                                          | Reject: licence and size                                               |
+| `pdf-oxide-wasm`                                       | 0.3.77               | MIT OR Apache-2.0     | Not evaluated                                                             | Rust/WASM; its PyPI page claims speed and pass-rate advantages that were **not** independently verified                | Not evaluated further; revisit only if pdf.js fails on real statements |
+| `pdf-parse` 2.4.5, `pdf2json` 4.1.1, `pdfreader` 3.0.8 | —                    | Apache-2.0 / MIT      | Varies                                                                    | Registry metadata only; Node-oriented wrappers                                                                         | Skip                                                                   |
+| Pyodide (314.0.7) + Python libraries                   | —                    | MPL-2.0               | —                                                                         | 13.9 MB package before any PDF library; see §2.1 for the PyMuPDF caveat                                                | Reject for MVP                                                         |
 
 ### `pdfjs-dist` assessment
 
@@ -100,7 +100,7 @@ None appears to be client-side TypeScript.
 - **Disadvantages:** large worker file; text items can be fragmented or merged unpredictably depending on how the bank generated the PDF; the API is low-level.
 - **Integration difficulty:** medium. The library call is simple; turning items into reliable table rows is the real work and is ours to build.
 - **Maintenance and security:** very actively maintained. The package includes WASM image decoders and an optional native canvas dependency (`@napi-rs/canvas`) that text extraction does not need. PDFs are untrusted input, so pin the version and keep the worker on the same origin.
-- **Known constraint:** do not run pdf.js *inside* another worker. Its display layer expects to create its own worker, and nesting has a long history of problems (see [mozilla/pdf.js#10319](https://github.com/mozilla/pdf.js/issues/10319)). Call it from the main thread and let it use its built-in worker.
+- **Known constraint:** do not run pdf.js _inside_ another worker. Its display layer expects to create its own worker, and nesting has a long history of problems (see [mozilla/pdf.js#10319](https://github.com/mozilla/pdf.js/issues/10319)). Call it from the main thread and let it use its built-in worker.
 
 ## 4. Feasibility spike
 
@@ -114,38 +114,39 @@ Throwaway code, not kept in the repository.
 
 ## 5. Front-end stack and tooling
 
-| Tool | Version | Licence | Compatibility facts checked | Verdict |
-|---|---|---|---|---|
-| Node.js | 24.22.2 "Krypton" (LTS); 26.13.0 "Lithium" is also LTS | — | Satisfies `pdfjs-dist` (≥ 22.13), Vite 8, Vitest 5 | **Node 24 LTS** |
-| Vite | 8.3.7 | MIT | Engines `^20.19.0 \|\| >=22.12.0` | **Use** |
-| `@vitejs/plugin-react` | 6.3.0 | MIT | Peer `vite ^8.0.0` | **Use** |
-| React / React DOM | 19.3.1 | MIT | — | **Use** (ADR-007) |
-| TypeScript | 7.0.2 | Apache-2.0 | See the finding below | **Use, with a fallback** |
-| Biome | 2.6.6 | MIT OR Apache-2.0 | No dependency on the TypeScript package | **Use** for lint and format |
-| ESLint + `typescript-eslint` | 10.14.0 / 8.72.2 | MIT | `typescript-eslint` peer range is `typescript >=4.8.4 <6.1.0` | Reject for now: incompatible with TypeScript 7 |
-| Vitest | 5.1.0 | MIT | Peer `vite ^6.4.0 \|\| ^7 \|\| ^8`; Node `^22.12 \|\| ^24 \|\| >=26` | **Use** |
-| `@playwright/test` | 1.65.0 | Apache-2.0 | Node ≥ 20 | **Use** for end-to-end and network assertions |
-| `fast-check` | 4.10.2 | MIT | — | **Use** for property tests |
-| `@vitest/coverage-v8` | 5.1.0 | MIT | Same version as Vitest | **Use** for the 90% core coverage target |
-| `@axe-core/playwright` | 4.14.0 | MPL-2.0 | Dev-only; file-level copyleft does not affect the app's licence | **Use** in M5 |
-| `pdf-lib` | 1.17.1 (last published 2022-05-12) | MIT | Unmaintained since 2022 | Candidate PDF writer for `tools/make-synthetic.ts`; decide in M1 against a hand-written minimal PDF |
-| Tailwind CSS + `@tailwindcss/vite` | 4.3.5 | MIT | Peer includes `vite ^8` | **Use** |
-| PapaParse | 5.7.0 (2026-08-24) | MIT | See §8 | **Use for CSV output**, with our own sanitising |
-| `vite-plugin-pwa` | 2.0.0 | MIT | Peer includes `vite ^8` | Post-MVP |
-| Comlink | 4.4.2 (last published 2024-11-07) | Apache-2.0 | — | Not needed in MVP (ADR-008) |
-| Zod 4.6.7 / Valibot 1.5.0 | — | MIT | — | Not needed in MVP; profiles are typed TypeScript objects |
-| `date-fns` 4.4.0, `rrule` 2.8.1 | — | MIT / BSD-3 | — | Not needed; plain-date helpers are about 30 lines |
-| Preact 11.2.0 / Svelte 5.57.3 | — | MIT | — | Considered and not chosen (ADR-007) |
+| Tool                               | Version                                                | Licence           | Compatibility facts checked                                          | Verdict                                                                                             |
+| ---------------------------------- | ------------------------------------------------------ | ----------------- | -------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
+| Node.js                            | 24.22.2 "Krypton" (LTS); 26.13.0 "Lithium" is also LTS | —                 | Satisfies `pdfjs-dist` (≥ 22.13), Vite 8, Vitest 5                   | **Node 24 LTS**                                                                                     |
+| Vite                               | 8.3.7                                                  | MIT               | Engines `^20.19.0 \|\| >=22.12.0`                                    | **Use**                                                                                             |
+| `@vitejs/plugin-react`             | 6.3.0                                                  | MIT               | Peer `vite ^8.0.0`                                                   | **Use**                                                                                             |
+| `@types/react`, `@types/react-dom` | 19.3.0                                                 | MIT               | Types for React 19                                                   | **Use** (pinned; in approved-deps.json)                                                             |
+| React / React DOM                  | 19.3.1                                                 | MIT               | —                                                                    | **Use** (ADR-007)                                                                                   |
+| TypeScript                         | 7.0.2                                                  | Apache-2.0        | See the finding below                                                | **Use, with a fallback**                                                                            |
+| Biome                              | 2.6.6                                                  | MIT OR Apache-2.0 | No dependency on the TypeScript package                              | **Use** for lint and format                                                                         |
+| ESLint + `typescript-eslint`       | 10.14.0 / 8.72.2                                       | MIT               | `typescript-eslint` peer range is `typescript >=4.8.4 <6.1.0`        | Reject for now: incompatible with TypeScript 7                                                      |
+| Vitest                             | 5.1.0                                                  | MIT               | Peer `vite ^6.4.0 \|\| ^7 \|\| ^8`; Node `^22.12 \|\| ^24 \|\| >=26` | **Use**                                                                                             |
+| `@playwright/test`                 | 1.65.0                                                 | Apache-2.0        | Node ≥ 20                                                            | **Use** for end-to-end and network assertions                                                       |
+| `fast-check`                       | 4.10.2                                                 | MIT               | —                                                                    | **Use** for property tests                                                                          |
+| `@vitest/coverage-v8`              | 5.1.0                                                  | MIT               | Same version as Vitest                                               | **Use** for the 90% core coverage target                                                            |
+| `@axe-core/playwright`             | 4.14.0                                                 | MPL-2.0           | Dev-only; file-level copyleft does not affect the app's licence      | **Use** in M5                                                                                       |
+| `pdf-lib`                          | 1.17.1 (last published 2022-05-12)                     | MIT               | Unmaintained since 2022                                              | Candidate PDF writer for `tools/make-synthetic.ts`; decide in M1 against a hand-written minimal PDF |
+| Tailwind CSS + `@tailwindcss/vite` | 4.3.5                                                  | MIT               | Peer includes `vite ^8`                                              | **Use**                                                                                             |
+| PapaParse                          | 5.7.0 (2026-08-24)                                     | MIT               | See §8                                                               | **Use for CSV output**, with our own sanitising                                                     |
+| `vite-plugin-pwa`                  | 2.0.0                                                  | MIT               | Peer includes `vite ^8`                                              | Post-MVP                                                                                            |
+| Comlink                            | 4.4.2 (last published 2024-11-07)                      | Apache-2.0        | —                                                                    | Not needed in MVP (ADR-008)                                                                         |
+| Zod 4.6.7 / Valibot 1.5.0          | —                                                      | MIT               | —                                                                    | Not needed in MVP; profiles are typed TypeScript objects                                            |
+| `date-fns` 4.4.0, `rrule` 2.8.1    | —                                                      | MIT / BSD-3       | —                                                                    | Not needed; plain-date helpers are about 30 lines                                                   |
+| Preact 11.2.0 / Svelte 5.57.3      | —                                                      | MIT               | —                                                                    | Considered and not chosen (ADR-007)                                                                 |
 
 **Finding — TypeScript 7 and linting.** `typescript@latest` is 7.0.2, and `typescript-eslint` 8.72.2 does not accept it. Biome avoids the conflict because it does not use the TypeScript package. If any other tool turns out to need the TypeScript 6 API, pin TypeScript to the 6.0.x line; nothing else in the stack changes. Verifying `tsc --noEmit` runs clean is an M0 acceptance item.
 
 ## 6. Hosting
 
-| Option | Cost | Custom response headers | Verdict |
-|---|---|---|---|
-| [Cloudflare Pages](https://developers.cloudflare.com/pages/configuration/headers/) | Free plan: up to 20,000 files, 25 MiB per file ([limits](https://developers.cloudflare.com/pages/platform/limits/)) | Yes, through a `_headers` file; the official docs show a `Content-Security-Policy` example | **Primary** |
-| GitHub Pages | Free | No documented way to set custom headers; a `<meta>` CSP still works but cannot express `frame-ancestors` | **Fallback** — the app must not depend on header-only features |
-| Vercel / Netlify | Free tiers | Yes | Not needed |
+| Option                                                                             | Cost                                                                                                                | Custom response headers                                                                                  | Verdict                                                        |
+| ---------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------- |
+| [Cloudflare Pages](https://developers.cloudflare.com/pages/configuration/headers/) | Free plan: up to 20,000 files, 25 MiB per file ([limits](https://developers.cloudflare.com/pages/platform/limits/)) | Yes, through a `_headers` file; the official docs show a `Content-Security-Policy` example               | **Primary**                                                    |
+| GitHub Pages                                                                       | Free                                                                                                                | No documented way to set custom headers; a `<meta>` CSP still works but cannot express `frame-ancestors` | **Fallback** — the app must not depend on header-only features |
+| Vercel / Netlify                                                                   | Free tiers                                                                                                          | Yes                                                                                                      | Not needed                                                     |
 
 The build output is plain static files, so switching hosts is a configuration change, not a code change.
 
@@ -168,19 +169,19 @@ From the official docs ([memory](https://code.claude.com/docs/en/memory.md), [be
 
 ## 9. Build, adapt or reuse
 
-| Component | Decision | Basis |
-|---|---|---|
-| PDF text and metadata extraction | **Reuse** `pdfjs-dist` | §3 |
-| Line and column reconstruction from positioned text | **Build** | No suitable browser library found; this is the core technical contribution |
-| Bank profiles (Canadian formats) | **Build**, informed by facts from monopoly and bankstate | §2.1, §2.2, ADR-006 |
-| Balance reconciliation | **Build** (idea adapted from monopoly's safety check) | §2.1 |
-| Redacted fixture workflow | **Adapt the idea** from monopoly's contributor guide to positioned-text JSON | §2.1 |
-| Recurring-charge detection | **Build**, parameters adapted from Actual Budget | §2.5 |
-| Merchant name normalisation | **Build** (rules plus a small alias table) | Third-party enrichment APIs would send data off-device |
-| CSV writing | **Reuse** PapaParse, plus our own text sanitiser | §8 |
-| UI framework, build, tests, lint | **Reuse** (React, Vite, Vitest, Playwright, Biome) | §5 |
-| Hosting and security headers | **Reuse** Cloudflare Pages | §6 |
-| Backend, database, auth, analytics | **None** | ADR-001 |
+| Component                                           | Decision                                                                     | Basis                                                                      |
+| --------------------------------------------------- | ---------------------------------------------------------------------------- | -------------------------------------------------------------------------- |
+| PDF text and metadata extraction                    | **Reuse** `pdfjs-dist`                                                       | §3                                                                         |
+| Line and column reconstruction from positioned text | **Build**                                                                    | No suitable browser library found; this is the core technical contribution |
+| Bank profiles (Canadian formats)                    | **Build**, informed by facts from monopoly and bankstate                     | §2.1, §2.2, ADR-006                                                        |
+| Balance reconciliation                              | **Build** (idea adapted from monopoly's safety check)                        | §2.1                                                                       |
+| Redacted fixture workflow                           | **Adapt the idea** from monopoly's contributor guide to positioned-text JSON | §2.1                                                                       |
+| Recurring-charge detection                          | **Build**, parameters adapted from Actual Budget                             | §2.5                                                                       |
+| Merchant name normalisation                         | **Build** (rules plus a small alias table)                                   | Third-party enrichment APIs would send data off-device                     |
+| CSV writing                                         | **Reuse** PapaParse, plus our own text sanitiser                             | §8                                                                         |
+| UI framework, build, tests, lint                    | **Reuse** (React, Vite, Vitest, Playwright, Biome)                           | §5                                                                         |
+| Hosting and security headers                        | **Reuse** Cloudflare Pages                                                   | §6                                                                         |
+| Backend, database, auth, analytics                  | **None**                                                                     | ADR-001                                                                    |
 
 ## 10. Corrections to the earlier gap analysis
 

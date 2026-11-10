@@ -4,24 +4,25 @@
 
 A record is changed only by adding a new record that supersedes it. Statuses: Proposed, Accepted, Superseded.
 
-| # | Decision | Status |
-|---|---|---|
-| 001 | Client-only static app; no backend, no telemetry | Proposed |
-| 002 | `pdfjs-dist` for PDF text extraction | Proposed |
-| 003 | Header-anchored column geometry for parsing | Proposed |
-| 004 | Balance reconciliation is a hard gate; fail closed | Proposed |
-| 005 | Redacted positioned-text fixtures; no real PDFs anywhere | Proposed |
+| #   | Decision                                                                        | Status                                               |
+| --- | ------------------------------------------------------------------------------- | ---------------------------------------------------- |
+| 001 | Client-only static app; no backend, no telemetry                                | Proposed                                             |
+| 002 | `pdfjs-dist` for PDF text extraction                                            | Proposed                                             |
+| 003 | Header-anchored column geometry for parsing                                     | Proposed                                             |
+| 004 | Balance reconciliation is a hard gate; fail closed                              | Proposed                                             |
+| 005 | Redacted positioned-text fixtures; no real PDFs anywhere                        | Proposed                                             |
 | 006 | MIT licence; independent implementation; monopoly as a reference for facts only | Accepted (choice delegated by the owner, 2026-11-10) |
-| 007 | React + Vite + TypeScript | Proposed |
-| 008 | No custom Web Worker in the MVP | Proposed |
-| 009 | Cloudflare Pages, with a host-independent CSP | Proposed |
-| 010 | In-memory state only | Proposed |
-| 011 | Integer cents and plain date strings | Proposed |
-| 012 | TypeScript 7 + Biome + Vitest + Playwright, npm, Node 24 | Proposed |
-| 013 | No LLM in the product path | Proposed |
-| 014 | Rule-based recurring detection | Proposed |
-| 015 | Autonomous PR workflow and Claude Code automation | Accepted |
-| 016 | Real statements live outside the repository | Accepted |
+| 007 | React + Vite + TypeScript                                                       | Proposed                                             |
+| 008 | No custom Web Worker in the MVP                                                 | Proposed                                             |
+| 009 | Cloudflare Pages, with a host-independent CSP                                   | Proposed                                             |
+| 010 | In-memory state only                                                            | Proposed                                             |
+| 011 | Integer cents and plain date strings                                            | Proposed                                             |
+| 012 | TypeScript 7 + Biome + Vitest + Playwright, npm, Node 24                        | Proposed                                             |
+| 013 | No LLM in the product path                                                      | Proposed                                             |
+| 014 | Rule-based recurring detection                                                  | Proposed                                             |
+| 015 | Autonomous PR workflow and Claude Code automation                               | Accepted                                             |
+| 016 | Real statements live outside the repository                                     | Accepted                                             |
+| 017 | Run `gh` and `git push/fetch/pull` as standalone commands                       | Accepted                                             |
 
 All records become Accepted when Bruce signs off on the PRD.
 
@@ -31,11 +32,11 @@ All records become Accepted when Bruce signs off on the PRD.
 
 **Context.** The product asks people to hand over bank statements. Budget is $0. The differentiator against existing tools is that nothing is uploaded.
 
-| Option | Cost | Privacy story | Effort |
-|---|---|---|---|
-| **A. Static app, all processing in the browser** | $0 | Strong and checkable by the user | Medium |
-| B. Small backend that parses PDFs | Hosting cost; scales with users | "Trust us" | Lower for parsing (Python libraries exist) |
-| C. Static app plus privacy-friendly analytics | $0 | Weakened: a third-party request exists | Low |
+| Option                                           | Cost                            | Privacy story                          | Effort                                     |
+| ------------------------------------------------ | ------------------------------- | -------------------------------------- | ------------------------------------------ |
+| **A. Static app, all processing in the browser** | $0                              | Strong and checkable by the user       | Medium                                     |
+| B. Small backend that parses PDFs                | Hosting cost; scales with users | "Trust us"                             | Lower for parsing (Python libraries exist) |
+| C. Static app plus privacy-friendly analytics    | $0                              | Weakened: a third-party request exists | Low                                        |
 
 **Decision.** A. No server code, no analytics, no error reporting service.
 
@@ -49,13 +50,13 @@ All records become Accepted when Bruce signs off on the PRD.
 
 **Context.** The parser needs each text fragment with its position, plus document metadata, in the browser.
 
-| Option | Licence | Positions | Size / fit | Risk |
-|---|---|---|---|---|
-| **A. `pdfjs-dist` 6.5.438** | Apache-2.0 | Yes | 1.3 MB worker; runs in browser and Node | Low: Mozilla-maintained |
-| B. `unpdf` 2.1.0 | MIT | Via its bundled pdf.js | Extra layer; Node ≥ 24 | Low |
-| C. MuPDF.js 1.28.6 | AGPL-3.0-or-later | Yes | 14.3 MB package | Licence forces AGPL |
-| D. Pyodide + Python parsers | Mixed | No | > 14 MB before PDF libraries; PyMuPDF's Pyodide build is experimental | High |
-| E. `pdf-oxide-wasm` 0.3.77 | MIT/Apache-2.0 | Not evaluated | Unknown | Unverified claims |
+| Option                      | Licence           | Positions              | Size / fit                                                            | Risk                    |
+| --------------------------- | ----------------- | ---------------------- | --------------------------------------------------------------------- | ----------------------- |
+| **A. `pdfjs-dist` 6.5.438** | Apache-2.0        | Yes                    | 1.3 MB worker; runs in browser and Node                               | Low: Mozilla-maintained |
+| B. `unpdf` 2.1.0            | MIT               | Via its bundled pdf.js | Extra layer; Node ≥ 24                                                | Low                     |
+| C. MuPDF.js 1.28.6          | AGPL-3.0-or-later | Yes                    | 14.3 MB package                                                       | Licence forces AGPL     |
+| D. Pyodide + Python parsers | Mixed             | No                     | > 14 MB before PDF libraries; PyMuPDF's Pyodide build is experimental | High                    |
+| E. `pdf-oxide-wasm` 0.3.77  | MIT/Apache-2.0    | Not evaluated          | Unknown                                                               | Unverified claims       |
 
 **Decision.** A, used directly and isolated in `src/pdf/extract.ts`.
 
@@ -69,11 +70,11 @@ All records become Accepted when Bruce signs off on the PRD.
 
 **Context.** Statement transactions are tables. Three ways to recover them were considered.
 
-| Option | Robustness | Reuse of prior art | Effort |
-|---|---|---|---|
-| **A. Use item x-positions; derive columns from the header row on each page** | Survives spacing changes; fails visibly if the header moves | Technique validated in the spike | Medium |
-| B. Rebuild fixed-width layout text and apply regular expressions (monopoly's approach) | Sensitive to exact whitespace, which we would be approximating | Could mirror monopoly's patterns, but that would make this project AGPL | Medium |
-| C. Generic table detection with no bank knowledge | Works on unknown banks, unreliable on details like signs and multi-line rows | None | High |
+| Option                                                                                 | Robustness                                                                   | Reuse of prior art                                                      | Effort |
+| -------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------- | ----------------------------------------------------------------------- | ------ |
+| **A. Use item x-positions; derive columns from the header row on each page**           | Survives spacing changes; fails visibly if the header moves                  | Technique validated in the spike                                        | Medium |
+| B. Rebuild fixed-width layout text and apply regular expressions (monopoly's approach) | Sensitive to exact whitespace, which we would be approximating               | Could mirror monopoly's patterns, but that would make this project AGPL | Medium |
+| C. Generic table detection with no bank knowledge                                      | Works on unknown banks, unreliable on details like signs and multi-line rows | None                                                                    | High   |
 
 **Decision.** A. Each bank format is a declarative profile: identifiers, header labels, column roles and alignment, date format, sign convention, and reconciliation method.
 
@@ -99,11 +100,11 @@ All records become Accepted when Bruce signs off on the PRD.
 
 **Context.** Tests need real statement structure. Real statements are personal financial data. No public fixtures exist for Canadian banks.
 
-| Option | Realism | Privacy | Notes |
-|---|---|---|---|
-| A. Commit real PDFs | Highest | Unacceptable | — |
-| B. Commit only synthetic PDFs | Low: misses real quirks | Safe | Useful for end-to-end tests |
-| **C. Commit redacted extraction output (JSON of positioned text) from real PDFs, plus synthetic PDFs for end-to-end** | High for parsing logic | Safe after review | Idea adapted from monopoly's contributor guide |
+| Option                                                                                                                | Realism                 | Privacy           | Notes                                          |
+| --------------------------------------------------------------------------------------------------------------------- | ----------------------- | ----------------- | ---------------------------------------------- |
+| A. Commit real PDFs                                                                                                   | Highest                 | Unacceptable      | —                                              |
+| B. Commit only synthetic PDFs                                                                                         | Low: misses real quirks | Safe              | Useful for end-to-end tests                    |
+| **C. Commit redacted extraction output (JSON of positioned text) from real PDFs, plus synthetic PDFs for end-to-end** | High for parsing logic  | Safe after review | Idea adapted from monopoly's contributor guide |
 
 **Decision.** C. A local CLI turns a PDF into a redacted fixture: dates, amounts and structural labels are kept; each distinct description becomes a stable placeholder; other digit runs are masked. Real PDFs live in a gitignored `private/` folder that AI tools are denied from reading.
 
@@ -117,11 +118,11 @@ All records become Accepted when Bruce signs off on the PRD.
 
 **Context.** monopoly (AGPL-3.0) already encodes rules for the five big Canadian banks. Copying or porting its code would make this project a derivative work and therefore AGPL. This record is an engineering judgement, not legal advice.
 
-| Option | Speed | Freedom for others to reuse | Legal clarity |
-|---|---|---|---|
-| **A. MIT; write parsers independently; consult monopoly, bankstate and Teller only for facts about formats** | Slower than copying; but the chosen technique (ADR-003) is different anyway, so little is lost | Maximum | Clear if the no-copy rule is followed |
-| B. AGPL-3.0; port monopoly's patterns freely | Faster in theory; in practice the patterns target poppler's layout text and are untested for Canadian banks | Limited | Clear |
-| C. MIT while porting code anyway | — | — | A licence violation |
+| Option                                                                                                       | Speed                                                                                                       | Freedom for others to reuse | Legal clarity                         |
+| ------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------- | --------------------------- | ------------------------------------- |
+| **A. MIT; write parsers independently; consult monopoly, bankstate and Teller only for facts about formats** | Slower than copying; but the chosen technique (ADR-003) is different anyway, so little is lost              | Maximum                     | Clear if the no-copy rule is followed |
+| B. AGPL-3.0; port monopoly's patterns freely                                                                 | Faster in theory; in practice the patterns target poppler's layout text and are untested for Canadian banks | Limited                     | Clear                                 |
+| C. MIT while porting code anyway                                                                             | —                                                                                                           | —                           | A licence violation                   |
 
 **Decision.** A. The repository rule is: never copy code or regular expressions from AGPL, GPL or unlicensed projects. Reading them to learn how a statement is laid out is fine. Credit them in the README. Code from MIT projects (bankstate, Actual Budget) may be adapted with attribution.
 
@@ -135,11 +136,11 @@ All records become Accepted when Bruce signs off on the PRD.
 
 **Context.** The UI is small: a drop zone, three result views, a few panels.
 
-| Option | Bundle | Familiarity | Signal to reviewers |
-|---|---|---|---|
-| **A. React 19 + Vite 8** | Larger framework, negligible next to pdf.js | Bruce already uses React | Widely recognised |
-| B. Preact or Svelte | Smaller | New to learn | Fine, less common in target employers |
-| C. No framework | Smallest | — | More hand-written DOM code |
+| Option                   | Bundle                                      | Familiarity              | Signal to reviewers                   |
+| ------------------------ | ------------------------------------------- | ------------------------ | ------------------------------------- |
+| **A. React 19 + Vite 8** | Larger framework, negligible next to pdf.js | Bruce already uses React | Widely recognised                     |
+| B. Preact or Svelte      | Smaller                                     | New to learn             | Fine, less common in target employers |
+| C. No framework          | Smallest                                    | —                        | More hand-written DOM code            |
 
 **Decision.** A.
 
@@ -197,10 +198,10 @@ All records become Accepted when Bruce signs off on the PRD.
 
 **Context.** `typescript@latest` is 7.0.2. `typescript-eslint` 8.72.2 declares a peer range of `<6.1.0`, so ESLint with type-aware rules cannot be used with TypeScript 7 today.
 
-| Option | Works today | Tools to manage |
-|---|---|---|
-| **A. TypeScript 7.0.x + Biome 2.6** | Yes | One tool for lint and format |
-| B. TypeScript 6.0.x + ESLint + Prettier | Yes | Three tools; older compiler |
+| Option                                  | Works today | Tools to manage              |
+| --------------------------------------- | ----------- | ---------------------------- |
+| **A. TypeScript 7.0.x + Biome 2.6**     | Yes         | One tool for lint and format |
+| B. TypeScript 6.0.x + ESLint + Prettier | Yes         | Three tools; older compiler  |
 
 **Decision.** A, with Vitest 5.1, fast-check 4.10, Playwright 1.65, npm and Node 24 LTS. Exact version pins and a committed lockfile.
 
@@ -224,11 +225,11 @@ All records become Accepted when Bruce signs off on the PRD.
 
 **Context.** The detector must be explainable to users ("why was this flagged?") and testable. Actual Budget's detector is the closest prior art but is bound to its database.
 
-| Option | Explainable | Data needed | Effort |
-|---|---|---|---|
-| **A. Group by normalised merchant, classify the median gap into cadence buckets, score consistency** | Yes | 3+ occurrences | Medium |
-| B. Port Actual Budget's candidate-pattern matcher | Yes | 3 occurrences | Medium–high: must replace its query layer and recurrence library |
-| C. Statistical or learned model | No | Labelled data we do not have | High |
+| Option                                                                                               | Explainable | Data needed                  | Effort                                                           |
+| ---------------------------------------------------------------------------------------------------- | ----------- | ---------------------------- | ---------------------------------------------------------------- |
+| **A. Group by normalised merchant, classify the median gap into cadence buckets, score consistency** | Yes         | 3+ occurrences               | Medium                                                           |
+| B. Port Actual Budget's candidate-pattern matcher                                                    | Yes         | 3 occurrences                | Medium–high: must replace its query layer and recurrence library |
+| C. Statistical or learned model                                                                      | No          | Labelled data we do not have | High                                                             |
 
 **Decision.** A. Starting parameters borrowed from Actual Budget: ±2 days of date jitter, 7.5% amount tolerance, a minimum of three occurrences for a confident result.
 
@@ -266,3 +267,13 @@ All records become Accepted when Bruce signs off on the PRD.
 **Decision.** Real statements live in `~/Statements/` (mode 700). `private/` holds only the owner's personal deny-list for the fixture privacy check. Both paths are denied by permission rules, the sandbox and the guard hook. `.gitignore` ignores every `*.pdf` except under `fixtures/synthetic/` and `src/demo/`. `tools/fixture-dump.ts` takes an absolute path and is run by the owner.
 
 **Consequences.** This supersedes ADR-005 only for where real statements are stored; the rest of ADR-005 stands.
+
+---
+
+## ADR-017 — Run `gh` and `git push/fetch/pull` as standalone commands
+
+**Context.** `sandbox.excludedCommands` matches the start of a command. A piped, chained (`&&`, `;`) or subshell form of `gh` or `git push/fetch/pull` is not matched, so it runs inside the sandbox and fails on network or TLS access.
+
+**Decision.** The `ship-task` skill (steps 7 and 10) requires these commands to run one at a time, never piped, chained or in subshells. This extends ADR-015 and changes only `.claude/skills/ship-task/SKILL.md`.
+
+**Consequences.** No change to permissions or the sandbox; a few more tool calls per task.

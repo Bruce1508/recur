@@ -4,15 +4,15 @@
 
 ## Overview
 
-| # | Milestone | Effort | Target week | Depends on |
-|---|---|---|---|---|
-| M0 | Validation gate and project bootstrap | 4–6 h | Nov 10–13 | — |
-| M1 | Extraction, line model, fixture tooling | 10–12 h | Nov 14–20 | M0 |
-| M2 | First statement format, reconciliation, walking skeleton | 14–16 h | Nov 21–27 | M1 |
-| M3 | Recurring-charge detection | 12–15 h | Nov 28–Dec 4 | M2 |
-| M4 | Second format, ledger merge, CSV export | 10–12 h | Dec 5–11 | M2 |
-| M5 | Product UI, demo mode, trust features | 10–12 h | Dec 5–14 | M3, M4 |
-| M6 | Hardening, deployment, launch | 6–8 h | Dec 12–18 | M5 |
+| #   | Milestone                                                | Effort  | Target week  | Depends on |
+| --- | -------------------------------------------------------- | ------- | ------------ | ---------- |
+| M0  | Validation gate and project bootstrap                    | 4–6 h   | Nov 10–13    | —          |
+| M1  | Extraction, line model, fixture tooling                  | 10–12 h | Nov 14–20    | M0         |
+| M2  | First statement format, reconciliation, walking skeleton | 14–16 h | Nov 21–27    | M1         |
+| M3  | Recurring-charge detection                               | 12–15 h | Nov 28–Dec 4 | M2         |
+| M4  | Second format, ledger merge, CSV export                  | 10–12 h | Dec 5–11     | M2         |
+| M5  | Product UI, demo mode, trust features                    | 10–12 h | Dec 5–14     | M3, M4     |
+| M6  | Hardening, deployment, launch                            | 6–8 h   | Dec 12–18    | M5         |
 
 **Total: 66–81 hours.** That is four weeks only at about 20 hours a week. At 15 hours a week it is five to six weeks, and mid-December exams will likely push the launch. Plan on the honest number.
 
