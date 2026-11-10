@@ -6,24 +6,25 @@ Living document. Update it at the end of every working session. Never record sta
 
 ## Current status
 
-**Phase:** M0 gate closed: **GO** (2026-11-10). M0b done (scaffold, CSP placeholder, CI job `verify`, privacy probe). **Next:** M1.
+**Phase:** M0 done. Re-scoped on 2026-11-10 by ADR-018: **CSV import first (stage 1, M1–M4), PDF parsing second (stage 2, M5–M7)**; usefulness to real users is now the first goal. **Next:** M1 (CSV import, ledger, fixture tooling, walking skeleton).
 
-**Target formats (A1 confirmed):** TD chequing account and CIBC credit card, each with ≥ 3 months of PDF statements. Real statements stay in `~/Statements/`.
+**Target files:** stage 1: CSV exports from TD (chequing) and CIBC (credit card). Stage 2: PDF statements for the same two accounts (A1 confirmed). Real exports and statements stay in `~/Statements/`.
 
-**Blocked on the owner:** M1 needs one real statement available locally in `~/Statements/` and the owner to review the first redacted fixture. Open question 5 (existing-tool test) does not block M1.
+**Blocked on the owner:** nothing blocks the start of M1; tasks 1–7 use synthetic data. The M1 fixtures (tasks 8–9) need the owner's own CSV exports in `~/Statements/` and his review of the redacted output.
 
 ## Milestones
 
-| #   | Milestone                                      | Status      | Started    | Finished   | Notes                              |
-| --- | ---------------------------------------------- | ----------- | ---------- | ---------- | ---------------------------------- |
-| —   | Discovery, research, architecture, planning    | Done        | 2026-11-10 | 2026-11-10 | Seven planning documents written   |
-| M0  | Validation gate and bootstrap                  | Done        | 2026-11-10 | 2026-11-10 | Gate: GO; A1 confirmed (TD + CIBC) |
-| M1  | Extraction, line model, fixture tooling        | Not started |            |            |                                    |
-| M2  | First format, reconciliation, walking skeleton | Not started |            |            |                                    |
-| M3  | Recurring-charge detection                     | Not started |            |            |                                    |
-| M4  | Second format, ledger merge, CSV export        | Not started |            |            |                                    |
-| M5  | Product UI, demo mode, trust features          | Not started |            |            |                                    |
-| M6  | Hardening, deployment, launch                  | Not started |            |            |                                    |
+| #   | Milestone                                             | Status      | Started    | Finished   | Notes                              |
+| --- | ----------------------------------------------------- | ----------- | ---------- | ---------- | ---------------------------------- |
+| —   | Discovery, research, architecture, planning           | Done        | 2026-11-10 | 2026-11-10 | Seven planning documents written   |
+| M0  | Validation gate and bootstrap                         | Done        | 2026-11-10 | 2026-11-10 | Gate: GO; A1 confirmed (TD + CIBC) |
+| M1  | CSV import, ledger, fixture tooling, walking skeleton | Not started |            |            | Stage 1                            |
+| M2  | Recurring-charge detection                            | Not started |            |            | Stage 1                            |
+| M3  | Product UI, demo mode, exports, trust features        | Not started |            |            | Stage 1                            |
+| M4  | Hardening, deployment, small launch, validation       | Not started |            |            | Stage 1; ends with the stage gate  |
+| M5  | PDF extraction, line model, PDF fixture tooling       | Not started |            |            | Stage 2; needs the M4 gate         |
+| M6  | First PDF format (TD chequing) with reconciliation    | Not started |            |            | Stage 2                            |
+| M7  | Second PDF format (CIBC credit card)                  | Not started |            |            | Stage 2                            |
 
 ## What the planning phase established
 
@@ -34,56 +35,75 @@ Living document. Update it at the end of every working session. Never record sta
 
 ## Open questions
 
-| #   | Question                                                                                  | Owner | Blocks        | Answer                                                                                |
-| --- | ----------------------------------------------------------------------------------------- | ----- | ------------- | ------------------------------------------------------------------------------------- |
-| 1   | Banks and account types with ≥ 3 months of PDF statements?                                | Bruce | M1            | TD chequing and CIBC credit card, ≥ 3 months of PDFs each (2026-11-10)                |
-| 2   | Hours per week through mid-December?                                                      | Bruce | Schedule      | More than 20 hours per week (2026-11-10)                                              |
-| 3   | Licence: MIT (recommended) or AGPL-3.0?                                                   | Bruce | First commit  | MIT (choice delegated to Claude, 2026-11-10; ADR-006)                                 |
-| 4   | Project name; buy a domain?                                                               | Bruce | M6            | Working name `recur`; public repo `Bruce1508/recur`. Final name and domain still open |
-| 5   | Does Digital ToolPad (or any other browser tool) already parse your statements correctly? | Bruce | Positioning   |                                                                                       |
-| 6   | What CSV export does your bank offer, and how far back?                                   | Bruce | Fallback plan | Bank offers CSV export, 12 months or more back (2026-11-10)                           |
+| #   | Question                                                                                                             | Owner | Blocks        | Answer                                                                                |
+| --- | -------------------------------------------------------------------------------------------------------------------- | ----- | ------------- | ------------------------------------------------------------------------------------- |
+| 1   | Banks and account types with ≥ 3 months of PDF statements?                                                           | Bruce | M1            | TD chequing and CIBC credit card, ≥ 3 months of PDFs each (2026-11-10)                |
+| 2   | Hours per week through mid-December?                                                                                 | Bruce | Schedule      | More than 20 hours per week (2026-11-10)                                              |
+| 3   | Licence: MIT (recommended) or AGPL-3.0?                                                                              | Bruce | First commit  | MIT (choice delegated to Claude, 2026-11-10; ADR-006)                                 |
+| 4   | Project name; buy a domain?                                                                                          | Bruce | M6            | Working name `recur`; public repo `Bruce1508/recur`. Final name and domain still open |
+| 5   | Does Digital ToolPad (or any other browser tool) already parse your statements correctly?                            | Bruce | Positioning   |                                                                                       |
+| 6   | What CSV export does your bank offer, and how far back?                                                              | Bruce | Fallback plan | Bank offers CSV export, 12 months or more back (2026-11-10)                           |
+| 7   | For TD chequing and CIBC credit card: how far back does each CSV export go, and does the file have a balance column? | Bruce | M1 fixtures   |                                                                                       |
 
 ## Decisions pending sign-off
 
-ADR-006 (MIT), ADR-015 and ADR-016 are Accepted. The rest stay Proposed until the owner signs off on the PRD.
+ADR-006 (MIT), ADR-015, ADR-016, ADR-017 and ADR-018 are Accepted. The rest stay Proposed until the owner signs off on the PRD.
 
 ## Waiting on the owner
 
 Queued by the autonomous workflow. Claude does not attempt these.
 
-- [ ] Open question 5: try one of your own statements in Digital ToolPad (and StatementSensei if convenient) and write down what each got right and wrong. Do not paste statement contents into any AI tool. Positioning only; does not block M1.
-- [ ] M0b-1: run `npm run e2e` once outside the sandbox (the sandbox blocks the preview server's port binding, `listen EPERM`; the unsandboxed retry was denied). Or set `sandbox.network.allowLocalBinding: true`.
-- [ ] Keep real statements in `~/Statements/` only (created, mode 700), never inside the repository.
+- [ ] M1: download a CSV of transactions from TD (chequing) and CIBC (credit card), as far back as each allows, and save them in `~/Statements/`. Answer open question 7.
+- [ ] M1: when `npm run fixture:dump` exists, run it on those files and review the redacted output before it is committed.
+- [ ] M2: before looking at any detector output, write down the subscriptions you believe you have (ground truth for AC-7). Keep the list out of the repository.
+- [ ] Open question 5: try one of your own statements in Digital ToolPad (and StatementSensei if convenient) and write down what each got right and wrong. Do not paste statement contents into any AI tool. Positioning only; matters for stage 2.
+- [ ] Keep real exports and statements in `~/Statements/` only (created, mode 700), never inside the repository.
+- [x] M0b-1: `npm run e2e` outside the sandbox. Covered by CI: the `verify` job runs the Playwright step and passed on PR #2.
 
 ## Acceptance criteria tracker
 
-| ID    | Criterion (short)                           | Status | Evidence |
-| ----- | ------------------------------------------- | ------ | -------- |
-| AC-1  | Fixtures match golden output and reconcile  | —      |          |
-| AC-2  | Mutations produce a mismatch                | —      |          |
-| AC-3  | Two formats, three fixtures each            | —      |          |
-| AC-4  | No cross-origin requests, no request bodies | —      |          |
-| AC-5  | Works offline after load                    | —      |          |
-| AC-6  | Detection precision ≥ 0.90, recall ≥ 0.80   | —      |          |
-| AC-7  | ≥ 80% of hand-listed subscriptions found    | —      |          |
-| AC-8  | CSV round-trip and injection safety         | —      |          |
-| AC-9  | 12 statements in under 5 s                  | —      |          |
-| AC-10 | Demo works with no user file                | —      |          |
-| AC-11 | CSP header on the deployed site             | —      |          |
-| AC-12 | README complete                             | —      |          |
+| ID    | Criterion (short)                             | Status | Evidence |
+| ----- | --------------------------------------------- | ------ | -------- |
+| AC-1  | Fixtures match golden output and reconcile    | —      |          |
+| AC-2  | Mutations produce a mismatch                  | —      |          |
+| AC-3  | Two real CSV layouts, two fixtures each       | —      |          |
+| AC-4  | No cross-origin requests, no request bodies   | —      |          |
+| AC-5  | Works offline after load                      | —      |          |
+| AC-6  | Detection precision ≥ 0.90, recall ≥ 0.80     | —      |          |
+| AC-7  | ≥ 80% of hand-listed subscriptions found      | —      |          |
+| AC-8  | CSV round-trip and injection safety           | —      |          |
+| AC-9  | 12 files in under 5 s                         | —      |          |
+| AC-10 | Demo works with no user file                  | —      |          |
+| AC-11 | CSP header on the deployed site               | —      |          |
+| AC-12 | README complete                               | —      |          |
+| AC-13 | Stage 2: two PDF formats, three fixtures each | —      |          |
+| AC-14 | Calendar file and list download are correct   | —      |          |
+| AC-15 | Five outside testers, findings recorded       | —      |          |
 
 ## Risk watch
 
-| Risk                                               | Status           | Next check               |
-| -------------------------------------------------- | ---------------- | ------------------------ |
-| Too few real statements                            | Open, unassessed | M0                       |
-| Real PDFs differ from the synthetic spike          | Open             | M1, first real statement |
-| Schedule against exams and internship applications | Open             | Weekly                   |
-| TypeScript 7 tooling friction                      | Open             | M0                       |
+| Risk                                                                   | Status                                           | Next check               |
+| ---------------------------------------------------------------------- | ------------------------------------------------ | ------------------------ |
+| Too few real statements                                                | Reduced: A1 confirmed for two accounts           | M5                       |
+| Real PDFs differ from the synthetic spike                              | Open                                             | M5, first real statement |
+| Schedule against exams and internship applications                     | Open                                             | Weekly                   |
+| TypeScript 7 tooling friction                                          | Closed: `tsc --noEmit` runs clean on 7.0.2 in CI | —                        |
+| Real CSV exports differ from the synthetic layouts, or have no balance | Open                                             | M1, first real export    |
+| People will not download a file from their bank                        | Open                                             | M4 validation            |
+| `gh` fails inside the Claude Code process (TLS)                        | Open: the owner runs `gh pr` commands by hand    | Each session             |
 
 ## Session log
 
 Newest first. One entry per session: date, what changed, what was verified, what is next.
+
+### 2026-11-10 — Re-scope: CSV first, PDF second (ADR-018)
+
+- **Scope changed.** The owner made usefulness to real users the first goal. CSV import is now the first input (stage 1, M1–M4, ending with a small launch and five outside testers); verified PDF parsing is stage 2 (M5–M7) behind a stage gate. Added to the PRD: annual-charge detection, a calendar file, a summary download, a label for ambiguous charges, AC-13 to AC-15, assumptions A8 and A9.
+- Updated: `docs/PRD.md` (v0.2), `docs/ROADMAP.md` (new milestone order), `docs/ARCHITECTURE.md` (CSV input stages, data model), `docs/DECISIONS.md` (ADR-018), `docs/RESEARCH.md` §12 (market re-check with sources), `README.md`, `CLAUDE.md`.
+- Evidence: four web searches, mostly vendor pages; no users interviewed. The AC-6 and AC-7 thresholds are unchanged.
+- Verified: `npm run verify` passes (docs-only change; lint covers the Markdown formatting).
+- Not verified: any bank's real CSV layout; whether people will download a file from their bank (A9, tested in M4).
+- Next: M1 through `ship-task`. Tasks 1–7 need nothing from the owner.
 
 ### 2026-11-10 — M0 gate decision: GO
 

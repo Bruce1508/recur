@@ -23,6 +23,7 @@ A record is changed only by adding a new record that supersedes it. Statuses: Pr
 | 015 | Autonomous PR workflow and Claude Code automation                               | Accepted                                             |
 | 016 | Real statements live outside the repository                                     | Accepted                                             |
 | 017 | Run `gh` and `git push/fetch/pull` as standalone commands                       | Accepted                                             |
+| 018 | CSV import first, PDF parsing second; usefulness is the first goal              | Accepted (owner's decision, 2026-11-10)              |
 
 All records become Accepted when Bruce signs off on the PRD.
 
@@ -277,3 +278,28 @@ All records become Accepted when Bruce signs off on the PRD.
 **Decision.** The `ship-task` skill (steps 7 and 10) requires these commands to run one at a time, never piped, chained or in subshells. This extends ADR-015 and changes only `.claude/skills/ship-task/SKILL.md`.
 
 **Consequences.** No change to permissions or the sandbox; a few more tool calls per task.
+
+---
+
+## ADR-018 — CSV import first, PDF parsing second; usefulness is the first goal
+
+**Context.** The original plan made PDF parsing the only input and a resume piece the first goal. On 2026-11-10 the owner changed the first goal to a product that is useful to the people who use it. Each PDF format needs its own profile and real fixtures, so a PDF-only MVP would serve customers of two banks. Most banks let customers download transactions as CSV, and the owner confirmed that his bank offers 12 months or more. A market re-check the same day (`docs/RESEARCH.md` §12) found no tool that detects recurring charges automatically without a bank connection.
+
+| Option                                      | Banks served at launch             | Time to a usable product | Hard technical piece |
+| ------------------------------------------- | ---------------------------------- | ------------------------ | -------------------- |
+| A. PDF first, CSV in the backlog (old plan) | 2 formats                          | About 6 weeks            | Shown early          |
+| **B. CSV first, PDF second**                | Any bank with a transaction export | About 4 weeks            | Deferred to stage 2  |
+| C. CSV only; drop PDF parsing               | Any bank with a transaction export | About 4 weeks            | Lost                 |
+
+**Decision.** B.
+
+- Goal order in `docs/PRD.md` §4 becomes: useful to real users; correct or says it is not; a resume-grade technical piece.
+- Stage 1 (M1–M4) ships CSV import with a column mapper, the recurring finder, exports and the trust features, then a small launch with at least five outside testers.
+- Stage 2 (M5–M7) adds verified PDF parsing for TD chequing and CIBC credit card. It starts only after the stage gate in M4.
+- A CSV import is checked with the running-balance method when the file has a balance column. Without one, the result is `unverifiable` and the UI says so. ADR-004 still holds: nothing unverified is shown as verified.
+- Annual charges are detected when the history holds two occurrences about a year apart. This extends ADR-014, whose rule-based approach is unchanged.
+- A real CSV export is treated exactly like a real statement: it stays in `~/Statements/`, is never read by Claude, and reaches the repository only as a redacted fixture reviewed by the owner (ADR-005, ADR-016).
+
+**Consequences.** The product is usable by far more people from day one, and feedback arrives before the expensive parser work. The resume piece moves later and depends on the stage gate. CSV layouts differ between banks and some carry no balance, so some imports cannot be verified. The old fallback plan ("switch to CSV if PDF fails") is gone because CSV is now the main path; if PDF parsing fails in M6 the product stays CSV-only.
+
+**Revisit when** the M4 validation shows that people cannot or will not download a CSV from their bank. Then PDF, or another input, moves up.
