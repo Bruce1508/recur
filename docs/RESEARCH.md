@@ -110,7 +110,7 @@ Throwaway code, not kept in the repository.
 - **Method:** `pdfjs-dist` 6.5.438 (legacy build) on Node 22.23.4 → `getTextContent()` → group items into lines by y-coordinate → assign numbers to columns by right-edge position → reconcile in integer cents.
 - **Result:** 58 of 58 transactions recovered; opening − withdrawals + deposits equalled the closing balance; all 58 per-row running balances matched; multi-line descriptions joined correctly; total run time about 170 ms including library start-up. `getMetadata()` returned Producer and Creator.
 - **What this proves:** the API shape in the current version, and that geometry-based row reconstruction plus reconciliation is workable.
-- **What it does not prove:** anything about real bank PDFs. Real statements may fragment text per glyph, omit spaces, include hidden text, or use fonts that need character maps. The first real statement must go through extraction in M1 before any parser is written.
+- **What it does not prove:** anything about real bank PDFs. Real statements may fragment text per glyph, omit spaces, include hidden text, or use fonts that need character maps. The first real statement must go through extraction in M5 before any parser is written.
 
 ## 5. Front-end stack and tooling
 
@@ -128,8 +128,8 @@ Throwaway code, not kept in the repository.
 | `@playwright/test`                 | 1.65.0                                                 | Apache-2.0        | Node ≥ 20                                                            | **Use** for end-to-end and network assertions                                                       |
 | `fast-check`                       | 4.10.2                                                 | MIT               | —                                                                    | **Use** for property tests                                                                          |
 | `@vitest/coverage-v8`              | 5.1.0                                                  | MIT               | Same version as Vitest                                               | **Use** for the 90% core coverage target                                                            |
-| `@axe-core/playwright`             | 4.14.0                                                 | MPL-2.0           | Dev-only; file-level copyleft does not affect the app's licence      | **Use** in M5                                                                                       |
-| `pdf-lib`                          | 1.17.1 (last published 2022-05-12)                     | MIT               | Unmaintained since 2022                                              | Candidate PDF writer for `tools/make-synthetic.ts`; decide in M1 against a hand-written minimal PDF |
+| `@axe-core/playwright`             | 4.14.0                                                 | MPL-2.0           | Dev-only; file-level copyleft does not affect the app's licence      | **Use** in M3                                                                                       |
+| `pdf-lib`                          | 1.17.1 (last published 2022-05-12)                     | MIT               | Unmaintained since 2022                                              | Candidate PDF writer for `tools/make-synthetic.ts`; decide in M5 against a hand-written minimal PDF |
 | Tailwind CSS + `@tailwindcss/vite` | 4.3.5                                                  | MIT               | Peer includes `vite ^8`                                              | **Use**                                                                                             |
 | PapaParse                          | 5.7.0 (2026-08-24)                                     | MIT               | See §8                                                               | **Use for CSV output**, with our own sanitising                                                     |
 | `vite-plugin-pwa`                  | 2.0.0                                                  | MIT               | Peer includes `vite ^8`                                              | Post-MVP                                                                                            |
@@ -165,7 +165,7 @@ From the official docs ([memory](https://code.claude.com/docs/en/memory.md), [be
 
 1. **CSV formula escaping breaks negative amounts.** `Papa.unparse(rows, { escapeFormulae: true })` correctly neutralised a description beginning with `=`, but it also turned the amount `-12.50` into `'-12.50`, which is no longer a number. Decision: sanitise text fields ourselves and leave numeric fields untouched.
 2. **`unpdf` needs Node ≥ 24** by its engines field; `pdfjs-dist` works from 22.13. One more reason to use `pdfjs-dist` directly.
-3. **pdf.js ships WASM image decoders** (JPEG 2000, JBIG2, colour management). Text extraction should not need them, which would let the CSP omit `'wasm-unsafe-eval'`. Confirm in M1 with a real statement.
+3. **pdf.js ships WASM image decoders** (JPEG 2000, JBIG2, colour management). Text extraction should not need them, which would let the CSP omit `'wasm-unsafe-eval'`. Confirm in M5 with a real statement.
 
 ## 9. Build, adapt or reuse
 
@@ -195,5 +195,22 @@ From the official docs ([memory](https://code.claude.com/docs/en/memory.md), [be
 - Whether Digital ToolPad or other closed tools handle Canadian statements.
 - Minimum browser versions for `pdfjs-dist` 6.x.
 - Whether Cloudflare's dashboard exposes aggregate request counts for a Pages project without client-side scripts.
-- What CSV export each bank offers and how far back it goes (relevant to the fallback plan).
+- What CSV export each bank offers and how far back it goes. The owner's bank offers 12 months or more (his report, 2026-11-10); the column layout of each bank's file is unknown until the M1 fixtures.
 - All market and pricing claims in §1.
+- Everything in §12 that comes from a vendor page.
+
+## 12. Market re-check for the re-scope (2026-11-10)
+
+Four web searches, read as summaries. Most sources are vendor pages or vendor blogs, so treat every line as a lead, not a fact, and re-verify before using it in public copy. No users were interviewed. This is the evidence behind ADR-018.
+
+| Question                                                                   | Finding                                                                                                                                                            | Source                                                                                                                                                                                   | Confidence                                                       |
+| -------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------- |
+| Do bank-free subscription trackers find charges automatically?             | The ones found (SubTracker, SubLedger, SubStop) are manual entry. One vendor states that bank-free tools cannot see charges the user does not enter                | [subtracker.io](https://www.subtracker.io/best/track-subscriptions-without-linking-bank), [subdupes.com](https://www.subdupes.com/blog/subscription-tracker-without-bank-linking)        | Low to medium: vendor pages                                      |
+| Is there a local, no-upload statement converter that names Canadian banks? | Several browser-only converters exist. None found lists TD, RBC, CIBC, Scotiabank or BMO, and none detects recurring charges                                       | [local-bank-statement-csv.pages.dev](https://local-bank-statement-csv.pages.dev/), [pdfca.vercel.app](https://pdfca.vercel.app/en/guides/pdf-to-csv)                                     | Low: not tested                                                  |
+| Is consumer-driven banking (open banking) live in Canada?                  | No confirmed launch date found. The Bank of Canada was still gathering information in March 2026; analysts point to late 2026 or 2027                              | [openbankingtracker.com](https://openbankingtracker.com/blog/open-banking-canada-what-is-coming-in-2026-and-2027)                                                                        | Medium: newest source is mid-2026; check the Bank of Canada site |
+| How much history do bank exports give?                                     | One vendor guide says TD's activity search reaches 18 months; another says BMO has no CSV export of full statements. Older months are available as PDF eStatements | [invoicedataextraction.com](https://invoicedataextraction.com/blog/td-bank-statement-to-excel), [docuclipper.com](https://www.docuclipper.com/blog/convert-bmo-bank-statement-to-excel/) | Low: vendor guides; confirm with the owner's own exports in M1   |
+| Can descriptions identify every subscription?                              | One vendor notes that app-store subscriptions appear only as Apple or Google on a statement                                                                        | [subdupes.com](https://www.subdupes.com/blog/subscription-tracker-without-bank-linking)                                                                                                  | Medium: matches common experience; drives FR-14                  |
+
+**Not found:** any r/PersonalFinanceCanada thread on the topic (the search returned none), and whether Rocket Money is still unavailable in Canada.
+
+**What it changed.** CSV import became the first input (ADR-018); annual detection, the calendar file, the summary download and the ambiguous-charge label were added to the PRD.

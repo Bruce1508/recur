@@ -1,27 +1,34 @@
 # Architecture
 
-**Date:** 2026-11-10 · **Status:** Proposed · Decisions are recorded in `docs/DECISIONS.md`; evidence is in `docs/RESEARCH.md`.
+**Date:** 2026-11-10 · **Status:** Proposed; input order changed by ADR-018 (CSV first, PDF second) · Decisions are recorded in `docs/DECISIONS.md`; evidence is in `docs/RESEARCH.md`.
 
 ## 1. Shape of the system
 
 A static single-page web app. There is no backend, no database, no API and no account system. This is deliberate: the product's core promise is that statement data never leaves the device, and the cheapest way to keep that promise is to have nowhere to send it (ADR-001).
 
+There are two inputs, built in this order (ADR-018). Both produce the same `ParsedStatement`, so everything from `reconcile` onward is shared.
+
 ```mermaid
 flowchart LR
-  U[User drops PDFs] --> E[extract<br/>pdfjs-dist + its worker]
+  U1[User drops CSV exports<br/>stage 1] --> CR[csv/read<br/>text to rows]
+  CR --> CM[csv/mapColumns<br/>guess + confirm]
+  CM --> CS[csv/toStatement]
+  U2[User drops PDFs<br/>stage 2] --> E[extract<br/>pdfjs-dist + its worker]
   E --> N[normalize<br/>items to lines]
   N --> D[detect<br/>bank + statement type]
   D --> P[parse<br/>profile-driven rows]
-  P --> R[reconcile<br/>balance check]
+  CS --> R[reconcile<br/>balance check]
+  P --> R
   R --> L[ledger<br/>merge + dedupe]
   L --> M[merchant<br/>normalise names]
   M --> C[recurring<br/>detect series]
   L --> X[export CSV]
+  C --> X2[export summary + calendar]
   C --> UI[Results UI]
   R --> UI
 ```
 
-Everything from `normalize` onward is pure TypeScript with no browser or library dependencies. That is the property that makes the project testable: the same functions run in Vitest on Node against JSON fixtures, with no PDF and no browser involved.
+Everything except `extract` and the UI is pure TypeScript with no browser dependencies. That is the property that makes the project testable: the same functions run in Vitest on Node against JSON fixtures, with no PDF and no browser involved.
 
 ## 2. Design principles
 
@@ -58,25 +65,27 @@ src/
     types.ts            # domain types (§5)
     money.ts            # cents parsing and formatting
     plainDate.ts        # YYYY-MM-DD helpers, day differences
-    normalize/          # RawDocument -> LineDocument
-    profiles/           # one file per bank format + registry
-    detect.ts           # choose a profile
-    parse/              # profile-driven row extraction
+    csv/                # stage 1: read.ts, mapColumns.ts, toStatement.ts
+    normalize/          # stage 2: RawDocument -> LineDocument
+    profiles/           # stage 2: one file per PDF format + registry
+    detect.ts           # stage 2: choose a profile
+    parse/              # stage 2: profile-driven row extraction
     reconcile.ts        # balance verification
     ledger.ts           # merge, dedupe, continuity checks
     merchant/           # description -> merchant key (+ alias table)
     recurring/          # series detection, price changes, confidence
-    exportCsv.ts
+    exportCsv.ts        # ledger and recurring list as CSV
+    exportIcs.ts        # renewal dates as a calendar file
   pdf/
-    extract.ts          # the ONLY module importing pdfjs-dist
+    extract.ts          # stage 2: the ONLY module importing pdfjs-dist
   ui/                   # React components and state
-  demo/                 # synthetic sample statements (generated)
+  demo/                 # synthetic sample files (generated)
 fixtures/
-  <bank>/<kind>/<name>/ # input.json (redacted positioned text), expected.json
-  synthetic/            # generated PDFs for end-to-end tests
+  <bank>/<kind>/<name>/ # input.csv or input.json (redacted), expected.json
+  synthetic/            # generated CSVs and PDFs for end-to-end tests
 tools/
-  fixture-dump.ts       # local CLI: PDF -> redacted fixture
-  make-synthetic.ts     # generates synthetic statements
+  fixture-dump.ts       # local CLI: real CSV or PDF -> redacted fixture
+  make-synthetic.ts     # generates synthetic exports and statements
 e2e/                    # Playwright tests
 private/                # owner's deny-list for the fixture check — gitignored, denied to AI tools
                         # real statements live in ~/Statements/, outside the repo (ADR-016)
@@ -122,6 +131,17 @@ interface LineDocument {
 
 type AccountKind = "deposit" | "credit";
 
+// Which CSV column holds what. Indexes, because some exports have no header row.
+interface ColumnMapping {
+  hasHeader: boolean;
+  date: number;
+  dateFormat: "YYYY-MM-DD" | "MM/DD/YYYY" | "DD/MM/YYYY";
+  description: number;
+  amount: { signed: number } | { debit: number; credit: number };
+  balance?: number;
+  confidence: "high" | "low"; // low = ask the user to confirm
+}
+
 interface Transaction {
   id: string; // stable hash of statement + row position
   date: PlainDate;
@@ -129,12 +149,15 @@ interface Transaction {
   description: string; // as printed, whitespace-collapsed
   amount: Cents; // signed: negative = money out
   balanceAfter?: Cents;
-  source: { statementId: string; page: number; lineIndex: number };
+  source:
+    | { statementId: string; input: "csv"; row: number }
+    | { statementId: string; input: "pdf"; page: number; lineIndex: number };
 }
 
 interface ParsedStatement {
   id: string;
-  bankId: string;
+  input: "csv" | "pdf";
+  bankId: string; // "unknown" for a CSV the app could not attribute
   kind: AccountKind;
   period: { start: PlainDate; end: PlainDate };
   openingBalance?: Cents;
@@ -151,7 +174,14 @@ type Reconciliation =
 interface RecurringSeries {
   merchantKey: string;
   displayName: string;
-  cadence: "weekly" | "biweekly" | "monthly" | "quarterly" | "annual-possible";
+  cadence:
+    | "weekly"
+    | "biweekly"
+    | "monthly"
+    | "quarterly"
+    | "annual" // two charges about a year apart
+    | "annual-possible"; // one large charge; not enough history
+  ambiguous: boolean; // description names only an app store or processor
   typicalAmount: Cents;
   amountKind: "fixed" | "variable";
   monthlyEquivalent: Cents;
@@ -168,7 +198,15 @@ Every transaction keeps a pointer to its source page and line so the UI can show
 
 Each stage is a function with one input type and one output type.
 
-### 6.1 `extract` (edge)
+### 6.0 CSV input (stage 1)
+
+- **`csv/read`** — `string → string[][]`. PapaParse does the parsing. Strips a byte-order mark and trailing blank rows.
+- **`csv/mapColumns`** — `string[][] → ColumnMapping`. Looks at header labels when there are any, and at the cell contents otherwise: a column where nearly every cell parses as a date is the date; a column of money values that continues from row to row by the amount is the balance. When two readings are plausible (for example day-first against month-first dates) the confidence is `low` and the UI asks the user. The function never picks silently.
+- **`csv/toStatement`** — `(string[][], ColumnMapping) → ParsedStatement`. Converts amounts to cents and dates to `PlainDate`; rows that fail to convert become warnings, never guessed values.
+
+Real export layouts are facts to learn from the owner's redacted fixtures in M1. Nothing about a bank's layout is assumed in code before a fixture shows it.
+
+### 6.1 `extract` (edge, stage 2)
 
 `ArrayBuffer → RawDocument`. Calls `getDocument`, `getMetadata`, and `getTextContent` for each page; converts each item's transform into top-left-origin `x`, `y`; drops empty strings. `pdfjs-dist` runs its parsing in its own worker, loaded from the same origin. The worker bundle is fetched only when the first file is dropped.
 
@@ -196,7 +234,7 @@ Each stage is a function with one input type and one output type.
 
 - **`running-balance`** — every row's printed balance must equal the previous balance plus the row's amount. Pinpoints the first bad row.
 - **`totals`** — opening balance plus the sum of transactions must equal the closing balance.
-- If neither is available the result is `unverifiable`, never `verified`.
+- If neither is available the result is `unverifiable`, never `verified`. A CSV with a balance column uses `running-balance`; a CSV without one is `unverifiable`.
 
 Statements are also chained: the closing balance of one must equal the opening balance of the next, which detects a missing month.
 
@@ -218,18 +256,24 @@ Merges statements, sorts by date, removes duplicates from overlapping periods us
 4. Score interval consistency (share of gaps inside the bucket) and amount stability (share of amounts within 7.5% or $1 of the median, the tolerance Actual Budget uses).
 5. A sustained step in the amount becomes a `priceChange`.
 6. Combine occurrence count, interval consistency and amount stability into high, medium or low confidence. Stable cadence with varying amounts is labelled a variable recurring bill.
+7. Annual: two charges from one merchant 350–380 days apart with a stable amount are an `annual` series. One large charge with no repeat stays `annual-possible`. When the history is shorter than 13 months the result says so.
+8. A series whose description names only an app store or a payment processor is marked `ambiguous`, because several services can hide behind one descriptor.
+
+### 6.9 `exportIcs`
+
+`RecurringSeries[] → string`. One all-day event per series on its `nextExpected` date, with the name and typical amount. Written by hand against RFC 5545 (text escaping, line folding, CRLF); no dependency.
 
 Every series carries its evidence rows, so the user can see why something was flagged.
 
 ## 7. User interface
 
-One page, four states: **empty** (drop zone, "Try with a sample statement", how-it-works), **processing**, **results**, **error**.
+One page, five states: **empty** (drop zone, "Try with sample data", "How to download your transactions", how-it-works), **confirm columns** (only when a mapping has low confidence), **processing**, **results**, **error**.
 
 Results has three views:
 
-- **Subscriptions** — the recurring series, sorted by annual cost, each expandable to its evidence.
+- **Subscriptions** — the recurring series, sorted by annual cost, each expandable to its evidence; the yearly total; "Download list" and "Add renewals to calendar".
 - **Transactions** — the ledger table with search and "Download CSV".
-- **Statements** — one row per file with bank, period and reconciliation status.
+- **Files** — one row per file with bank (when known), period and verification status.
 
 State lives in memory only. Closing or reloading the tab discards everything (ADR-010). A permanent footer links to "How to verify nothing is uploaded": open the browser's network tab, or load the page, turn off Wi-Fi, then drop a file.
 
@@ -241,6 +285,7 @@ State lives in memory only. Closing or reloading the tab discards everything (AD
 | -------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | App or a dependency sends statement data somewhere       | No network code in the app; CSP restricts connections to the app's own origin, which is a static file host with no upload endpoint; end-to-end test asserts no cross-origin requests and no request bodies |
 | Malicious or compromised dependency                      | Four runtime dependencies, exact pins, lockfile, `npm ci` in CI; no post-MVP dependency added without a research note                                                                                      |
+| Malicious CSV                                            | Parsed as data only; cells are never evaluated; all text is inserted through React (escaped); exported text fields are sanitised against formula injection                                                 |
 | Malicious PDF                                            | Parsed by pdf.js in a worker; we render nothing from the PDF, only read text; all text is inserted through React (escaped), never as HTML                                                                  |
 | CSV formula injection when the export is opened in Excel | Text fields beginning with `=`, `+`, `-`, `@`, tab or carriage return are prefixed with `'`; numeric fields are left alone                                                                                 |
 | Real statements leaking into Git or CI                   | `private/` is gitignored; a CI check fails on any PDF outside `fixtures/synthetic/` and on long digit runs in fixtures                                                                                     |
@@ -262,7 +307,7 @@ form-action 'none';
 frame-ancestors 'none'
 ```
 
-`connect-src 'self'` is needed because pdf.js may fetch character-map files from the app's own origin. If M1 shows text extraction works without them, tighten it to `'none'`. If pdf.js turns out to need WebAssembly for these statements, add `'wasm-unsafe-eval'` to `script-src` and record why.
+`connect-src 'self'` is needed because pdf.js may fetch character-map files from the app's own origin. If M5 shows text extraction works without them, tighten it to `'none'`. If pdf.js turns out to need WebAssembly for these statements, add `'wasm-unsafe-eval'` to `script-src` and record why.
 
 **Fixture redaction.** `tools/fixture-dump.ts` runs locally, extracts positioned text, keeps dates, amounts and structural labels, replaces each distinct description with a stable placeholder (`MERCHANT_07`), and masks other digit runs. Stable placeholders preserve recurrence patterns, so redacted fixtures still exercise the detector. A human reviews the output before committing.
 
@@ -277,7 +322,7 @@ frame-ancestors 'none'
 
 | Level              | What                                                                                                                                                                                  | Tool       |
 | ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------- |
-| Unit               | `money`, `plainDate`, merchant rules, cadence bucketing, CSV sanitiser                                                                                                                | Vitest     |
+| Unit               | `money`, `plainDate`, CSV reading and column mapping (each synthetic layout), merchant rules, cadence bucketing, CSV sanitiser, calendar file round trip                              | Vitest     |
 | Golden fixtures    | `input.json` → exact `expected.json`, and reconciliation must be `verified`                                                                                                           | Vitest     |
 | Mutation           | Remove or alter one row in each fixture → must become `mismatch`                                                                                                                      | Vitest     |
 | Property           | Generate random ledgers → render to a synthetic `LineDocument` → parse → must equal the original; detector invariants (order-independence, no series from fewer than two occurrences) | fast-check |
@@ -289,7 +334,7 @@ Coverage target: 90% of lines in `src/core/`. No coverage target for `src/ui/`; 
 
 ## 11. Deployment
 
-`main` → GitHub Actions (typecheck, lint, unit, fixtures, build, end-to-end) → Cloudflare Pages serves the built `dist/` folder. The exact deploy mechanism (Cloudflare's Git integration or an upload step from CI) is chosen in M6. No secrets are needed at runtime because there is no runtime server.
+`main` → GitHub Actions (typecheck, lint, unit, fixtures, build, end-to-end) → Cloudflare Pages serves the built `dist/` folder. The exact deploy mechanism (Cloudflare's Git integration or an upload step from CI) is chosen in M4. No secrets are needed at runtime because there is no runtime server.
 
 ## 12. Extensibility, scale and cost
 
@@ -302,4 +347,4 @@ Coverage target: 90% of lines in `src/core/`. No coverage target for `src/ui/`; 
 - Real statements defeat the geometry approach on some bank → consider reconstructing layout text and matching patterns for that profile only.
 - Batches above roughly 50 statements cause jank → dedicated worker.
 - Users ask to keep data between visits → opt-in local storage, with a clear "stored on this device" notice.
-- Bank CSV import is added → it enters the pipeline at the `ledger` stage; nothing upstream changes.
+- Column guessing proves unreliable for some bank's export → add a small per-bank CSV preset (data, not code), chosen by the user or by header match.

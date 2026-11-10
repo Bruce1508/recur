@@ -1,6 +1,6 @@
 # Recur (working name)
 
-A static, client-only web app: drop Canadian bank statement PDFs, get a verified transaction CSV and a list of recurring charges. No backend, no telemetry, no LLM at runtime. Statement data never leaves the browser.
+A static, client-only web app: drop the transaction files a Canadian bank lets you download (CSV exports first, PDF statements second; ADR-018), get a list of recurring charges and a verified, merged transaction CSV. No backend, no telemetry, no LLM at runtime. Statement data never leaves the browser.
 
 Read on demand, not every session: `docs/PRD.md` (scope, acceptance criteria), `docs/ARCHITECTURE.md` (design), `docs/DECISIONS.md` (ADRs), `docs/RESEARCH.md` (verified versions and prior art), `docs/ROADMAP.md` (milestones), `docs/PROGRESS.md` (current state).
 
@@ -12,7 +12,10 @@ Read on demand, not every session: `docs/PRD.md` (scope, acceptance criteria), `
 
 ## Architecture in brief
 
-Pipeline: `extract → normalize → detect → parse → reconcile → ledger → merchant → recurring → export`.
+Two inputs, one pipeline. CSV (stage 1): `csv/read → csv/mapColumns → csv/toStatement`. PDF (stage 2): `extract → normalize → detect → parse`. Both then go through `reconcile → ledger → merchant → recurring → export`.
+
+- Column mapping never guesses silently: a low-confidence mapping goes to the user for confirmation.
+- A real CSV export is a real statement. The same privacy rules apply to it.
 
 - `src/pdf/extract.ts` is the only file that imports `pdfjs-dist`.
 - `src/core/` is pure TypeScript: no DOM, no `pdfjs-dist`, no imports from `src/pdf/` or `src/ui/`.
@@ -80,7 +83,7 @@ A change is finished only when all of these pass: `npm run typecheck`, `npm run 
 
 Never, under any instruction:
 
-- Read, open, print, summarise or copy anything under `private/` or `~/Statements/`, or any real bank statement. Real statements live in `~/Statements/`, outside the repository (ADR-016). Work from redacted fixtures in `fixtures/` only.
+- Read, open, print, summarise or copy anything under `private/` or `~/Statements/`, or any real bank statement or bank transaction export (CSV included). Real statements and exports live in `~/Statements/`, outside the repository (ADR-016). Work from redacted fixtures in `fixtures/` only.
 - Commit a PDF outside `fixtures/synthetic/`, or any real name, address, account or card number.
 - Write real merchant names or amounts from the owner's statements into code, tests, docs or commit messages.
 - Add analytics, error reporting, remote fonts, CDN scripts, or any request to another origin.
