@@ -6,7 +6,9 @@ test("page makes no cross-origin requests and sends no request bodies", async ({
   const origin = "http://localhost:4173";
   const offenders: string[] = [];
   page.on("request", (req) => {
-    if (new URL(req.url()).origin !== origin || req.postData() !== null)
+    const url = new URL(req.url());
+    if (url.protocol === "data:") return; // inline, never leaves the browser; origin is "null"
+    if (url.origin !== origin || req.postData() !== null)
       offenders.push(req.url());
   });
   await page.goto("/");
