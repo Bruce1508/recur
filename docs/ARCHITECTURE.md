@@ -33,20 +33,20 @@ Everything from `normalize` onward is pure TypeScript with no browser or library
 
 ## 3. Technology stack
 
-| Layer | Choice | Why |
-|---|---|---|
-| Language | TypeScript 7.0.x, strict mode | Money and date handling benefit from strong types; fallback to 6.0.x if a tool requires it |
-| UI | React 19.3 | Bruce already knows it; recruiters recognise it; framework size is irrelevant next to the 1.3 MB pdf.js worker |
-| Build | Vite 8.3 | Standard, fast, first-class worker and static-asset handling |
-| Styling | Tailwind CSS 4.3 | Fast to build a small UI; no runtime |
-| PDF | `pdfjs-dist` 6.5.438 | Positioned text plus metadata; Mozilla-maintained |
-| CSV | PapaParse 5.7 | Correct RFC 4180 quoting without hand-rolling it |
-| Unit and fixture tests | Vitest 5.1 | Shares Vite's config |
-| Property tests | fast-check 4.10 | Parsers and detectors have natural invariants |
-| End-to-end | Playwright 1.65 | Real browser, real pdf.js, network assertions |
-| Lint and format | Biome 2.6 | Works with TypeScript 7; one tool instead of two |
-| Runtime for tooling | Node 24 LTS, npm | No extra package manager to install |
-| Hosting | Cloudflare Pages (GitHub Pages as fallback) | Free; supports real CSP response headers |
+| Layer                  | Choice                                      | Why                                                                                                            |
+| ---------------------- | ------------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
+| Language               | TypeScript 7.0.x, strict mode               | Money and date handling benefit from strong types; fallback to 6.0.x if a tool requires it                     |
+| UI                     | React 19.3                                  | Bruce already knows it; recruiters recognise it; framework size is irrelevant next to the 1.3 MB pdf.js worker |
+| Build                  | Vite 8.3                                    | Standard, fast, first-class worker and static-asset handling                                                   |
+| Styling                | Tailwind CSS 4.3                            | Fast to build a small UI; no runtime                                                                           |
+| PDF                    | `pdfjs-dist` 6.5.438                        | Positioned text plus metadata; Mozilla-maintained                                                              |
+| CSV                    | PapaParse 5.7                               | Correct RFC 4180 quoting without hand-rolling it                                                               |
+| Unit and fixture tests | Vitest 5.1                                  | Shares Vite's config                                                                                           |
+| Property tests         | fast-check 4.10                             | Parsers and detectors have natural invariants                                                                  |
+| End-to-end             | Playwright 1.65                             | Real browser, real pdf.js, network assertions                                                                  |
+| Lint and format        | Biome 2.6                                   | Works with TypeScript 7; one tool instead of two                                                               |
+| Runtime for tooling    | Node 24 LTS, npm                            | No extra package manager to install                                                                            |
+| Hosting                | Cloudflare Pages (GitHub Pages as fallback) | Free; supports real CSP response headers                                                                       |
 
 There are four runtime dependencies: `react`, `react-dom`, `pdfjs-dist` and `papaparse`. Tailwind is build-time only. Keep the runtime count under ten (NFR-7).
 
@@ -88,27 +88,46 @@ A Biome or simple import-lint rule enforces that nothing under `src/core/` impor
 ## 5. Data model
 
 ```ts
-type Cents = number;          // integer; never store dollars as floats
-type PlainDate = string;      // "YYYY-MM-DD"; no time zones anywhere
+type Cents = number; // integer; never store dollars as floats
+type PlainDate = string; // "YYYY-MM-DD"; no time zones anywhere
 
-interface RawItem { str: string; x: number; y: number; w: number; h: number; font: string }
-interface RawPage { width: number; height: number; items: RawItem[] }
+interface RawItem {
+  str: string;
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+  font: string;
+}
+interface RawPage {
+  width: number;
+  height: number;
+  items: RawItem[];
+}
 interface RawDocument {
   meta: { producer?: string; creator?: string; title?: string };
   pages: RawPage[];
 }
 
-interface Line { page: number; y: number; items: RawItem[]; text: string }
-interface LineDocument { meta: RawDocument["meta"]; lines: Line[] }
+interface Line {
+  page: number;
+  y: number;
+  items: RawItem[];
+  text: string;
+}
+interface LineDocument {
+  meta: RawDocument["meta"];
+  lines: Line[];
+}
 
 type AccountKind = "deposit" | "credit";
 
 interface Transaction {
-  id: string;                 // stable hash of statement + row position
+  id: string; // stable hash of statement + row position
   date: PlainDate;
   postedDate?: PlainDate;
-  description: string;        // as printed, whitespace-collapsed
-  amount: Cents;              // signed: negative = money out
+  description: string; // as printed, whitespace-collapsed
+  amount: Cents; // signed: negative = money out
   balanceAfter?: Cents;
   source: { statementId: string; page: number; lineIndex: number };
 }
@@ -218,15 +237,15 @@ State lives in memory only. Closing or reloading the tab discards everything (AD
 
 **Threat model**
 
-| Threat | Mitigation |
-|---|---|
-| App or a dependency sends statement data somewhere | No network code in the app; CSP restricts connections to the app's own origin, which is a static file host with no upload endpoint; end-to-end test asserts no cross-origin requests and no request bodies |
-| Malicious or compromised dependency | Four runtime dependencies, exact pins, lockfile, `npm ci` in CI; no post-MVP dependency added without a research note |
-| Malicious PDF | Parsed by pdf.js in a worker; we render nothing from the PDF, only read text; all text is inserted through React (escaped), never as HTML |
-| CSV formula injection when the export is opened in Excel | Text fields beginning with `=`, `+`, `-`, `@`, tab or carriage return are prefixed with `'`; numeric fields are left alone |
-| Real statements leaking into Git or CI | `private/` is gitignored; a CI check fails on any PDF outside `fixtures/synthetic/` and on long digit runs in fixtures |
-| Real statements leaking to an AI coding assistant | Statements live outside the repository; Claude Code deny rules, an OS-level sandbox read block and a guard hook that also covers MCP tools (ADR-015, ADR-016); development uses redacted fixtures only |
-| Clickjacking | `frame-ancestors 'none'` response header on Cloudflare Pages |
+| Threat                                                   | Mitigation                                                                                                                                                                                                 |
+| -------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| App or a dependency sends statement data somewhere       | No network code in the app; CSP restricts connections to the app's own origin, which is a static file host with no upload endpoint; end-to-end test asserts no cross-origin requests and no request bodies |
+| Malicious or compromised dependency                      | Four runtime dependencies, exact pins, lockfile, `npm ci` in CI; no post-MVP dependency added without a research note                                                                                      |
+| Malicious PDF                                            | Parsed by pdf.js in a worker; we render nothing from the PDF, only read text; all text is inserted through React (escaped), never as HTML                                                                  |
+| CSV formula injection when the export is opened in Excel | Text fields beginning with `=`, `+`, `-`, `@`, tab or carriage return are prefixed with `'`; numeric fields are left alone                                                                                 |
+| Real statements leaking into Git or CI                   | `private/` is gitignored; a CI check fails on any PDF outside `fixtures/synthetic/` and on long digit runs in fixtures                                                                                     |
+| Real statements leaking to an AI coding assistant        | Statements live outside the repository; Claude Code deny rules, an OS-level sandbox read block and a guard hook that also covers MCP tools (ADR-015, ADR-016); development uses redacted fixtures only     |
+| Clickjacking                                             | `frame-ancestors 'none'` response header on Cloudflare Pages                                                                                                                                               |
 
 **Content Security Policy** (sent as a response header via `_headers`, and duplicated in a `<meta>` tag so the policy survives a move to a host without header support):
 
@@ -256,15 +275,15 @@ frame-ancestors 'none'
 
 ## 10. Testing strategy
 
-| Level | What | Tool |
-|---|---|---|
-| Unit | `money`, `plainDate`, merchant rules, cadence bucketing, CSV sanitiser | Vitest |
-| Golden fixtures | `input.json` → exact `expected.json`, and reconciliation must be `verified` | Vitest |
-| Mutation | Remove or alter one row in each fixture → must become `mismatch` | Vitest |
-| Property | Generate random ledgers → render to a synthetic `LineDocument` → parse → must equal the original; detector invariants (order-independence, no series from fewer than two occurrences) | fast-check |
-| Labelled scenarios | ≥ 30 synthetic ledgers with known subscriptions → precision and recall report (AC-6) | Vitest |
-| End-to-end | Synthetic PDFs through the real UI in Chromium, Firefox and WebKit; network assertions; offline run; timing | Playwright |
-| Accessibility | Automated axe scan on each UI state | Playwright |
+| Level              | What                                                                                                                                                                                  | Tool       |
+| ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------- |
+| Unit               | `money`, `plainDate`, merchant rules, cadence bucketing, CSV sanitiser                                                                                                                | Vitest     |
+| Golden fixtures    | `input.json` → exact `expected.json`, and reconciliation must be `verified`                                                                                                           | Vitest     |
+| Mutation           | Remove or alter one row in each fixture → must become `mismatch`                                                                                                                      | Vitest     |
+| Property           | Generate random ledgers → render to a synthetic `LineDocument` → parse → must equal the original; detector invariants (order-independence, no series from fewer than two occurrences) | fast-check |
+| Labelled scenarios | ≥ 30 synthetic ledgers with known subscriptions → precision and recall report (AC-6)                                                                                                  | Vitest     |
+| End-to-end         | Synthetic PDFs through the real UI in Chromium, Firefox and WebKit; network assertions; offline run; timing                                                                           | Playwright |
+| Accessibility      | Automated axe scan on each UI state                                                                                                                                                   | Playwright |
 
 Coverage target: 90% of lines in `src/core/`. No coverage target for `src/ui/`; it is covered by end-to-end tests.
 

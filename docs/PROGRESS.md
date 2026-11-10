@@ -12,16 +12,16 @@ Living document. Update it at the end of every working session. Never record sta
 
 ## Milestones
 
-| # | Milestone | Status | Started | Finished | Notes |
-|---|---|---|---|---|---|
-| — | Discovery, research, architecture, planning | Done | 2026-11-10 | 2026-11-10 | Seven planning documents written |
-| M0 | Validation gate and bootstrap | Not started | | | Waiting on the owner's answers |
-| M1 | Extraction, line model, fixture tooling | Not started | | | |
-| M2 | First format, reconciliation, walking skeleton | Not started | | | |
-| M3 | Recurring-charge detection | Not started | | | |
-| M4 | Second format, ledger merge, CSV export | Not started | | | |
-| M5 | Product UI, demo mode, trust features | Not started | | | |
-| M6 | Hardening, deployment, launch | Not started | | | |
+| #   | Milestone                                      | Status      | Started    | Finished   | Notes                            |
+| --- | ---------------------------------------------- | ----------- | ---------- | ---------- | -------------------------------- |
+| —   | Discovery, research, architecture, planning    | Done        | 2026-11-10 | 2026-11-10 | Seven planning documents written |
+| M0  | Validation gate and bootstrap                  | Not started |            |            | Waiting on the owner's answers   |
+| M1  | Extraction, line model, fixture tooling        | Not started |            |            |                                  |
+| M2  | First format, reconciliation, walking skeleton | Not started |            |            |                                  |
+| M3  | Recurring-charge detection                     | Not started |            |            |                                  |
+| M4  | Second format, ledger merge, CSV export        | Not started |            |            |                                  |
+| M5  | Product UI, demo mode, trust features          | Not started |            |            |                                  |
+| M6  | Hardening, deployment, launch                  | Not started |            |            |                                  |
 
 ## What the planning phase established
 
@@ -32,14 +32,14 @@ Living document. Update it at the end of every working session. Never record sta
 
 ## Open questions
 
-| # | Question | Owner | Blocks | Answer |
-|---|---|---|---|---|
-| 1 | Banks and account types with ≥ 3 months of PDF statements? | Bruce | M1 | |
-| 2 | Hours per week through mid-December? | Bruce | Schedule | |
-| 3 | Licence: MIT (recommended) or AGPL-3.0? | Bruce | First commit | MIT (choice delegated to Claude, 2026-11-10; ADR-006) |
-| 4 | Project name; buy a domain? | Bruce | M6 | Working name `recur`; public repo `Bruce1508/recur`. Final name and domain still open |
-| 5 | Does Digital ToolPad (or any other browser tool) already parse your statements correctly? | Bruce | Positioning | |
-| 6 | What CSV export does your bank offer, and how far back? | Bruce | Fallback plan | |
+| #   | Question                                                                                  | Owner | Blocks        | Answer                                                                                |
+| --- | ----------------------------------------------------------------------------------------- | ----- | ------------- | ------------------------------------------------------------------------------------- |
+| 1   | Banks and account types with ≥ 3 months of PDF statements?                                | Bruce | M1            |                                                                                       |
+| 2   | Hours per week through mid-December?                                                      | Bruce | Schedule      |                                                                                       |
+| 3   | Licence: MIT (recommended) or AGPL-3.0?                                                   | Bruce | First commit  | MIT (choice delegated to Claude, 2026-11-10; ADR-006)                                 |
+| 4   | Project name; buy a domain?                                                               | Bruce | M6            | Working name `recur`; public repo `Bruce1508/recur`. Final name and domain still open |
+| 5   | Does Digital ToolPad (or any other browser tool) already parse your statements correctly? | Bruce | Positioning   |                                                                                       |
+| 6   | What CSV export does your bank offer, and how far back?                                   | Bruce | Fallback plan |                                                                                       |
 
 ## Decisions pending sign-off
 
@@ -50,37 +50,45 @@ ADR-006 (MIT), ADR-015 and ADR-016 are Accepted. The rest stay Proposed until th
 Queued by the autonomous workflow. Claude does not attempt these.
 
 - [ ] M0a: answer open questions 1, 2, 5 and 6.
+- [ ] M0b-1: run `npm run e2e` once outside the sandbox (the sandbox blocks the preview server's port binding, `listen EPERM`; the unsandboxed retry was denied). Or set `sandbox.network.allowLocalBinding: true`.
 - [ ] Keep real statements in `~/Statements/` only (created, mode 700), never inside the repository.
 
 ## Acceptance criteria tracker
 
-| ID | Criterion (short) | Status | Evidence |
-|---|---|---|---|
-| AC-1 | Fixtures match golden output and reconcile | — | |
-| AC-2 | Mutations produce a mismatch | — | |
-| AC-3 | Two formats, three fixtures each | — | |
-| AC-4 | No cross-origin requests, no request bodies | — | |
-| AC-5 | Works offline after load | — | |
-| AC-6 | Detection precision ≥ 0.90, recall ≥ 0.80 | — | |
-| AC-7 | ≥ 80% of hand-listed subscriptions found | — | |
-| AC-8 | CSV round-trip and injection safety | — | |
-| AC-9 | 12 statements in under 5 s | — | |
-| AC-10 | Demo works with no user file | — | |
-| AC-11 | CSP header on the deployed site | — | |
-| AC-12 | README complete | — | |
+| ID    | Criterion (short)                           | Status | Evidence |
+| ----- | ------------------------------------------- | ------ | -------- |
+| AC-1  | Fixtures match golden output and reconcile  | —      |          |
+| AC-2  | Mutations produce a mismatch                | —      |          |
+| AC-3  | Two formats, three fixtures each            | —      |          |
+| AC-4  | No cross-origin requests, no request bodies | —      |          |
+| AC-5  | Works offline after load                    | —      |          |
+| AC-6  | Detection precision ≥ 0.90, recall ≥ 0.80   | —      |          |
+| AC-7  | ≥ 80% of hand-listed subscriptions found    | —      |          |
+| AC-8  | CSV round-trip and injection safety         | —      |          |
+| AC-9  | 12 statements in under 5 s                  | —      |          |
+| AC-10 | Demo works with no user file                | —      |          |
+| AC-11 | CSP header on the deployed site             | —      |          |
+| AC-12 | README complete                             | —      |          |
 
 ## Risk watch
 
-| Risk | Status | Next check |
-|---|---|---|
-| Too few real statements | Open, unassessed | M0 |
-| Real PDFs differ from the synthetic spike | Open | M1, first real statement |
-| Schedule against exams and internship applications | Open | Weekly |
-| TypeScript 7 tooling friction | Open | M0 |
+| Risk                                               | Status           | Next check               |
+| -------------------------------------------------- | ---------------- | ------------------------ |
+| Too few real statements                            | Open, unassessed | M0                       |
+| Real PDFs differ from the synthetic spike          | Open             | M1, first real statement |
+| Schedule against exams and internship applications | Open             | Weekly                   |
+| TypeScript 7 tooling friction                      | Open             | M0                       |
 
 ## Session log
 
 Newest first. One entry per session: date, what changed, what was verified, what is next.
+
+### 2026-11-10 — M0b-1 scaffold
+
+- Scaffolded Vite 8, React 19, TypeScript 7.0.2 (`tsc --noEmit` works, so ADR-012 stands), Biome, Vitest, Playwright, Tailwind, all pinned and in `approved-deps.json`; CSP `<meta>` and a placeholder page; `npm run verify`. Added ADR-017 and the standalone-command rule to `ship-task` steps 7 and 10. README stub and LICENSE confirmed present.
+- Verified: `npm run verify` (typecheck, lint, 1 test, build) passes locally.
+- Not verified: `npm run e2e` (sandbox blocks port binding); see "Waiting on the owner". No CI workflow yet (M0b task 7).
+- Next: CI workflow with job `verify`.
 
 ### 2026-11-10 — Bootstrap
 
