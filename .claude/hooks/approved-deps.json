@@ -1,0 +1,9 @@
+{
+  "packages": [
+    "react", "react-dom", "pdfjs-dist", "papaparse",
+    "typescript", "vite", "@vitejs/plugin-react", "tailwindcss", "@tailwindcss/vite", "@biomejs/biome",
+    "vitest", "@vitest/coverage-v8", "fast-check", "@playwright/test", "@axe-core/playwright",
+    "@types/react", "@types/react-dom", "@types/papaparse", "@types/node", "create-vite"
+  ],
+  "bins": ["tsc", "vite", "vitest", "biome", "playwright"]
+}

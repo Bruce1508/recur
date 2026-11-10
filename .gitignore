@@ -1,0 +1,15 @@
+node_modules/
+dist/
+coverage/
+playwright-report/
+test-results/
+.env
+.env.*
+.DS_Store
+.claude/settings.local.json
+
+# Real statement data never enters the repository (ADR-016)
+private/
+*.pdf
+!fixtures/synthetic/**/*.pdf
+!src/demo/**/*.pdf
