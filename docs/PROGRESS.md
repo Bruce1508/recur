@@ -6,7 +6,7 @@ Living document. Update it at the end of every working session. Never record sta
 
 ## Current status
 
-**Phase:** Bootstrap done. **Next:** M0b scaffold (Claude, through PRs) while the owner does M0a.
+**Phase:** M0b done (scaffold, CSP placeholder, CI job `verify`, privacy probe; PR #1 and the gate-hardening PR). **Next:** M0a (owner) to close the M0 gate, then M1.
 
 **Blocked on the owner:** which banks and account types have ≥ 3 months of PDF statements available (PRD §13, question 1).
 
@@ -15,7 +15,7 @@ Living document. Update it at the end of every working session. Never record sta
 | #   | Milestone                                      | Status      | Started    | Finished   | Notes                            |
 | --- | ---------------------------------------------- | ----------- | ---------- | ---------- | -------------------------------- |
 | —   | Discovery, research, architecture, planning    | Done        | 2026-11-10 | 2026-11-10 | Seven planning documents written |
-| M0  | Validation gate and bootstrap                  | Not started |            |            | Waiting on the owner's answers   |
+| M0  | Validation gate and bootstrap                  | In progress | 2026-11-10 |            | M0b done; waiting on M0a answers |
 | M1  | Extraction, line model, fixture tooling        | Not started |            |            |                                  |
 | M2  | First format, reconciliation, walking skeleton | Not started |            |            |                                  |
 | M3  | Recurring-charge detection                     | Not started |            |            |                                  |
@@ -82,6 +82,15 @@ Queued by the autonomous workflow. Claude does not attempt these.
 ## Session log
 
 Newest first. One entry per session: date, what changed, what was verified, what is next.
+
+### 2026-11-10 — M0b-3 gate hardening and privacy probe
+
+- PR #1 merged after reviewer APPROVE. It had no CI to wait for, and `main` requires the `verify` check, so the CI workflow (`.github/workflows/ci.yml`, job id `verify`) was added to PR #1 before merging.
+- Hardened the gates: Biome `noExplicitAny` and `noNonNullAssertion` are now errors (they were warnings, so `verify` would not have caught a new `any`); the e2e network check ignores `data:` URLs (origin `"null"`).
+- Privacy probe on a non-existent `private/probe.txt`: Read denied by the permission rule; `cat` and `node` denied by the guard hook. Blocked by path, not by "file not found".
+- Verified: `npm run verify` (typecheck, lint on 22 files, 1 test, build) passes locally.
+- Not verified: `npm run e2e` locally (see "Waiting on the owner"); the CI e2e step is its first run. `gh` fails inside the Claude Code process with a TLS error, so PR creation and merge were done by the owner from a terminal.
+- Next: owner completes M0a (open questions 1, 2, 5, 6), then the M0 gate decision is recorded.
 
 ### 2026-11-10 — M0b-1 review fixes
 
