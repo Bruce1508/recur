@@ -6,22 +6,24 @@ Living document. Update it at the end of every working session. Never record sta
 
 ## Current status
 
-**Phase:** M0b done (scaffold, CSP placeholder, CI job `verify`, privacy probe; PR #1 and the gate-hardening PR). **Next:** M0a (owner) to close the M0 gate, then M1.
+**Phase:** M0 gate closed: **GO** (2026-11-10). M0b done (scaffold, CSP placeholder, CI job `verify`, privacy probe). **Next:** M1.
 
-**Blocked on the owner:** which banks and account types have ≥ 3 months of PDF statements available (PRD §13, question 1).
+**Target formats (A1 confirmed):** TD chequing account and CIBC credit card, each with ≥ 3 months of PDF statements. Real statements stay in `~/Statements/`.
+
+**Blocked on the owner:** M1 needs one real statement available locally in `~/Statements/` and the owner to review the first redacted fixture. Open question 5 (existing-tool test) does not block M1.
 
 ## Milestones
 
-| #   | Milestone                                      | Status      | Started    | Finished   | Notes                            |
-| --- | ---------------------------------------------- | ----------- | ---------- | ---------- | -------------------------------- |
-| —   | Discovery, research, architecture, planning    | Done        | 2026-11-10 | 2026-11-10 | Seven planning documents written |
-| M0  | Validation gate and bootstrap                  | In progress | 2026-11-10 |            | M0b done; waiting on M0a answers |
-| M1  | Extraction, line model, fixture tooling        | Not started |            |            |                                  |
-| M2  | First format, reconciliation, walking skeleton | Not started |            |            |                                  |
-| M3  | Recurring-charge detection                     | Not started |            |            |                                  |
-| M4  | Second format, ledger merge, CSV export        | Not started |            |            |                                  |
-| M5  | Product UI, demo mode, trust features          | Not started |            |            |                                  |
-| M6  | Hardening, deployment, launch                  | Not started |            |            |                                  |
+| #   | Milestone                                      | Status      | Started    | Finished   | Notes                              |
+| --- | ---------------------------------------------- | ----------- | ---------- | ---------- | ---------------------------------- |
+| —   | Discovery, research, architecture, planning    | Done        | 2026-11-10 | 2026-11-10 | Seven planning documents written   |
+| M0  | Validation gate and bootstrap                  | Done        | 2026-11-10 | 2026-11-10 | Gate: GO; A1 confirmed (TD + CIBC) |
+| M1  | Extraction, line model, fixture tooling        | Not started |            |            |                                    |
+| M2  | First format, reconciliation, walking skeleton | Not started |            |            |                                    |
+| M3  | Recurring-charge detection                     | Not started |            |            |                                    |
+| M4  | Second format, ledger merge, CSV export        | Not started |            |            |                                    |
+| M5  | Product UI, demo mode, trust features          | Not started |            |            |                                    |
+| M6  | Hardening, deployment, launch                  | Not started |            |            |                                    |
 
 ## What the planning phase established
 
@@ -34,12 +36,12 @@ Living document. Update it at the end of every working session. Never record sta
 
 | #   | Question                                                                                  | Owner | Blocks        | Answer                                                                                |
 | --- | ----------------------------------------------------------------------------------------- | ----- | ------------- | ------------------------------------------------------------------------------------- |
-| 1   | Banks and account types with ≥ 3 months of PDF statements?                                | Bruce | M1            |                                                                                       |
-| 2   | Hours per week through mid-December?                                                      | Bruce | Schedule      |                                                                                       |
+| 1   | Banks and account types with ≥ 3 months of PDF statements?                                | Bruce | M1            | TD chequing and CIBC credit card, ≥ 3 months of PDFs each (2026-11-10)                |
+| 2   | Hours per week through mid-December?                                                      | Bruce | Schedule      | More than 20 hours per week (2026-11-10)                                              |
 | 3   | Licence: MIT (recommended) or AGPL-3.0?                                                   | Bruce | First commit  | MIT (choice delegated to Claude, 2026-11-10; ADR-006)                                 |
 | 4   | Project name; buy a domain?                                                               | Bruce | M6            | Working name `recur`; public repo `Bruce1508/recur`. Final name and domain still open |
 | 5   | Does Digital ToolPad (or any other browser tool) already parse your statements correctly? | Bruce | Positioning   |                                                                                       |
-| 6   | What CSV export does your bank offer, and how far back?                                   | Bruce | Fallback plan |                                                                                       |
+| 6   | What CSV export does your bank offer, and how far back?                                   | Bruce | Fallback plan | Bank offers CSV export, 12 months or more back (2026-11-10)                           |
 
 ## Decisions pending sign-off
 
@@ -49,7 +51,7 @@ ADR-006 (MIT), ADR-015 and ADR-016 are Accepted. The rest stay Proposed until th
 
 Queued by the autonomous workflow. Claude does not attempt these.
 
-- [ ] M0a: answer open questions 1, 2, 5 and 6.
+- [ ] Open question 5: try one of your own statements in Digital ToolPad (and StatementSensei if convenient) and write down what each got right and wrong. Do not paste statement contents into any AI tool. Positioning only; does not block M1.
 - [ ] M0b-1: run `npm run e2e` once outside the sandbox (the sandbox blocks the preview server's port binding, `listen EPERM`; the unsandboxed retry was denied). Or set `sandbox.network.allowLocalBinding: true`.
 - [ ] Keep real statements in `~/Statements/` only (created, mode 700), never inside the repository.
 
@@ -82,6 +84,14 @@ Queued by the autonomous workflow. Claude does not attempt these.
 ## Session log
 
 Newest first. One entry per session: date, what changed, what was verified, what is next.
+
+### 2026-11-10 — M0 gate decision: GO
+
+- Owner answers: open questions 1, 2 and 6 answered (table above). A1 is confirmed with two target formats: TD chequing and CIBC credit card. Open question 5 (existing-tool test) is still open and queued under "Waiting on the owner"; it affects positioning only.
+- Decision: **go**, no scope change. A time budget of 20+ hours per week supports the M1-M3 schedule.
+- Fallback noted: the bank offers CSV export 12+ months back, which covers the fallback plan if a PDF format proves unparseable.
+- Not verified: nothing has been run on a real statement yet. M1 starts when the owner places the first real statement in the private statements folder (Claude never reads it).
+- Next: M1 through `ship-task`.
 
 ### 2026-11-10 — M0b-3 gate hardening and privacy probe
 
