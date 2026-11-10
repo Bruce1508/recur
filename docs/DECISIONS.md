@@ -22,6 +22,7 @@ A record is changed only by adding a new record that supersedes it. Statuses: Pr
 | 014 | Rule-based recurring detection                                                  | Proposed                                             |
 | 015 | Autonomous PR workflow and Claude Code automation                               | Accepted                                             |
 | 016 | Real statements live outside the repository                                     | Accepted                                             |
+| 017 | Run `gh` and `git push/fetch/pull` as standalone commands                       | Accepted                                             |
 
 All records become Accepted when Bruce signs off on the PRD.
 
@@ -276,4 +277,3 @@ All records become Accepted when Bruce signs off on the PRD.
 **Decision.** The `ship-task` skill (steps 7 and 10) requires these commands to run one at a time, never piped, chained or in subshells. This extends ADR-015 and changes only `.claude/skills/ship-task/SKILL.md`.
 
 **Consequences.** No change to permissions or the sandbox; a few more tool calls per task.
-
