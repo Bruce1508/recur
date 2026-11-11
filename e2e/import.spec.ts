@@ -1,10 +1,10 @@
 import { expect, test } from "@playwright/test";
 
 const withBalance = [
-  "Date,Description,Amount,Balance",
-  "2025-01-01,PAY,1000.00,1000.00",
-  "2025-01-02,COFFEE,-4.50,995.50",
-  "2025-01-03,BOOKS,-20.00,975.50",
+  "Date,Description,Debit,Credit,Balance",
+  "2025-01-01,PAY,,1000.00,1000.00",
+  "2025-01-02,COFFEE,4.50,,995.50",
+  "2025-01-03,BOOKS,20.00,,975.50",
 ].join("\n");
 
 const noBalance = [
@@ -57,4 +57,27 @@ test("a file that is not a transaction export shows a clear message", async ({
     .getByTestId("file-input")
     .setInputFiles(csv("notes.csv", "hello\nworld"));
   await expect(page.getByRole("alert")).toContainText("cannot read this file");
+});
+
+test("a signed amount with a balance still asks, and shows the column roles", async ({
+  page,
+}) => {
+  await page.goto("/");
+  await page
+    .getByTestId("file-input")
+    .setInputFiles(
+      csv(
+        "card.csv",
+        [
+          "Date,Description,Amount,Balance",
+          "2025-01-01,STORE,10.00,10.00",
+          "2025-01-02,CAFE,4.50,14.50",
+          "2025-01-03,PAYMENT,-14.50,0.00",
+        ].join("\n"),
+      ),
+    );
+  await expect(page.getByText("Confirm columns: card.csv")).toBeVisible();
+  await expect(
+    page.getByRole("columnheader", { name: "Balance" }),
+  ).toBeVisible();
 });

@@ -128,8 +128,9 @@ Newest first. One entry per session: date, what changed, what was verified, what
 
 - Added `src/ui/analyze.ts` (read + map; a mapping goes to the user when it is low confidence or a lone signed amount has no balance), `src/ui/accounts.ts` (`summarize`: files grouped by account, one `buildLedger` per account, merged and date-sorted), `src/ui/Importer.tsx` (file picker and drop, confirm panel with date format and flip-sign, files table with status, transactions table, "how to verify nothing is uploaded" footer) and `e2e/import.spec.ts`. `App.tsx` renders the importer.
 - Carried requirements met: files are grouped by account (user picks A to D per file, so two same-kind accounts no longer merge); a lone signed amount and any low mapping wait for confirmation; `unverifiable` and `mismatch` are shown with the reason or row; a non-transaction file gives "cannot read this file" in an alert, not an exception.
+- Review round 1 (REQUEST_CHANGES, fixed): a signed amount with a balance went straight to "ready", so a card export showed a false Verified or a false mismatch and the flip control was unreachable; now every signed amount asks. The confirm panel labelled no columns and could not swap debit/credit; it now shows each column's role and has a swap. Confirmed files can now be adjusted or removed. Also fixed: duplicate ids from overlapping drops, a 10 MB file cap, duplicate React keys.
 - Not done: no styling, no search, no CSV download, no sample-data button, no processing state (M3). Account letters are chosen by hand; nothing infers them.
-- Verified: `npm run verify` passes (281 tests). Not verified locally: `npm run e2e` (sandbox blocks port binding); the CI `verify` job runs it.
+- Verified: `npm run verify` passes (284 tests). Not verified locally: `npm run e2e` (sandbox blocks port binding); the CI `verify` job runs it.
 
 ### 2026-11-11 — End of session: status sync
 

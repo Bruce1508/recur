@@ -9,7 +9,7 @@ import type {
   Reconciliation,
 } from "../core/types";
 import { type ImportedFile, summarize } from "./accounts";
-import { analyzeCsv } from "./analyze";
+import { analyzeCsv, applyChoices, columnRoles } from "./analyze";
 
 interface Entry {
   readonly id: number;
@@ -22,6 +22,7 @@ interface Entry {
   readonly kind: AccountKind;
   readonly account: string;
   readonly negateSigned: boolean;
+  readonly swapDebitCredit: boolean;
   readonly dateFormat: DateFormat;
 }
 
@@ -48,10 +49,70 @@ export function describeStatus(r: Reconciliation): string {
 }
 
 function convert(e: Entry) {
-  return toStatement(
-    e.rows,
-    { ...e.mapping, dateFormat: e.dateFormat },
-    { kind: e.kind, negateSigned: e.negateSigned },
+  return toStatement(e.rows, applyChoices(e.mapping, e), {
+    kind: e.kind,
+    negateSigned: e.negateSigned,
+  });
+}
+
+function Controls({
+  e,
+  update,
+}: {
+  e: Entry;
+  update: (id: number, patch: Partial<Entry>) => void;
+}) {
+  return (
+    <div className="space-x-4">
+      <label>
+        Account type{" "}
+        <select
+          aria-label={`Account type for ${e.name}`}
+          value={e.kind}
+          onChange={(ev) =>
+            update(e.id, { kind: ev.target.value as AccountKind })
+          }
+        >
+          <option value="deposit">Chequing or savings</option>
+          <option value="credit">Credit card</option>
+        </select>
+      </label>
+      <label>
+        Date format{" "}
+        <select
+          aria-label={`Date format for ${e.name}`}
+          value={e.dateFormat}
+          onChange={(ev) =>
+            update(e.id, { dateFormat: ev.target.value as DateFormat })
+          }
+        >
+          {DATE_FORMATS.map((f) => (
+            <option key={f}>{f}</option>
+          ))}
+        </select>
+      </label>
+      {"signed" in e.mapping.amount ? (
+        <label>
+          <input
+            type="checkbox"
+            checked={e.negateSigned}
+            onChange={(ev) => update(e.id, { negateSigned: ev.target.checked })}
+          />{" "}
+          Purchases are positive in this file (flip the sign)
+        </label>
+      ) : (
+        <label>
+          <input
+            type="checkbox"
+            checked={e.swapDebitCredit}
+            onChange={(ev) =>
+              update(e.id, { swapDebitCredit: ev.target.checked })
+            }
+          />{" "}
+          Swap the debit and credit columns
+        </label>
+      )}
+    </div>
   );
 }
 
@@ -84,6 +145,7 @@ export function Importer() {
         kind: "deposit",
         account: "A",
         negateSigned: false,
+        swapDebitCredit: false,
         dateFormat: analysis.mapping.dateFormat,
       });
     }
@@ -162,6 +224,19 @@ export function Importer() {
             do.
           </p>
           <table className="my-2 text-sm">
+            <thead>
+              <tr>
+                {columnRoles(
+                  applyChoices(e.mapping, e),
+                  e.sample[0]?.length ?? 0,
+                ).map((role, i) => (
+                  // biome-ignore lint/suspicious/noArrayIndexKey: columns are positional
+                  <th key={i} className="pr-4 text-left font-semibold">
+                    {role}
+                  </th>
+                ))}
+              </tr>
+            </thead>
             <tbody>
               {e.sample.map((row, r) => (
                 // biome-ignore lint/suspicious/noArrayIndexKey: sample rows may be identical and are static
@@ -176,31 +251,7 @@ export function Importer() {
               ))}
             </tbody>
           </table>
-          <label className="mr-4">
-            Date format{" "}
-            <select
-              value={e.dateFormat}
-              onChange={(ev) =>
-                update(e.id, { dateFormat: ev.target.value as DateFormat })
-              }
-            >
-              {DATE_FORMATS.map((f) => (
-                <option key={f}>{f}</option>
-              ))}
-            </select>
-          </label>
-          {"signed" in e.mapping.amount && (
-            <label className="mr-4">
-              <input
-                type="checkbox"
-                checked={e.negateSigned}
-                onChange={(ev) =>
-                  update(e.id, { negateSigned: ev.target.checked })
-                }
-              />{" "}
-              Purchases are positive in this file (flip the sign)
-            </label>
-          )}
+          <Controls e={e} update={update} />
           <button
             type="button"
             className="rounded border px-3"
@@ -229,9 +280,9 @@ export function Importer() {
                 <tr>
                   <th className="pr-4 text-left">File</th>
                   <th className="pr-4 text-left">Account</th>
-                  <th className="pr-4 text-left">Type</th>
                   <th className="pr-4 text-left">Rows</th>
-                  <th className="text-left">Status</th>
+                  <th className="pr-4 text-left">Status</th>
+                  <th className="text-left">Adjust</th>
                 </tr>
               </thead>
               <tbody>
@@ -253,26 +304,12 @@ export function Importer() {
                           ))}
                         </select>
                       </td>
-                      <td className="pr-4">
-                        <select
-                          aria-label={`Account type for ${entry.name}`}
-                          value={entry.kind}
-                          onChange={(ev) =>
-                            update(entry.id, {
-                              kind: ev.target.value as AccountKind,
-                            })
-                          }
-                        >
-                          <option value="deposit">Chequing or savings</option>
-                          <option value="credit">Credit card</option>
-                        </select>
-                      </td>
                       {result.ok ? (
                         <>
                           <td className="pr-4">
                             {result.statement.transactions.length}
                           </td>
-                          <td>
+                          <td className="pr-4">
                             {status && describeStatus(status)}
                             {result.statement.warnings.map((w) => (
                               <div key={w} className="text-amber-700">
@@ -282,10 +319,24 @@ export function Importer() {
                           </td>
                         </>
                       ) : (
-                        <td colSpan={2} className="text-red-700">
+                        <td colSpan={2} className="pr-4 text-red-700">
                           Cannot read this file: {result.reason}
                         </td>
                       )}
+                      <td>
+                        <Controls e={entry} update={update} />
+                        <button
+                          type="button"
+                          className="rounded border px-3"
+                          onClick={() =>
+                            setEntries((prev) =>
+                              prev.filter((x) => x.id !== entry.id),
+                            )
+                          }
+                        >
+                          Remove file
+                        </button>
+                      </td>
                     </tr>
                   ))}
               </tbody>
