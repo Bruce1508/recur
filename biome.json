@@ -12,13 +12,64 @@
       "!.claude"
     ]
   },
-  "formatter": { "indentStyle": "space", "indentWidth": 2 },
+  "formatter": {
+    "indentStyle": "space",
+    "indentWidth": 2
+  },
   "linter": {
     "enabled": true,
     "rules": {
       "preset": "recommended",
-      "suspicious": { "noExplicitAny": "error" },
-      "style": { "noNonNullAssertion": "error" }
+      "suspicious": {
+        "noExplicitAny": "error"
+      },
+      "style": {
+        "noNonNullAssertion": "error"
+      }
     }
-  }
+  },
+  "overrides": [
+    {
+      "includes": ["src/**", "!src/pdf/extract.ts", "!src/core/**"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "paths": {
+                  "pdfjs-dist": "Only src/pdf/extract.ts may import pdfjs-dist"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["src/core/**"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "paths": {
+                  "pdfjs-dist": "src/core/ is pure TypeScript: no imports from src/ui/, src/pdf/, pdfjs-dist, react or react-dom (ARCHITECTURE section 3)",
+                  "react": "src/core/ is pure TypeScript: no imports from src/ui/, src/pdf/, pdfjs-dist, react or react-dom (ARCHITECTURE section 3)",
+                  "react-dom": "src/core/ is pure TypeScript: no imports from src/ui/, src/pdf/, pdfjs-dist, react or react-dom (ARCHITECTURE section 3)"
+                },
+                "patterns": [
+                  {
+                    "group": ["**/ui", "**/ui/**", "**/pdf", "**/pdf/**"],
+                    "message": "src/core/ is pure TypeScript: no imports from src/ui/, src/pdf/, pdfjs-dist, react or react-dom (ARCHITECTURE section 3)"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
 }
