@@ -2,11 +2,19 @@
 
 Living document. Update it at the end of every working session. Never record statement contents, merchant names from real statements, or account details here; counts and pass/fail only.
 
-**Last updated:** 2026-11-10
+**Last updated:** 2026-11-11
 
 ## Current status
 
-**Phase:** M0 done. Re-scoped on 2026-11-10 by ADR-018: **CSV import first (stage 1, M1–M4), PDF parsing second (stage 2, M5–M7)**; usefulness to real users is now the first goal. **Next:** M1 (CSV import, ledger, fixture tooling, walking skeleton).
+**Phase:** M1 in progress (stage 1, CSV first, ADR-018). Task 1 (types, money, dates) is on branch `m1/01-domain-money-dates` and task 2 (`csv/read.ts`, papaparse 5.7.1) on `m1/02-csv-read`. Both are pushed and reviewed (reviewer APPROVE; task 1 also passed the pr-review-toolkit code, test and type reviews). **Neither is merged.** `npm run verify` passes locally on both.
+
+**Next session, in order:**
+
+1. The CI job `verify` on the task 1 PR ran 10 min 21 s and failed, while local verify takes seconds. A step hangs (suspect `npx playwright install` or `npm run e2e`). Get the failing step with `gh run view <run-id> -v` and `--log-failed` from a normal terminal. Fix it in its own branch if it is the workflow or e2e, not in a task PR; compare with PR #2, whose CI passed.
+2. Merge task 1, then task 2 (rebase it; the conflict is the session log here). Each squash-merge needs CI green; never `--admin`.
+3. M1 task 3: `csv/mapColumns.ts`. It must check row widths (`readCsv` returns ragged rows), must not assume dot decimals silently, and must mark a `;`-delimited file with comma decimals low confidence.
+4. Then tasks 4–7 (toStatement, reconcile, ledger, make-synthetic). Task 4: guard against `-0` when negating a zero debit.
+5. Add the cross-field invariants to the task 4 tests: `source.statementId` equals the statement id, `input` agrees with each `source.input`, `period.start <= end`.
 
 **Target files:** stage 1: CSV exports from TD (chequing) and CIBC (credit card). Stage 2: PDF statements for the same two accounts (A1 confirmed). Real exports and statements stay in `~/Statements/`.
 
@@ -18,7 +26,7 @@ Living document. Update it at the end of every working session. Never record sta
 | --- | ----------------------------------------------------- | ----------- | ---------- | ---------- | ---------------------------------- |
 | —   | Discovery, research, architecture, planning           | Done        | 2026-11-10 | 2026-11-10 | Seven planning documents written   |
 | M0  | Validation gate and bootstrap                         | Done        | 2026-11-10 | 2026-11-10 | Gate: GO; A1 confirmed (TD + CIBC) |
-| M1  | CSV import, ledger, fixture tooling, walking skeleton | Not started |            |            | Stage 1                            |
+| M1  | CSV import, ledger, fixture tooling, walking skeleton | In progress | 2026-11-11 |            | Stage 1                            |
 | M2  | Recurring-charge detection                            | Not started |            |            | Stage 1                            |
 | M3  | Product UI, demo mode, exports, trust features        | Not started |            |            | Stage 1                            |
 | M4  | Hardening, deployment, small launch, validation       | Not started |            |            | Stage 1; ends with the stage gate  |
@@ -52,6 +60,10 @@ ADR-006 (MIT), ADR-015, ADR-016, ADR-017 and ADR-018 are Accepted. The rest stay
 ## Waiting on the owner
 
 Queued by the autonomous workflow. Claude does not attempt these.
+
+- [ ] Open the PRs and merge them from a normal terminal: `gh` fails with a TLS error (`x509: OSStatus -26276`) inside Claude Code, so Claude cannot create PRs, read CI or merge. Task 1: `gh pr create --base main --head m1/01-domain-money-dates --fill`; task 2: `--head m1/02-csv-read`. Check whether a fix exists (`gh auth status` in a new session).
+- [ ] Read why CI `verify` hangs (see Current status, step 1) and paste the failing step.
+- [ ] `sudo chown -R 501:20 ~/.npm`: the npm cache has root-owned files, so `npm` fails in the sandbox (worked around with a temp cache).
 
 - [ ] M1: download a CSV of transactions from TD (chequing) and CIBC (credit card), as far back as each allows, and save them in `~/Statements/`. Answer open question 7.
 - [ ] M1: when `npm run fixture:dump` exists, run it on those files and review the redacted output before it is committed.
@@ -95,6 +107,14 @@ Queued by the autonomous workflow. Claude does not attempt these.
 ## Session log
 
 Newest first. One entry per session: date, what changed, what was verified, what is next.
+
+### 2026-11-11 — M1 task 1: domain types, money, dates
+
+- Added `src/core/types.ts` (the M1 subset of ARCHITECTURE §5), `money.ts` (`parseMoney` to integer cents without floats, bracketed and signed negatives, strict thousands grouping; `formatCents` via `Intl` en-CA CAD) and `plainDate.ts` (`parseDate` for the three `DateFormat`s with calendar validation; `daysBetween` by integer day numbers, no `Date`).
+- Verified: `npm run verify` passes (114 tests); `src/core` line coverage 100%.
+- Not decided: trailing-minus (`12.34-`) and `CR`/`DR` amounts are rejected for now; add them only if a real export shows them.
+- Reviewer: APPROVE; fixed leading-zero thousands group (`0,001`), year 0000, and the `formatCents` comment. Open for task 3: `1,234` reads as thousands, so a decimal-comma export would misread by 1000x; `mapColumns` must not assume dot decimals silently.
+- Next: M1 task 2 (`csv/read.ts`, PapaParse).
 
 ### 2026-11-10 — Re-scope: CSV first, PDF second (ADR-018)
 
