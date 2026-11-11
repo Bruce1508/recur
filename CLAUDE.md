@@ -33,7 +33,8 @@ Created in M0. If one is missing, add it under this exact name.
 - `npm run e2e` — Playwright
 - `npm run build` — production build
 - `npm run verify` — typecheck, lint, test and build in one command (the merge gate)
-- `npm run fixture:dump -- <pdf>` — build a redacted fixture locally (run by the owner only)
+- `npm run fixture:dump -- <csv> --bank <b> --kind <k> --name <n>` — build a redacted fixture locally (run by the owner only)
+- `npm run fixtures:check` — privacy rules for `fixtures/` (part of `verify`)
 
 ## Development standards
 
