@@ -37,9 +37,12 @@
             "noRestrictedImports": {
               "level": "error",
               "options": {
-                "paths": {
-                  "pdfjs-dist": "Only src/pdf/extract.ts may import pdfjs-dist"
-                }
+                "patterns": [
+                  {
+                    "group": ["pdfjs-dist", "pdfjs-dist/**"],
+                    "message": "Only src/pdf/extract.ts may import pdfjs-dist"
+                  }
+                ]
               }
             }
           }
@@ -54,14 +57,20 @@
             "noRestrictedImports": {
               "level": "error",
               "options": {
-                "paths": {
-                  "pdfjs-dist": "src/core/ is pure TypeScript: no imports from src/ui/, src/pdf/, pdfjs-dist, react or react-dom (ARCHITECTURE section 3)",
-                  "react": "src/core/ is pure TypeScript: no imports from src/ui/, src/pdf/, pdfjs-dist, react or react-dom (ARCHITECTURE section 3)",
-                  "react-dom": "src/core/ is pure TypeScript: no imports from src/ui/, src/pdf/, pdfjs-dist, react or react-dom (ARCHITECTURE section 3)"
-                },
                 "patterns": [
                   {
-                    "group": ["**/ui", "**/ui/**", "**/pdf", "**/pdf/**"],
+                    "group": [
+                      "pdfjs-dist",
+                      "pdfjs-dist/**",
+                      "react",
+                      "react/**",
+                      "react-dom",
+                      "react-dom/**",
+                      "**/ui",
+                      "**/ui/**",
+                      "**/pdf",
+                      "**/pdf/**"
+                    ],
                     "message": "src/core/ is pure TypeScript: no imports from src/ui/, src/pdf/, pdfjs-dist, react or react-dom (ARCHITECTURE section 3)"
                   }
                 ]

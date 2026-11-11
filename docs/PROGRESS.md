@@ -115,9 +115,9 @@ Newest first. One entry per session: date, what changed, what was verified, what
 
 ### 2026-11-11 — M1 task 10: import-boundary rule
 
-- Added two `overrides` to `biome.json` using `style/noRestrictedImports` (error): `src/core/**` may not import `pdfjs-dist`, `react`, `react-dom`, or anything under a `ui/` or `pdf/` directory; the rest of `src/` (except `src/pdf/extract.ts`) may not import `pdfjs-dist`. It runs in `npm run lint`, so it is part of `npm run verify` and CI.
-- Proof (throwaway files, deleted): a probe in `src/core/` importing `../ui/x`, `pdfjs-dist` and `react` gave three errors; `pdfjs-dist` in `src/ui/` and in `src/pdf/other.ts` was an error; in `src/pdf/extract.ts` it was accepted.
-- Limit: Biome checks static imports only; a dynamic `import()` is not covered. Review for it when `src/pdf/` and `src/ui/` exist.
+- Added two `overrides` to `biome.json` using `style/noRestrictedImports` (error) with glob `patterns`: `src/core/**` may not import `pdfjs-dist`, `react`, `react-dom` (or any subpath of them) or anything under a `ui/` or `pdf/` directory; the rest of `src/` (except `src/pdf/extract.ts`) may not import `pdfjs-dist` or its subpaths. It runs in `npm run lint`, so it is part of `npm run verify` and CI.
+- Proof (throwaway files, deleted): in `src/core/csv/`, `pdfjs-dist/legacy/build/pdf.mjs`, `react/jsx-runtime`, `react-dom/client`, `../ui/x` and bare `pdfjs-dist` were all errors; `pdfjs-dist/build/pdf.mjs` in `src/ui/` and `src/pdf/other.ts` was an error; in `src/pdf/extract.ts` it was accepted; `react-dom/client` in `src/ui/` was accepted.
+- Review round 1 (fixed): the first version used exact package names (`paths`), so subpath imports like `pdfjs-dist/build/pdf.mjs`, the normal way to import it, passed. Patterns now cover subpaths. The reviewer also confirmed type-only imports and dynamic `import()` are flagged.
 - Verified: `npm run verify` passes.
 - Next: task 11 (walking-skeleton UI).
 
