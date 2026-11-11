@@ -6,13 +6,13 @@ Living document. Update it at the end of every working session. Never record sta
 
 ## Current status
 
-**Phase:** M1 in progress (stage 1, CSV first, ADR-018). Task 1 (types, money, dates) is merged (#5). Task 2 (`csv/read.ts`) is merged (#6). Task 3 (`csv/mapColumns.ts`) is on branch `m1/03-map-columns`. `npm run verify` passes locally.
+**Phase:** M1 in progress (stage 1, CSV first, ADR-018). Task 1 (types, money, dates) is merged (#5). Task 2 (`csv/read.ts`) is merged (#6). Task 3 (`csv/mapColumns.ts`) is PR #7, **open with one unresolved blocking review finding** (see session log). `npm run verify` passes locally.
 
 **CI note:** the earlier `verify` failures were not code. `npx playwright install --with-deps chromium` failed because the runner could not resolve `*.ubuntu.com` (apt, `Temporary failure resolving`). A rerun passed. If it recurs, cache the Playwright browsers or retry that step, in its own branch.
 
 **Next session, in order:**
 
-1. Merge task 3 once CI is green and the reviewer approves. Never `--admin`; never force-push (merge `main` into the branch instead of rebasing).
+1. Fix the round-3 finding on PR #7 (see session log), re-run the reviewer, then merge once CI is green and it approves. Never `--admin`; never force-push (merge `main` into the branch instead of rebasing).
 2. Then tasks 4-7 (toStatement, reconcile, ledger, make-synthetic). Task 4: guard against `-0` when negating a zero debit.
 3. Add the cross-field invariants to the task 4 tests: `source.statementId` equals the statement id, `input` agrees with each `source.input`, `period.start <= end`.
 
@@ -123,6 +123,7 @@ Newest first. One entry per session: date, what changed, what was verified, what
 - Known limit: a column of plain integers (cheque numbers) looks like money; it yields low confidence or a failure, not a silent wrong mapping.
 - Review round 1 (REQUEST_CHANGES, fixed): with a balance and separate debit/credit columns, the order came from the balance sign and ignored the header, so a card export swapped them at high confidence. Now the header decides; no labels and a reversed sign is low.
 - Review round 2 (REQUEST_CHANGES, fixed): a Debit/Credit file where one column is empty in every row was mapped as a signed amount at high confidence, so purchases read as inflows. A lone column labelled Debit or Credit is now low.
+- Review round 3 (REQUEST_CHANGES, **not fixed**; two fix rounds used, PR #7 left open per ADR-015): a headerless Debit/Credit file whose partner column is empty in every row and which has no balance column maps as signed at high confidence (purchases read as inflows). Proposed fix: low when the signed column has no reconciling balance and every non-empty value has the same sign; add a headerless all-positive test.
 - Open, non-blocking: a balance column with a blank cell is not detected (a three-money-column file is then refused, fail closed); French amounts like `4,50 $` or `1 234,56` are not recognised as decimal comma, so the error message is misleading.
 - Next: task 4 (`toStatement`).
 
