@@ -13,10 +13,11 @@ const FORMATS: readonly DateFormat[] = [
   "MM/DD/YYYY",
   "DD/MM/YYYY",
 ];
-// "12,34", "1.234,56", "(12,34)": a comma followed by one or two digits at the end.
+// "12,34", "1.234,56", "1 234,56", "4,50 $", "(12,34)": a comma followed by one or two digits at the end.
 // parseMoney would reject these anyway, but "1,234" would pass it as thousands, so a
 // decimal-comma export must be refused here rather than misread by 1000x.
-const DECIMAL_COMMA = /^\(?[+-]?\$?\d+(?:\.\d{3})*,\d{1,2}\)?$/;
+const DECIMAL_COMMA =
+  /^\(?[+-]?\$?\s*\d+(?:[ .\u00a0]\d{3})*,\d{1,2}\s*\$?\)?$/;
 const DEBIT_LABEL = /debit|withdraw/i;
 const CREDIT_LABEL = /credit|deposit/i;
 
@@ -173,6 +174,8 @@ export function mapColumns(rows: readonly (readonly string[])[]): MapResult {
     if (money.length === 1) {
       amount = { signed: r0 };
       if (splitHalf(r0)) low = true;
+      // All-positive with no balance to check against: could be a debit-only column.
+      if (cents(r0).every((x) => x === null || x > 0)) low = true;
     } else if (money.length === 2 && r1 !== undefined) {
       const complementary = body.every(
         (r) => (cell(r, r0) === "") !== (cell(r, r1) === ""),

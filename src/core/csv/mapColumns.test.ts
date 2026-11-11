@@ -152,6 +152,14 @@ describe("mapColumns", () => {
     expect(m.confidence).toBe("low");
   });
 
+  test("headerless lone amount column that is all positive, with no balance, is low confidence", () => {
+    const m = mapping([
+      ["2026-01-05", "COFFEE", "4.50", ""],
+      ["2026-01-06", "BOOKS", "12.00", ""],
+    ]);
+    expect(m.confidence).toBe("low");
+  });
+
   test("two numeric columns that are not debit and credit and do not reconcile are low confidence", () => {
     const m = mapping([
       ["2026-01-05", "COFFEE", "10.00", "99.00"],
@@ -196,6 +204,18 @@ describe("mapColumns", () => {
         ]),
       ).toMatch(/decimal comma/i);
     });
+
+    test.each(["4,50 $", "1 234,56", "1.234,56", "(4,50)"])(
+      "French-style amount %s is refused as decimal comma",
+      (amount) => {
+        expect(
+          reason([
+            ["2026-01-05", "CAFE", amount],
+            ["2026-01-06", "PAIE", "1200,00"],
+          ]),
+        ).toMatch(/decimal comma/i);
+      },
+    );
 
     test("no rows", () => {
       expect(reason([])).toMatch(/no rows/i);
