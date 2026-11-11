@@ -49,6 +49,7 @@ describe("parseMoney", () => {
     "$",
     ".",
     "1e3",
+    "0,001",
     "99999999999999999",
   ])("rejects %j", (text) => {
     expect(parseMoney(text)).toBeNull();

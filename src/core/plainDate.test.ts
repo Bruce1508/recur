@@ -35,6 +35,7 @@ describe("parseDate", () => {
     ["01/05/26", "MM/DD/YYYY"],
     ["2026-01-05", "MM/DD/YYYY"],
     ["2026-01-05T00:00", "YYYY-MM-DD"],
+    ["0000-01-01", "YYYY-MM-DD"],
   ] as const)("rejects %j as %s", (text, format) => {
     expect(parseDate(text, format)).toBeNull();
   });

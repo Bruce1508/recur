@@ -16,7 +16,7 @@ function daysInMonth(y: number, m: number): number {
 }
 
 function toPlainDate(y: number, m: number, d: number): PlainDate | null {
-  if (m < 1 || m > 12 || d < 1 || d > daysInMonth(y, m)) return null;
+  if (y < 1 || m < 1 || m > 12 || d < 1 || d > daysInMonth(y, m)) return null;
   return `${String(y).padStart(4, "0")}-${String(m).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
 }
 

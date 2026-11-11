@@ -2,7 +2,8 @@ import type { Cents } from "./types";
 
 // Optional sign, optional "$", optional sign again ("-$5" and "$-5" both occur),
 // whole part with correct thousands grouping or none, up to two decimals.
-const AMOUNT = /^([+-]?)\$?([+-]?)(\d{1,3}(?:,\d{3})+|\d+)?(?:\.(\d{1,2}))?$/;
+const AMOUNT =
+  /^([+-]?)\$?([+-]?)([1-9]\d{0,2}(?:,\d{3})+|\d+)?(?:\.(\d{1,2}))?$/;
 const BRACKETED = /^\(\s*(.*?)\s*\)$/;
 
 /**
@@ -37,6 +38,6 @@ const CAD = new Intl.NumberFormat("en-CA", {
 
 /** Display form, e.g. "-$1,234.56". For the UI only; exports write plain numbers. */
 export function formatCents(cents: Cents): string {
-  // Exact for safe integers: the float error of cents / 100 is far below the half-cent rounding step.
+  // cents / 100 rounds back to the right cent for any realistic amount (well below 2^53 / 100).
   return CAD.format(cents / 100);
 }
