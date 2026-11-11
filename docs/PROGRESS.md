@@ -6,16 +6,15 @@ Living document. Update it at the end of every working session. Never record sta
 
 ## Current status
 
-**Phase:** M1 in progress (stage 1, CSV first, ADR-018). Task 1 (types, money, dates) is merged (#5). Task 2 (`csv/read.ts`, papaparse 5.7.1) is PR #6, reviewed (reviewer APPROVE), awaiting CI and merge. `npm run verify` passes locally.
+**Phase:** M1 in progress (stage 1, CSV first, ADR-018). Task 1 (types, money, dates) is merged (#5). Task 2 (`csv/read.ts`) is merged (#6). Task 3 (`csv/mapColumns.ts`) is PR #7, awaiting a final review and merge. `npm run verify` passes locally.
 
 **CI note:** the earlier `verify` failures were not code. `npx playwright install --with-deps chromium` failed because the runner could not resolve `*.ubuntu.com` (apt, `Temporary failure resolving`). A rerun passed. If it recurs, cache the Playwright browsers or retry that step, in its own branch.
 
 **Next session, in order:**
 
-1. Merge task 2 (#6) once CI is green. Never `--admin`; never force-push (merge `main` into the branch instead of rebasing).
-2. M1 task 3: `csv/mapColumns.ts`. It must check row widths (`readCsv` returns ragged rows), must not assume dot decimals silently, and must mark a `;`-delimited file with comma decimals low confidence.
-3. Then tasks 4-7 (toStatement, reconcile, ledger, make-synthetic). Task 4: guard against `-0` when negating a zero debit.
-4. Add the cross-field invariants to the task 4 tests: `source.statementId` equals the statement id, `input` agrees with each `source.input`, `period.start <= end`.
+1. Merge PR #7 once the reviewer approves and CI is green. Never `--admin`; never force-push (merge `main` into the branch instead of rebasing).
+2. Then tasks 4-7 (toStatement, reconcile, ledger, make-synthetic). Task 4: guard against `-0` when negating a zero debit.
+3. Add the cross-field invariants to the task 4 tests: `source.statementId` equals the statement id, `input` agrees with each `source.input`, `period.start <= end`.
 
 **Target files:** stage 1: CSV exports from TD (chequing) and CIBC (credit card). Stage 2: PDF statements for the same two accounts (A1 confirmed). Real exports and statements stay in `~/Statements/`.
 
@@ -114,6 +113,20 @@ Newest first. One entry per session: date, what changed, what was verified, what
 - Not decided: trailing-minus (`12.34-`) and `CR`/`DR` amounts are rejected for now; add them only if a real export shows them.
 - Reviewer: APPROVE; fixed leading-zero thousands group (`0,001`), year 0000, and the `formatCents` comment. Open for task 3: `1,234` reads as thousands, so a decimal-comma export would misread by 1000x; `mapColumns` must not assume dot decimals silently.
 - Next: M1 task 2 (`csv/read.ts`, PapaParse).
+
+### 2026-11-11 — M1 task 3: column mapping
+
+- Added `src/core/csv/mapColumns.ts`: `mapColumns(rows)` returns `{ ok: true, mapping }` or `{ ok: false, reason }`. Works from cell contents (header labels only break a debit/credit tie). Date column must be filled in every row; a balance is accepted only when it continues row to row by the amounts, oldest-first or newest-first.
+- Low confidence (UI must confirm): dates that fit both day-first and month-first, two text columns, debit/credit order not provable, a balance that moves opposite to the amounts (no sign field in `ColumnMapping`), two numeric columns that do not reconcile.
+- Fails closed: ragged rows, decimal-comma amounts (refused rather than low confidence, because `toStatement` cannot convert them and `1,234` would read as 1234), no date, amount or description column, no transactions.
+- Verified: `npm run verify` passes; `mapColumns.ts` fully covered.
+- Known limit: a column of plain integers (cheque numbers) looks like money; it yields low confidence or a failure, not a silent wrong mapping.
+- Review round 1 (REQUEST_CHANGES, fixed): with a balance and separate debit/credit columns, the order came from the balance sign and ignored the header, so a card export swapped them at high confidence. Now the header decides; no labels and a reversed sign is low.
+- Review round 2 (REQUEST_CHANGES, fixed): a Debit/Credit file where one column is empty in every row was mapped as a signed amount at high confidence, so purchases read as inflows. A lone column labelled Debit or Credit is now low.
+- Review round 3 (REQUEST_CHANGES, fixed after the owner asked to continue past the two-round limit): a headerless Debit/Credit file whose partner column is empty in every row and which has no balance column maps as signed at high confidence (purchases read as inflows). Now low when a lone amount column has no balance and is all positive.
+- Fixed: French amounts (`4,50 $`, `1 234,56`) now get the decimal-comma message.
+- Open, non-blocking: a balance column with a blank cell is not detected (a three-money-column file is then refused, fail closed). Relaxing this would let a debit column pose as a balance.
+- Next: task 4 (`toStatement`).
 
 ### 2026-11-11 — M1 task 2: CSV reader
 
