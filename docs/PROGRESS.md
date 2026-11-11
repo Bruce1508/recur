@@ -6,15 +6,16 @@ Living document. Update it at the end of every working session. Never record sta
 
 ## Current status
 
-**Phase:** M1 in progress (stage 1, CSV first, ADR-018). Task 1 (types, money, dates) is on branch `m1/01-domain-money-dates` and task 2 (`csv/read.ts`, papaparse 5.7.1) on `m1/02-csv-read`. Both are pushed and reviewed (reviewer APPROVE; task 1 also passed the pr-review-toolkit code, test and type reviews). **Neither is merged.** `npm run verify` passes locally on both.
+**Phase:** M1 in progress (stage 1, CSV first, ADR-018). Task 1 (types, money, dates) is merged (#5). Task 2 (`csv/read.ts`, papaparse 5.7.1) is PR #6, reviewed (reviewer APPROVE), awaiting CI and merge. `npm run verify` passes locally.
+
+**CI note:** the earlier `verify` failures were not code. `npx playwright install --with-deps chromium` failed because the runner could not resolve `*.ubuntu.com` (apt, `Temporary failure resolving`). A rerun passed. If it recurs, cache the Playwright browsers or retry that step, in its own branch.
 
 **Next session, in order:**
 
-1. The CI job `verify` on the task 1 PR ran 10 min 21 s and failed, while local verify takes seconds. A step hangs (suspect `npx playwright install` or `npm run e2e`). Get the failing step with `gh run view <run-id> -v` and `--log-failed` from a normal terminal. Fix it in its own branch if it is the workflow or e2e, not in a task PR; compare with PR #2, whose CI passed.
-2. Merge task 1, then task 2 (rebase it; the conflict is the session log here). Each squash-merge needs CI green; never `--admin`.
-3. M1 task 3: `csv/mapColumns.ts`. It must check row widths (`readCsv` returns ragged rows), must not assume dot decimals silently, and must mark a `;`-delimited file with comma decimals low confidence.
-4. Then tasks 4–7 (toStatement, reconcile, ledger, make-synthetic). Task 4: guard against `-0` when negating a zero debit.
-5. Add the cross-field invariants to the task 4 tests: `source.statementId` equals the statement id, `input` agrees with each `source.input`, `period.start <= end`.
+1. Merge task 2 (#6) once CI is green. Never `--admin`; never force-push (merge `main` into the branch instead of rebasing).
+2. M1 task 3: `csv/mapColumns.ts`. It must check row widths (`readCsv` returns ragged rows), must not assume dot decimals silently, and must mark a `;`-delimited file with comma decimals low confidence.
+3. Then tasks 4-7 (toStatement, reconcile, ledger, make-synthetic). Task 4: guard against `-0` when negating a zero debit.
+4. Add the cross-field invariants to the task 4 tests: `source.statementId` equals the statement id, `input` agrees with each `source.input`, `period.start <= end`.
 
 **Target files:** stage 1: CSV exports from TD (chequing) and CIBC (credit card). Stage 2: PDF statements for the same two accounts (A1 confirmed). Real exports and statements stay in `~/Statements/`.
 
@@ -61,8 +62,6 @@ ADR-006 (MIT), ADR-015, ADR-016, ADR-017 and ADR-018 are Accepted. The rest stay
 
 Queued by the autonomous workflow. Claude does not attempt these.
 
-- [ ] Open the PRs and merge them from a normal terminal: `gh` fails with a TLS error (`x509: OSStatus -26276`) inside Claude Code, so Claude cannot create PRs, read CI or merge. Task 1: `gh pr create --base main --head m1/01-domain-money-dates --fill`; task 2: `--head m1/02-csv-read`. Check whether a fix exists (`gh auth status` in a new session).
-- [ ] Read why CI `verify` hangs (see Current status, step 1) and paste the failing step.
 - [ ] `sudo chown -R 501:20 ~/.npm`: the npm cache has root-owned files, so `npm` fails in the sandbox (worked around with a temp cache).
 
 - [ ] M1: download a CSV of transactions from TD (chequing) and CIBC (credit card), as far back as each allows, and save them in `~/Statements/`. Answer open question 7.
@@ -102,7 +101,7 @@ Queued by the autonomous workflow. Claude does not attempt these.
 | TypeScript 7 tooling friction                                          | Closed: `tsc --noEmit` runs clean on 7.0.2 in CI | —                        |
 | Real CSV exports differ from the synthetic layouts, or have no balance | Open                                             | M1, first real export    |
 | People will not download a file from their bank                        | Open                                             | M4 validation            |
-| `gh` fails inside the Claude Code process (TLS)                        | Open: the owner runs `gh pr` commands by hand    | Each session             |
+| `gh` TLS failure (`x509 -26276`) inside the sandbox                    | Works with the sandbox off (2026-11-11)          | Each session             |
 
 ## Session log
 
@@ -115,6 +114,13 @@ Newest first. One entry per session: date, what changed, what was verified, what
 - Not decided: trailing-minus (`12.34-`) and `CR`/`DR` amounts are rejected for now; add them only if a real export shows them.
 - Reviewer: APPROVE; fixed leading-zero thousands group (`0,001`), year 0000, and the `formatCents` comment. Open for task 3: `1,234` reads as thousands, so a decimal-comma export would misread by 1000x; `mapColumns` must not assume dot decimals silently.
 - Next: M1 task 2 (`csv/read.ts`, PapaParse).
+
+### 2026-11-11 — M1 task 2: CSV reader
+
+- Added `src/core/csv/read.ts`: `readCsv(text)` returns `{ ok: true, rows }` or `{ ok: false, reason }` (a deliberate refinement of the `string → string[][]` signature in ARCHITECTURE §6.0, so a malformed quote fails closed instead of folding the rest of the file into one cell). Cells stay strings; BOM stripped; blank lines dropped; delimiter detected by PapaParse.
+- Dependencies: `papaparse` 5.7.1 and `@types/papaparse` 5.5.2, exact pins, both already in `approved-deps.json`; RESEARCH §5 row updated (it said 5.7.0).
+- Verified: `npm run verify`, see the PR for the result lines.
+- Next: M1 task 3 (`csv/mapColumns.ts`). It must not assume dot decimals silently (see task 1 note), must check row widths (`readCsv` returns ragged rows as they are), and should treat a semicolon-delimited file with comma decimals as low confidence.
 
 ### 2026-11-10 — Re-scope: CSV first, PDF second (ADR-018)
 
