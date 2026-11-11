@@ -200,7 +200,7 @@ Each stage is a function with one input type and one output type.
 
 ### 6.0 CSV input (stage 1)
 
-- **`csv/read`** — `string → string[][]`. PapaParse does the parsing. Strips a byte-order mark and trailing blank rows.
+- **`csv/read`** — `string → { ok: true, rows: string[][] } | { ok: false, reason }`; a malformed quote fails closed. Rows may differ in width and the delimiter is auto-detected, so `mapColumns` must check that rows have consistent width. PapaParse does the parsing. Strips a byte-order mark and trailing blank rows.
 - **`csv/mapColumns`** — `string[][] → ColumnMapping`. Looks at header labels when there are any, and at the cell contents otherwise: a column where nearly every cell parses as a date is the date; a column of money values that continues from row to row by the amount is the balance. When two readings are plausible (for example day-first against month-first dates) the confidence is `low` and the UI asks the user. The function never picks silently.
 - **`csv/toStatement`** — `(string[][], ColumnMapping) → ParsedStatement`. Converts amounts to cents and dates to `PlainDate`; rows that fail to convert become warnings, never guessed values.
 

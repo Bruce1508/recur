@@ -82,6 +82,10 @@ describe("readCsv", () => {
     expect(r.ok).toBe(false);
   });
 
+  test("text after a closing quote is a failure", () => {
+    expect(readCsv('a,"b"c,d\n').ok).toBe(false);
+  });
+
   test("detects a tab or semicolon delimiter", () => {
     expect(rows("a\tb\n1\t2\n")).toEqual([
       ["a", "b"],

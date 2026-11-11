@@ -101,7 +101,7 @@ Newest first. One entry per session: date, what changed, what was verified, what
 - Added `src/core/csv/read.ts`: `readCsv(text)` returns `{ ok: true, rows }` or `{ ok: false, reason }` (a deliberate refinement of the `string → string[][]` signature in ARCHITECTURE §6.0, so a malformed quote fails closed instead of folding the rest of the file into one cell). Cells stay strings; BOM stripped; blank lines dropped; delimiter detected by PapaParse.
 - Dependencies: `papaparse` 5.7.1 and `@types/papaparse` 5.5.2, exact pins, both already in `approved-deps.json`; RESEARCH §5 row updated (it said 5.7.0).
 - Verified: `npm run verify`, see the PR for the result lines.
-- Next: M1 task 3 (`csv/mapColumns.ts`). It must not assume dot decimals silently (see task 1 note).
+- Next: M1 task 3 (`csv/mapColumns.ts`). It must not assume dot decimals silently (see task 1 note), must check row widths (`readCsv` returns ragged rows as they are), and should treat a semicolon-delimited file with comma decimals as low confidence.
 
 ### 2026-11-10 — Re-scope: CSV first, PDF second (ADR-018)
 
