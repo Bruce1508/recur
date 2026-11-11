@@ -13,3 +13,6 @@ private/
 *.pdf
 !fixtures/synthetic/**/*.pdf
 !src/demo/**/*.pdf
+
+# Built by the tools/ scripts (npm run fixture:dump, fixtures:check)
+.tooling/

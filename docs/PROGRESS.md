@@ -8,7 +8,7 @@ Living document. Update it at the end of every working session. Never record sta
 
 **Phase:** M1 in progress (stage 1, CSV first, ADR-018). The whole CSV pipeline up to the ledger is on `main`, tested end to end on synthetic data (269 tests, `npm run verify` green, CI green): `src/core/money.ts`, `plainDate.ts`, `csv/read.ts`, `csv/mapColumns.ts`, `csv/toStatement.ts`, `reconcile.ts`, `ledger.ts`, `tools/make-synthetic.ts`, and the import-boundary lint rule (PRs #5 to #12, tasks 1 to 7 and 10).
 
-**Left in M1:** task 11 (walking-skeleton UI) is in PR (see the session log). Tasks 8 and 9 (fixture dump tool, fixture privacy check) can be built and tested on the synthetic files, but the owner must then run `fixture:dump` on his real exports and review the output, and the real-export acceptance criteria (AC-3) wait for that (see "Waiting on the owner"). M1 is done when two real export layouts import correctly.
+**Left in M1:** tasks 1 to 11 are built (11 is the UI, PR #15; 8 and 9 are the fixture tools, see the session log). What remains is the owner's: run `fixture:dump` on his real exports and review the output, then the real-export acceptance criteria (AC-3) and the manual check in the browser (see "Waiting on the owner"). M1 is done when two real export layouts import correctly.
 
 **Tooling note:** `gh` failed with `x509: OSStatus -26276` inside the Bash sandbox on 2026-11-11. It worked when that call was run with the sandbox disabled, so the sandbox is the cause. Use that only after a sandbox-caused failure of the same command, never as the default; if the owner gets a proper fix, drop this note.
 
@@ -16,9 +16,10 @@ Living document. Update it at the end of every working session. Never record sta
 
 **Next session, in order:**
 
-1. Run `git log origin/main` and `gh pr list` to confirm what is merged (task 11 may still be open). Never `--admin`; never force-push (merge `main` into the branch instead of rebasing).
-2. Tasks 8 and 9 (tools only; Claude never reads a real export). Build them against synthetic files; the owner's run on real exports is queued under "Waiting on the owner".
-3. After M1: M2 (recurring-charge detection) needs the owner's hand-written subscription list first (see "Waiting on the owner").
+1. Run `git log origin/main` and `gh pr list` to confirm what is merged (the task 8 and 9 PR may still be open). Never `--admin`; never force-push (merge `main` into the branch instead of rebasing).
+2. If the owner has put redacted fixtures in `fixtures/`: write golden expectations and the mutation test for each (AC-1 to AC-3), and fix whatever the real layouts break in `mapColumns` and `toStatement`. Claude never reads a real export; only the redacted fixtures.
+3. Otherwise M2 needs the owner's hand-written subscription list first, so there is nothing to start; say so and stop rather than inventing work.
+4. After M1: M2 (recurring-charge detection) needs the owner's hand-written subscription list first (see "Waiting on the owner").
 
 **Requirements carried into task 11 and later** (found in reviews; most are pinned by a test or noted in code; the blank-description item is neither, add a test or a warning when touching `toStatement`):
 
@@ -31,6 +32,8 @@ Living document. Update it at the end of every working session. Never record sta
 
 **Backlog (not scheduled):**
 
+- A card export with labelled Debit/Credit columns and a balance is "ready" without asking, and the account type defaults to chequing, so it can show a false "Mismatch" until the user switches the type. Default the type from the balance direction, or ask (found in the task 11 re-review).
+- `mapColumns` returns low confidence for any extra text column (a card number, a memo) and in one probe picked the card column as the description. `fixture:dump --description` works around it for fixtures; the UI has no way to pick the description column yet. See what the real CIBC export looks like first.
 - Cross-file balance chain check (closing balance of one file against the next file's opening balance). It is what would cover the first and last rows of a file, so AC-2 holds for CSV only for middle rows until it exists. Also use `ParsedStatement.openingBalance` in `reconcile` when a statement has one (stage 2). Reword AC-2 in the PRD when this is decided.
 - `reconcile` reports `mismatch` rather than `unverifiable` when an export lists same-day rows against its overall date direction; check against the real TD and CIBC fixtures.
 - `mapColumns`: a balance column with a blank cell is not detected (fail closed); a lone Amount column with mixed signs and no balance is `high` (sign convention is the UI's job, above).
@@ -82,7 +85,7 @@ Queued by the autonomous workflow. Claude does not attempt these.
 
 - [ ] `sudo chown -R 501:20 ~/.npm`: the npm cache has root-owned files, so `npm` fails in the sandbox (worked around with a temp cache).
 - [ ] M1: download a CSV of transactions from TD (chequing) and CIBC (credit card), as far back as each allows, and save them in `~/Statements/`. Answer open question 7.
-- [ ] M1: when `npm run fixture:dump` exists, run it on those files and review the redacted output before it is committed.
+- [ ] M1: run `npm run fixture:dump -- /abs/path/export.csv --bank td --kind chequing --name 2025-01` on each export (add `--description <n>` when it refuses because of an extra text column such as a card number; add `--deny-list /abs/path/deny.txt` with your own names and numbers). Read each file written to `fixtures/` before committing. The merchant map it writes next to the input holds real merchant names: keep it there, never in the repository.
 - [ ] M2: before looking at any detector output, write down the subscriptions you believe you have (ground truth for AC-7). Keep the list out of the repository.
 - [ ] Open question 5: try one of your own statements in Digital ToolPad (and StatementSensei if convenient) and write down what each got right and wrong. Do not paste statement contents into any AI tool. Positioning only; matters for stage 2.
 - [ ] Keep real exports and statements in `~/Statements/` only (created, mode 700), never inside the repository.
@@ -123,6 +126,16 @@ Queued by the autonomous workflow. Claude does not attempt these.
 ## Session log
 
 Newest first. One entry per session: date, what changed, what was verified, what is next.
+
+### 2026-11-11 — M1 tasks 8 and 9: fixture tools
+
+- Added `tools/redact.ts` (`redactCsv`), `tools/fixture-dump.ts` (CLI), `tools/fixtureRules.ts` (`checkFiles`) and `tools/check-fixtures.ts` (CLI), with `npm run fixture:dump` and `npm run fixtures:check`; `fixtures:check` is now part of `npm run verify`, so CI runs it. Both CLIs are bundled by `vite build --ssr` into the git-ignored `.tooling/` and run by Node, so no new runner dependency. Added `@types/node` 26.6.6 as a direct dev dependency (already in the lockfile and in `approved-deps.json`; `npm view` on 2026-11-11: latest, MIT) and `"node"` to `tsconfig` types.
+- Redaction keeps the header labels (digit runs masked), dates, amounts and balances; replaces each distinct description with `MERCHANT_nn` through a map that persists between files (kept outside the repository, mode 600, so the same merchant has the same placeholder in every file); blanks every other column. It fails closed: a low-confidence mapping, free text in a date or amount column, or a result that reads back with a different mapping all refuse the file. `--description <n>` lets the owner name the merchant column after looking at the file.
+- Checks (`fixtures:check`): no PDF outside `fixtures/synthetic/`, no run of nine or more digits, optional owner deny-list. Output is file, line and rule only, never the matched text. `fixture:dump` runs the same rules on its own output and deletes it if one fails.
+- Review round 1 (opus, REQUEST_CHANGES, fixed): the source header row was copied verbatim, so a first row holding a name survived (now canonical labels are written); `--map` and `--deny-list` were not checked to be absolute and outside the repo (now both are, with `realpathSync` and a case-insensitive `isInside` in `tools/paths.ts`); the PDF rule only covered `fixtures/` (now `git ls-files '*.pdf'` is checked repo-wide, with `fixtures/synthetic/` and `src/demo/` allowed); a malformed merchant map is refused. Round 2 (blocking, fixed): the git pathspec was case-sensitive, so `statement.PDF` outside `fixtures/` passed; it is now `:(icase)*.pdf` (checked by hand with a force-added `docs/zz.PDF`; the git call itself has no unit test). Also: a malformed merchant map no longer prints a snippet, and the low-confidence refusal prints only the column count. **Stopped after two fix rounds (ADR-015), PR left open:** round 3 review found that `.tooling/` (the build output of `fixtures:check` and `fixture:dump`) is not excluded from Biome, so a second `npm run verify` or `npm run lint` in the same tree fails on `.tooling/check-fixtures.js`; CI passes only because a fresh checkout has no `.tooling/` and lint runs before `fixtures:check`. Fix, awaiting the owner's go-ahead for a third round: add `"!.tooling"` to `files.includes` in `biome.json`, then run `npm run verify` twice in a row. Not covered by tests: the CLI wiring itself (overwrite refusal, the self-check that deletes its output).
+- Verified: `npm run verify` passes; a throwaway synthetic file through both CLIs (redacted output as expected, planted digit run caught, input inside the repo refused). Not verified: anything on a real export.
+- Limit: the output is always comma-delimited, whatever the input delimiter was. Merchant text that varies by store number gets a different placeholder per variant, so recurrence in redacted fixtures is weaker than in real data; the merchant normaliser (M2) will need hand-written realistic descriptors, as ARCHITECTURE section 6.7 already says.
+- Next: the owner runs `fixture:dump` (see "Waiting on the owner").
 
 ### 2026-11-11 — M1 task 11: walking-skeleton UI
 
