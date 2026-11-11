@@ -82,7 +82,6 @@ ADR-006 (MIT), ADR-015, ADR-016, ADR-017 and ADR-018 are Accepted. The rest stay
 Queued by the autonomous workflow. Claude does not attempt these.
 
 - [ ] `sudo chown -R 501:20 ~/.npm`: the npm cache has root-owned files, so `npm` fails in the sandbox (worked around with a temp cache).
-
 - [ ] M1: download a CSV of transactions from TD (chequing) and CIBC (credit card), as far back as each allows, and save them in `~/Statements/`. Answer open question 7.
 - [ ] M1: when `npm run fixture:dump` exists, run it on those files and review the redacted output before it is committed.
 - [ ] M2: before looking at any detector output, write down the subscriptions you believe you have (ground truth for AC-7). Keep the list out of the repository.
@@ -130,7 +129,8 @@ Newest first. One entry per session: date, what changed, what was verified, what
 
 - Brought this file to the real state: M1 tasks 1 to 7 and 10 are on `main` (PRs #5 to #12); added "Requirements carried into task 11 and later" and a backlog section; AC-1 to AC-3 marked Partial with evidence; the `gh` workaround recorded as a tooling note.
 - Verified: `npm run verify` passes locally (269 tests) and CI `verify` was green on this PR. Memory and the cross-project ledger were updated outside the repository.
-- Review (docs PR): one wrong pointer (page states are in ARCHITECTURE section 7, not 9) and five smaller points, all fixed.
+- Review (docs PR): one wrong pointer (page states are in ARCHITECTURE section 7, not 9) and five smaller points. All were fixed except a blank line in the owner list, which was left until the cleanup PR that followed.
+- Cleanup PR (`chore/close-session-cleanup`): removed that blank line; made the synthetic "days above 12" test check every month; moved a success test out of the "fails closed" group in `mapColumns.test.ts`; pinned the blank-description behaviour in `toStatement.test.ts`.
 - Next: M1 task 11 (UI), see "Next session".
 
 ### 2026-11-11 — M1 task 10: import-boundary rule

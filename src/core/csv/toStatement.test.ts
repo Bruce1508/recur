@@ -122,6 +122,18 @@ describe("toStatement", () => {
     expect(s.transactions.map((t) => t.amount)).toEqual([-450, 450]);
   });
 
+  test("a blank description is kept as an empty string with no warning (pinned)", () => {
+    const s = statement(
+      [
+        ["2026-01-05", "", "-1.00", "5.00"],
+        ["2026-01-06", "OK", "-1.00", "4.00"],
+      ],
+      { ...SIGNED, hasHeader: false },
+    );
+    expect(s.transactions.map((t) => t.description)).toEqual(["", "OK"]);
+    expect(s.warnings).toEqual([]);
+  });
+
   describe("bad rows become warnings, never guessed values", () => {
     test("unreadable date, amount, or both debit and credit filled", () => {
       const s = statement(

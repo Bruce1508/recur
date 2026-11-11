@@ -55,8 +55,16 @@ describe("generateLedger", () => {
     expect(count("ACME PAYROLL")).toBe(24);
   });
 
-  test("days above 12 exist in every month, so slashed dates are never ambiguous", () => {
-    expect(entries.some((e) => Number(e.date.slice(8)) > 12)).toBe(true);
+  test("every month has a day above 12, so slashed dates are never ambiguous", () => {
+    const months = new Set(entries.map((e) => e.date.slice(0, 7)));
+    expect(months.size).toBe(12);
+    for (const m of months) {
+      expect(
+        entries.some(
+          (e) => e.date.startsWith(m) && Number(e.date.slice(8)) > 12,
+        ),
+      ).toBe(true);
+    }
   });
 });
 
