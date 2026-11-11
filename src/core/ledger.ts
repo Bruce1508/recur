@@ -20,16 +20,21 @@ const nextMonth = (ym: string): string => {
  * Merge statements into one ledger: sort by date, drop rows that appear in more than one
  * overlapping file, and report whole months with no data between files.
  *
- * Duplicates: rows are the same when date, amount, description and printed balance (if any)
- * all match. For each such row, every statement holding it counts how many copies it has and the
- * statement with the most copies supplies them (the first on a tie). Two coffees on one day in
- * one file are therefore both kept, while the same coffee in two overlapping exports is kept
- * once. The balance is part of the identity so the same charge on two different accounts, whose
- * running balances differ, is not merged.
+ * Duplicates: rows are the same when bank, account kind, date, amount, description and printed
+ * balance (if any) all match. For each such row, every statement holding it counts how many
+ * copies it has and the statement with the most copies supplies them (the first on a tie). Two
+ * coffees on one day in one file are therefore both kept, while the same coffee in two
+ * overlapping exports is kept once. Kind and balance are part of the identity so the same charge
+ * on a chequing and a card account, or on two accounts whose running balances differ, is not
+ * merged.
  *
- * Limits, both visible rather than silent: the same account exported once with and once without
- * a balance column is not de-duplicated (the rows differ), and months are counted over all
- * statements together, so a gap in one account can hide behind another account's coverage.
+ * Limits: the same account exported once with and once without a balance column is not
+ * de-duplicated (the rows differ). **Two accounts of the same kind and bank with no balance
+ * column cannot be told apart** (a CSV has no account id, `bankId` is "unknown"): an identical
+ * charge on the same day in both is merged into one row and counted in `duplicatesRemoved`. The
+ * UI must group files by account, and call this once per account, before this is safe for such
+ * files. Months are counted over all statements together, so a gap in one account can hide
+ * behind another account's coverage.
  * Checking each file's closing balance against the next file's opening balance (which would
  * also cover the first and last rows of a file) is not done here yet.
  */
@@ -43,6 +48,8 @@ export function buildLedger(statements: readonly ParsedStatement[]): Ledger {
   for (const [si, s] of statements.entries()) {
     for (const t of s.transactions) {
       const key = JSON.stringify([
+        s.bankId,
+        s.kind,
         t.date,
         t.amount,
         t.description,

@@ -9,7 +9,11 @@ type Row = {
   balance?: Cents;
 };
 
-function statement(id: string, rows: Row[]): ParsedStatement {
+function statement(
+  id: string,
+  rows: Row[],
+  kind: ParsedStatement["kind"] = "deposit",
+): ParsedStatement {
   const transactions: Transaction[] = rows.map((r, i) => ({
     id: `${id}:${i + 1}`,
     date: r.date,
@@ -23,7 +27,7 @@ function statement(id: string, rows: Row[]): ParsedStatement {
     id,
     input: "csv",
     bankId: "unknown",
-    kind: "deposit",
+    kind,
     period: { start: dates[0] ?? "", end: dates[dates.length - 1] ?? "" },
     transactions,
     warnings: [],
@@ -94,7 +98,7 @@ describe("buildLedger: duplicates from overlapping files", () => {
     expect(l.transactions[1]?.id).toBe("jan:2");
   });
 
-  test("the result does not depend on the order the files are given", () => {
+  test("the kept rows (not their ids) do not depend on the order the files are given", () => {
     const x = buildLedger([statement("jan", jan), statement("feb", feb)]);
     const y = buildLedger([statement("feb", feb), statement("jan", jan)]);
     expect(summary(y.transactions)).toEqual(summary(x.transactions));
@@ -159,6 +163,37 @@ describe("buildLedger: duplicates from overlapping files", () => {
       },
     ]);
     expect(buildLedger([chequing, card]).transactions).toHaveLength(2);
+  });
+
+  test("the same charge on a chequing and a card account is kept even with no balance columns", () => {
+    const row = [{ date: "2026-01-05", amount: -1699, description: "NETFLIX" }];
+    const l = buildLedger([
+      statement("chq", row, "deposit"),
+      statement("card", row, "credit"),
+    ]);
+    expect(l.transactions).toHaveLength(2);
+    expect(l.duplicatesRemoved).toBe(0);
+  });
+
+  test("a row in three files with 1, 2 and 1 copies keeps exactly 2, from the second", () => {
+    const one = [{ date: "2026-01-05", amount: -450, description: "COFFEE" }];
+    const two = [...one, ...one];
+    const l = buildLedger([
+      statement("a", one),
+      statement("b", two),
+      statement("c", one),
+    ]);
+    expect(l.transactions.map((t) => t.id)).toEqual(["b:1", "b:2"]);
+    expect(l.duplicatesRemoved).toBe(2);
+  });
+
+  test("known limit: two accounts of the same kind with no balances are merged on an identical charge", () => {
+    const row = [{ date: "2026-01-05", amount: -1699, description: "NETFLIX" }];
+    const l = buildLedger([
+      statement("card1", row, "credit"),
+      statement("card2", row, "credit"),
+    ]);
+    expect(l.transactions).toHaveLength(1);
   });
 
   test("known limit: the same account exported with and without a balance column is not de-duplicated", () => {
