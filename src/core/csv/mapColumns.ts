@@ -194,7 +194,27 @@ export function mapColumns(rows: readonly (readonly string[])[]): MapResult {
         low = true;
       }
     } else {
-      return fail("Cannot tell which numeric columns are amounts");
+      // Three numeric columns: a debit/credit pair plus a balance whose chain is broken (the
+      // case `reconcile` exists to report). The balance is the one column filled in every row;
+      // the other two must fill complementary rows. The chain could not be confirmed, so low.
+      const [b, ...others] = money.filter(filled);
+      const rest = money.filter((c) => c !== b);
+      const [p, q] = rest;
+      const pair =
+        money.length === 3 &&
+        b !== undefined &&
+        others.length === 0 &&
+        p !== undefined &&
+        q !== undefined &&
+        body.every((r) => (cell(r, p) === "") !== (cell(r, q) === ""));
+      if (!pair) return fail("Cannot tell which numeric columns are amounts");
+      const order = labelOrder(p, q);
+      amount =
+        order === "credit-first"
+          ? { debit: q, credit: p }
+          : { debit: p, credit: q };
+      balance = b;
+      low = true;
     }
   }
 
