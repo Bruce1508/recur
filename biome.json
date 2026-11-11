@@ -4,6 +4,7 @@
     "includes": [
       "**",
       "!dist",
+      "!.tooling",
       "!coverage",
       "!playwright-report",
       "!test-results",
