@@ -186,6 +186,18 @@ describe("mapColumns", () => {
     expect(m.confidence).toBe("high");
   });
 
+  test("a debit/credit pair with a filled column whose chain is broken maps as a balance, low confidence", () => {
+    const m = mapping([
+      ["Date", "Description", "Debit", "Credit", "Balance"],
+      ["2026-01-05", "COFFEE", "4.50", "", "995.50"],
+      ["2026-01-06", "PAYROLL", "", "1200.00", "2195.50"],
+      ["2026-01-07", "RENT", "900.00", "", "999.99"],
+    ]);
+    expect(m.amount).toEqual({ debit: 2, credit: 3 });
+    expect(m.balance).toBe(4);
+    expect(m.confidence).toBe("low");
+  });
+
   describe("fails closed", () => {
     test("rows of different widths", () => {
       expect(
@@ -252,18 +264,6 @@ describe("mapColumns", () => {
           ["2026-01-06", "PAYROLL"],
         ]),
       ).toMatch(/amount/i);
-    });
-
-    test("a debit/credit pair with a filled column whose chain is broken maps as a balance, low confidence", () => {
-      const m = mapping([
-        ["Date", "Description", "Debit", "Credit", "Balance"],
-        ["2026-01-05", "COFFEE", "4.50", "", "995.50"],
-        ["2026-01-06", "PAYROLL", "", "1200.00", "2195.50"],
-        ["2026-01-07", "RENT", "900.00", "", "999.99"],
-      ]);
-      expect(m.amount).toEqual({ debit: 2, credit: 3 });
-      expect(m.balance).toBe(4);
-      expect(m.confidence).toBe("low");
     });
 
     test("three numeric columns that do not reconcile", () => {
