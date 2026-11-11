@@ -8,7 +8,7 @@ Living document. Update it at the end of every working session. Never record sta
 
 **Phase:** M1 in progress (stage 1, CSV first, ADR-018). The whole CSV pipeline up to the ledger is on `main`, tested end to end on synthetic data (269 tests, `npm run verify` green, CI green): `src/core/money.ts`, `plainDate.ts`, `csv/read.ts`, `csv/mapColumns.ts`, `csv/toStatement.ts`, `reconcile.ts`, `ledger.ts`, `tools/make-synthetic.ts`, and the import-boundary lint rule (PRs #5 to #12, tasks 1 to 7 and 10).
 
-**Left in M1:** task 11 (walking-skeleton UI) can start now. Tasks 8 and 9 (fixture dump tool, fixture privacy check) can be built and tested on the synthetic files, but the owner must then run `fixture:dump` on his real exports and review the output, and the real-export acceptance criteria (AC-3) wait for that (see "Waiting on the owner"). M1 is done when two real export layouts import correctly.
+**Left in M1:** task 11 (walking-skeleton UI) is in PR (see the session log). Tasks 8 and 9 (fixture dump tool, fixture privacy check) can be built and tested on the synthetic files, but the owner must then run `fixture:dump` on his real exports and review the output, and the real-export acceptance criteria (AC-3) wait for that (see "Waiting on the owner"). M1 is done when two real export layouts import correctly.
 
 **Tooling note:** `gh` failed with `x509: OSStatus -26276` inside the Bash sandbox on 2026-11-11. It worked when that call was run with the sandbox disabled, so the sandbox is the cause. Use that only after a sandbox-caused failure of the same command, never as the default; if the owner gets a proper fix, drop this note.
 
@@ -16,10 +16,9 @@ Living document. Update it at the end of every working session. Never record sta
 
 **Next session, in order:**
 
-1. Run `git log origin/main` and `gh pr list` to confirm what is merged, then start M1 task 11 through `ship-task`. Never `--admin`; never force-push (merge `main` into the branch instead of rebasing).
-2. Task 11 (`src/ui/`): drop a CSV, confirm the column mapping when asked, see a plain table and the verification status. No styling effort. It must satisfy the "Requirements carried into task 11" list below. Read `docs/ARCHITECTURE.md` section 7 (User interface) first: it defines the page states and the "how to verify nothing is uploaded" footer.
-3. Then tasks 8 and 9 (tools only; Claude never reads a real export). Build them against synthetic files; the owner's run on real exports is queued under "Waiting on the owner". If the owner says he is ready to download exports earlier, do 8 and 9 before 11.
-4. After M1: M2 (recurring-charge detection) needs the owner's hand-written subscription list first (see "Waiting on the owner").
+1. Run `git log origin/main` and `gh pr list` to confirm what is merged (task 11 may still be open). Never `--admin`; never force-push (merge `main` into the branch instead of rebasing).
+2. Tasks 8 and 9 (tools only; Claude never reads a real export). Build them against synthetic files; the owner's run on real exports is queued under "Waiting on the owner".
+3. After M1: M2 (recurring-charge detection) needs the owner's hand-written subscription list first (see "Waiting on the owner").
 
 **Requirements carried into task 11 and later** (found in reviews; most are pinned by a test or noted in code; the blank-description item is neither, add a test or a warning when touching `toStatement`):
 
@@ -124,6 +123,14 @@ Queued by the autonomous workflow. Claude does not attempt these.
 ## Session log
 
 Newest first. One entry per session: date, what changed, what was verified, what is next.
+
+### 2026-11-11 — M1 task 11: walking-skeleton UI
+
+- Added `src/ui/analyze.ts` (read + map; a mapping goes to the user when it is low confidence or a lone signed amount has no balance), `src/ui/accounts.ts` (`summarize`: files grouped by account, one `buildLedger` per account, merged and date-sorted), `src/ui/Importer.tsx` (file picker and drop, confirm panel with date format and flip-sign, files table with status, transactions table, "how to verify nothing is uploaded" footer) and `e2e/import.spec.ts`. `App.tsx` renders the importer.
+- Carried requirements met: files are grouped by account (user picks A to D per file, so two same-kind accounts no longer merge); a lone signed amount and any low mapping wait for confirmation; `unverifiable` and `mismatch` are shown with the reason or row; a non-transaction file gives "cannot read this file" in an alert, not an exception.
+- Review round 1 (REQUEST_CHANGES, fixed): a signed amount with a balance went straight to "ready", so a card export showed a false Verified or a false mismatch and the flip control was unreachable; now every signed amount asks. The confirm panel labelled no columns and could not swap debit/credit; it now shows each column's role and has a swap. Confirmed files can now be adjusted or removed. Also fixed: duplicate ids from overlapping drops, a 10 MB file cap, duplicate React keys.
+- Not done: no styling, no search, no CSV download, no sample-data button, no processing state (M3). Account letters are chosen by hand; nothing infers them.
+- Verified: `npm run verify` passes (284 tests). Not verified locally: `npm run e2e` (sandbox blocks port binding); the CI `verify` job runs it.
 
 ### 2026-11-11 — End of session: status sync
 
