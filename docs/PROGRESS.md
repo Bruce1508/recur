@@ -101,7 +101,7 @@ Queued by the autonomous workflow. Claude does not attempt these.
 | TypeScript 7 tooling friction                                          | Closed: `tsc --noEmit` runs clean on 7.0.2 in CI | —                        |
 | Real CSV exports differ from the synthetic layouts, or have no balance | Open                                             | M1, first real export    |
 | People will not download a file from their bank                        | Open                                             | M4 validation            |
-| `gh` TLS failure (`x509 -26276`) inside the sandbox                   | Works with the sandbox off (2026-11-11)          | Each session             |
+| `gh` TLS failure (`x509 -26276`) inside the sandbox                    | Works with the sandbox off (2026-11-11)          | Each session             |
 
 ## Session log
 
