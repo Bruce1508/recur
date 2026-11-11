@@ -6,14 +6,14 @@ Living document. Update it at the end of every working session. Never record sta
 
 ## Current status
 
-**Phase:** M1 in progress (stage 1, CSV first, ADR-018). Task 1 (types, money, dates) is merged (#5). Task 2 (`csv/read.ts`) is merged (#6). Task 3 (`csv/mapColumns.ts`) is merged (#7). Task 4 (`csv/toStatement.ts`) is merged (#8). Task 5 (`reconcile.ts`) is on branch `m1/05-reconcile`. `npm run verify` passes locally.
+**Phase:** M1 in progress (stage 1, CSV first, ADR-018). Task 1 (types, money, dates) is merged (#5). Task 2 (`csv/read.ts`) is merged (#6). Task 3 (`csv/mapColumns.ts`) is merged (#7). Task 4 (`csv/toStatement.ts`) is merged (#8). Task 5 (`reconcile.ts`) is merged (#9). Task 6 (`ledger.ts`) is on branch `m1/06-ledger`. `npm run verify` passes locally.
 
 **CI note:** the earlier `verify` failures were not code. `npx playwright install --with-deps chromium` failed because the runner could not resolve `*.ubuntu.com` (apt, `Temporary failure resolving`). A rerun passed. If it recurs, cache the Playwright browsers or retry that step, in its own branch.
 
 **Next session, in order:**
 
-1. Merge task 5 once the reviewer approves and CI is green. Never `--admin`; never force-push (merge `main` into the branch instead of rebasing).
-2. Then tasks 6-7 (ledger, make-synthetic).
+1. Merge task 6 once the reviewer approves and CI is green. Never `--admin`; never force-push (merge `main` into the branch instead of rebasing).
+2. Then task 7 (make-synthetic).
 
 **Target files:** stage 1: CSV exports from TD (chequing) and CIBC (credit card). Stage 2: PDF statements for the same two accounts (A1 confirmed). Real exports and statements stay in `~/Statements/`.
 
@@ -112,6 +112,15 @@ Newest first. One entry per session: date, what changed, what was verified, what
 - Not decided: trailing-minus (`12.34-`) and `CR`/`DR` amounts are rejected for now; add them only if a real export shows them.
 - Reviewer: APPROVE; fixed leading-zero thousands group (`0,001`), year 0000, and the `formatCents` comment. Open for task 3: `1,234` reads as thousands, so a decimal-comma export would misread by 1000x; `mapColumns` must not assume dot decimals silently.
 - Next: M1 task 2 (`csv/read.ts`, PapaParse).
+
+### 2026-11-11 — M1 task 6: ledger
+
+- Added `src/core/ledger.ts`: `buildLedger(statements)` returns `{ transactions, duplicatesRemoved, missingMonths }`. Rows are the same when date, amount, description and printed balance match; for each row the statement holding the most copies supplies them (first on a tie), so two identical coffees in one file stay, and the same row in two overlapping exports is kept once. The same file imported twice adds nothing. Missing months are whole calendar months between covered stretches.
+- Review round 1 (REQUEST_CHANGES, fixed): the identity key ignored the account, so a chequing and a card CSV without balances lost one of two identical charges silently. Bank and kind are now part of the key. **Residual limit (pinned by a test):** two accounts of the same kind with no balance column still merge on an identical same-day charge; the UI (task 11) must group files by account and call `buildLedger` once per account.
+- Limits, pinned by tests or noted in the code: the same account exported with and without a balance column is not de-duplicated; missing months are computed over all statements together (a gap in one account can hide behind another's coverage; the UI should group by account); same-day order follows input order, so a newest-first file lists its same-day rows reversed.
+- **Not done, moved to the backlog:** the cross-file balance chain check (closing balance of one file against the next file's opening balance). It is what would cover the first and last rows of a file (see task 5), so AC-2 ("removing or altering any one transaction") is only guaranteed for middle rows of a CSV until it exists. Needs a decision on opening-balance handling together with `reconcile` ignoring `ParsedStatement.openingBalance`; do it when real fixtures show what the exports contain.
+- Verified: `npm run verify` passes (219 tests).
+- Next: task 7 (`tools/make-synthetic.ts`).
 
 ### 2026-11-11 — M1 task 5: running-balance reconciliation
 
