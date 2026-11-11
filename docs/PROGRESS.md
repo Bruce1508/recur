@@ -6,14 +6,14 @@ Living document. Update it at the end of every working session. Never record sta
 
 ## Current status
 
-**Phase:** M1 in progress (stage 1, CSV first, ADR-018). Task 1 (types, money, dates) is merged (#5). Task 2 (`csv/read.ts`) is merged (#6). Task 3 (`csv/mapColumns.ts`) is merged (#7). Task 4 (`csv/toStatement.ts`) is on branch `m1/04-to-statement`. `npm run verify` passes locally.
+**Phase:** M1 in progress (stage 1, CSV first, ADR-018). Task 1 (types, money, dates) is merged (#5). Task 2 (`csv/read.ts`) is merged (#6). Task 3 (`csv/mapColumns.ts`) is merged (#7). Task 4 (`csv/toStatement.ts`) is merged (#8). Task 5 (`reconcile.ts`) is on branch `m1/05-reconcile`. `npm run verify` passes locally.
 
 **CI note:** the earlier `verify` failures were not code. `npx playwright install --with-deps chromium` failed because the runner could not resolve `*.ubuntu.com` (apt, `Temporary failure resolving`). A rerun passed. If it recurs, cache the Playwright browsers or retry that step, in its own branch.
 
 **Next session, in order:**
 
-1. Merge task 4 once the reviewer approves and CI is green. Never `--admin`; never force-push (merge `main` into the branch instead of rebasing).
-2. Then tasks 5-7 (reconcile, ledger, make-synthetic).
+1. Merge task 5 once the reviewer approves and CI is green. Never `--admin`; never force-push (merge `main` into the branch instead of rebasing).
+2. Then tasks 6-7 (ledger, make-synthetic).
 
 **Target files:** stage 1: CSV exports from TD (chequing) and CIBC (credit card). Stage 2: PDF statements for the same two accounts (A1 confirmed). Real exports and statements stay in `~/Statements/`.
 
@@ -112,6 +112,15 @@ Newest first. One entry per session: date, what changed, what was verified, what
 - Not decided: trailing-minus (`12.34-`) and `CR`/`DR` amounts are rejected for now; add them only if a real export shows them.
 - Reviewer: APPROVE; fixed leading-zero thousands group (`0,001`), year 0000, and the `formatCents` comment. Open for task 3: `1,234` reads as thousands, so a decimal-comma export would misread by 1000x; `mapColumns` must not assume dot decimals silently.
 - Next: M1 task 2 (`csv/read.ts`, PapaParse).
+
+### 2026-11-11 — M1 task 5: running-balance reconciliation
+
+- Added `src/core/reconcile.ts`: `reconcile(statement)` checks each printed balance against the previous row. The dates pick the direction (rising: oldest-first, falling: newest-first); dates in no order are `unverifiable`. Only when every date is the same are both orders tried (fewer broken steps wins, oldest-first on a tie), and then an altered last-in-time row can go unseen. A credit account's balance is the amount owed, so purchases raise it. Result is `verified`, `mismatch` (with expected, actual and the first bad row) or `unverifiable` (no balances, a row without one, fewer than two rows, or rows skipped in `toStatement`). A mismatch wins over warnings.
+- **Known limit, by construction:** one file has no opening balance, so the first row's own amount and a row removed from either end are not detected. AC-2 ("removing or altering any one transaction") therefore holds for CSV only for middle rows; the ends need the ledger chain check (task 6: closing balance of one file against the next). Both limits are pinned by tests so they cannot change silently. Update the AC-2 wording in the PRD when task 6 lands.
+- Carried from the task 4 review: `source.row` counts rows after `readCsv` drops blank lines, so do not show it as a spreadsheet line; the UI (task 11) must make the user confirm a lone signed column and must not convert a `low` mapping unconfirmed; a blank description gives `""` without a warning; two identical files have the same statement id, so `ledger` must treat that as already imported.
+- Review round 1 (opus, REQUEST_CHANGES, fixed): choosing the order by failure count let an altered last row verify (a purchase and its refund); and in the newest-first reading `expected`/`actual` belonged to the neighbouring row. Both pinned by tests.
+- Verified: `npm run verify` passes (203 tests); `reconcile.ts` fully covered except two defensive lines.
+- Next: task 6 (`ledger.ts`).
 
 ### 2026-11-11 — M1 task 4: rows to statement
 
