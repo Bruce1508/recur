@@ -23,8 +23,6 @@ export type RedactResult =
   | { ok: false; reason: string };
 
 const normalise = (d: string) => d.trim().replace(/\s+/g, " ").toUpperCase();
-const maskDigits = (s: string) =>
-  s.replace(/\d{4,}/g, (m) => "X".repeat(m.length));
 
 function read(
   text: string,
@@ -101,11 +99,7 @@ export function redactCsv(
   if (options.descriptionColumn === undefined && mapping.confidence === "low")
     return {
       ok: false,
-      reason: `the column mapping is not certain, so the merchant text might be in the wrong column (the file has ${width} columns${
-        mapping.hasHeader
-          ? `: ${(rows[0] ?? []).map(maskDigits).join(" | ")}`
-          : ""
-      }); check the file and re-run with --description <column number>`,
+      reason: `the column mapping is not certain, so the merchant text might be in the wrong column (the file has ${width} columns); check the file and re-run with --description <column number>`,
     };
   if (
     mapping.description === mapping.date ||

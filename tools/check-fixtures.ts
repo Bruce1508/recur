@@ -38,9 +38,9 @@ const files: FixtureFile[] = paths.map((p) => {
 });
 
 // A PDF is a violation anywhere in the repository, not only under fixtures/ (CLAUDE.md), so ask git
-// which PDFs are tracked or staged. `git add -f` gets past the ignore rule but not past this.
+// which PDFs are tracked or staged (any case: bank downloads are often .PDF). `git add -f` gets past the ignore rule but not past this.
 const known = new Set(files.map((f) => f.path));
-const tracked = execFileSync("git", ["ls-files", "-z", "--", "*.pdf"], {
+const tracked = execFileSync("git", ["ls-files", "-z", "--", ":(icase)*.pdf"], {
   encoding: "utf8",
 })
   .split("\0")

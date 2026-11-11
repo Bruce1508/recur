@@ -74,9 +74,16 @@ const mapPath = outside(
   "--map",
   flags.get("map") ?? join(dirname(input), "merchant-map.json"),
 );
-const loaded: unknown = existsSync(mapPath)
-  ? JSON.parse(readFileSync(mapPath, "utf8"))
-  : {};
+function readMap(): unknown {
+  if (!existsSync(mapPath)) return {};
+  try {
+    return JSON.parse(readFileSync(mapPath, "utf8"));
+  } catch {
+    // Not the parser's message: it quotes the start of the file, and the map holds real names.
+    return fail("the merchant map is not valid JSON");
+  }
+}
+const loaded = readMap();
 if (typeof loaded !== "object" || loaded === null || Array.isArray(loaded))
   fail("the merchant map is not a JSON object");
 const previous = loaded as Record<string, string>;

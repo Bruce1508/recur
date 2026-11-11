@@ -46,7 +46,7 @@ describe("redactCsv", () => {
     const r = redactCsv(EXTRA, {});
     if (r.ok) throw new Error("expected a refusal");
     expect(r.reason).toContain("--description");
-    expect(r.reason).not.toMatch(/\d{4}/);
+    expect(r.reason).not.toMatch(/\d{4}|Memo|Card/);
   });
 
   test("with the description column named, other columns are blanked and nothing leaks", () => {
