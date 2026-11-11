@@ -2,22 +2,41 @@
 
 Living document. Update it at the end of every working session. Never record statement contents, merchant names from real statements, or account details here; counts and pass/fail only.
 
-**Last updated:** 2026-11-11
+**Last updated:** 2026-11-11 (end of session)
 
 ## Current status
 
-**Phase:** M1 in progress (stage 1, CSV first, ADR-018). Task 1 (types, money, dates) is merged (#5). Task 2 (`csv/read.ts`) is merged (#6). Task 3 (`csv/mapColumns.ts`) is merged (#7). Task 4 (`csv/toStatement.ts`) is merged (#8). Task 5 (`reconcile.ts`) is merged (#9). Task 6 (`ledger.ts`) is merged (#10). Task 7 (`tools/make-synthetic.ts`) is merged (#11). Task 10 (import-boundary lint rule) is on branch `m1/10-import-boundary`. `npm run verify` passes locally.
+**Phase:** M1 in progress (stage 1, CSV first, ADR-018). The whole CSV pipeline up to the ledger is on `main`, tested end to end on synthetic data (269 tests, `npm run verify` green, CI green): `src/core/money.ts`, `plainDate.ts`, `csv/read.ts`, `csv/mapColumns.ts`, `csv/toStatement.ts`, `reconcile.ts`, `ledger.ts`, `tools/make-synthetic.ts`, and the import-boundary lint rule (PRs #5 to #12, tasks 1 to 7 and 10).
+
+**Left in M1:** task 11 (walking-skeleton UI) can start now. Tasks 8 and 9 (fixture dump tool, fixture privacy check) can be built and tested on the synthetic files, but the owner must then run `fixture:dump` on his real exports and review the output, and the real-export acceptance criteria (AC-3) wait for that (see "Waiting on the owner"). M1 is done when two real export layouts import correctly.
 
 **CI note:** the earlier `verify` failures were not code. `npx playwright install --with-deps chromium` failed because the runner could not resolve `*.ubuntu.com` (apt, `Temporary failure resolving`). A rerun passed. If it recurs, cache the Playwright browsers or retry that step, in its own branch.
 
 **Next session, in order:**
 
-1. Merge task 10 once the reviewer approves and CI is green. Never `--admin`; never force-push (merge `main` into the branch instead of rebasing).
-2. Then M1 task 11 (walking-skeleton UI); tasks 8-9 wait for the owner's real exports.
+1. Run `git log origin/main` and `gh pr list` to confirm what is merged, then start M1 task 11 through `ship-task`. Never `--admin`; never force-push (merge `main` into the branch instead of rebasing).
+2. Task 11 (`src/ui/`): drop a CSV, confirm the column mapping when asked, see a plain table and the verification status. No styling effort. It must satisfy the "Requirements carried into task 11" list below. Check `docs/ARCHITECTURE.md` section 9 for the page states first.
+3. Tasks 8 and 9 (tools only; Claude never reads a real export). Build them against synthetic files; the owner's run on real exports is queued below. Do these after task 11 or before it, whichever lets the owner start downloading exports sooner.
+4. After M1: M2 (recurring-charge detection) needs the owner's hand-written subscription list first (see "Waiting on the owner").
+
+**Requirements carried into task 11 and later** (found in reviews; each is pinned or noted in code):
+
+- Group files by account and call `buildLedger` once per account. Two accounts of the same kind and bank with no balance column merge on an identical same-day charge (silent loss otherwise). The same account exported with and without a balance column, and (stage 2) as CSV and as PDF, is not de-duplicated.
+- A lone signed amount column has no sign convention in `ColumnMapping`: the UI must show a sample and let the user set `negateSigned` before `toStatement`. A `low` mapping must never be converted without the user confirming it. `toStatement` does not check `confidence`.
+- `source.row` counts rows after `readCsv` drops blank lines; do not present it as a spreadsheet line number.
+- A blank description gives `""` without a warning; two identical files have the same statement id (`buildLedger` already treats that as one import).
+- Show `unverifiable` as "Cannot verify: this file has no balances", and `mismatch` with the named row.
+- Months are computed over all statements together; per-account missing months need the account grouping above.
+
+**Backlog (not scheduled):**
+
+- Cross-file balance chain check (closing balance of one file against the next file's opening balance). It is what would cover the first and last rows of a file, so AC-2 holds for CSV only for middle rows until it exists. Also use `ParsedStatement.openingBalance` in `reconcile` when a statement has one (stage 2). Reword AC-2 in the PRD when this is decided.
+- `reconcile` reports `mismatch` rather than `unverifiable` when an export lists same-day rows against its overall date direction; check against the real TD and CIBC fixtures.
+- `mapColumns`: a balance column with a blank cell is not detected (fail closed); a lone Amount column with mixed signs and no balance is `high` (sign convention is the UI's job, above).
 
 **Target files:** stage 1: CSV exports from TD (chequing) and CIBC (credit card). Stage 2: PDF statements for the same two accounts (A1 confirmed). Real exports and statements stay in `~/Statements/`.
 
-**Blocked on the owner:** nothing blocks the start of M1; tasks 1–7 use synthetic data. The M1 fixtures (tasks 8–9) need the owner's own CSV exports in `~/Statements/` and his review of the redacted output.
+**Blocked on the owner:** nothing blocks Claude's next tasks (11, 8, 9). Real-export fixtures and AC-3 need the owner's own CSV exports in the statements folder (outside the repository) and his review of the redacted output.
 
 ## Milestones
 
@@ -61,6 +80,7 @@ ADR-006 (MIT), ADR-015, ADR-016, ADR-017 and ADR-018 are Accepted. The rest stay
 Queued by the autonomous workflow. Claude does not attempt these.
 
 - [ ] `sudo chown -R 501:20 ~/.npm`: the npm cache has root-owned files, so `npm` fails in the sandbox (worked around with a temp cache).
+- [x] `gh` TLS error: works inside Claude Code when the Bash call runs with the sandbox disabled (2026-11-11); PRs, CI and merges now run from Claude's side.
 
 - [ ] M1: download a CSV of transactions from TD (chequing) and CIBC (credit card), as far back as each allows, and save them in `~/Statements/`. Answer open question 7.
 - [ ] M1: when `npm run fixture:dump` exists, run it on those files and review the redacted output before it is committed.
@@ -71,23 +91,23 @@ Queued by the autonomous workflow. Claude does not attempt these.
 
 ## Acceptance criteria tracker
 
-| ID    | Criterion (short)                             | Status | Evidence |
-| ----- | --------------------------------------------- | ------ | -------- |
-| AC-1  | Fixtures match golden output and reconcile    | —      |          |
-| AC-2  | Mutations produce a mismatch                  | —      |          |
-| AC-3  | Two real CSV layouts, two fixtures each       | —      |          |
-| AC-4  | No cross-origin requests, no request bodies   | —      |          |
-| AC-5  | Works offline after load                      | —      |          |
-| AC-6  | Detection precision ≥ 0.90, recall ≥ 0.80     | —      |          |
-| AC-7  | ≥ 80% of hand-listed subscriptions found      | —      |          |
-| AC-8  | CSV round-trip and injection safety           | —      |          |
-| AC-9  | 12 files in under 5 s                         | —      |          |
-| AC-10 | Demo works with no user file                  | —      |          |
-| AC-11 | CSP header on the deployed site               | —      |          |
-| AC-12 | README complete                               | —      |          |
-| AC-13 | Stage 2: two PDF formats, three fixtures each | —      |          |
-| AC-14 | Calendar file and list download are correct   | —      |          |
-| AC-15 | Five outside testers, findings recorded       | —      |          |
+| ID    | Criterion (short)                             | Status  | Evidence                                                                            |
+| ----- | --------------------------------------------- | ------- | ----------------------------------------------------------------------------------- |
+| AC-1  | Fixtures match golden output and reconcile    | Partial | 11 synthetic layouts parse to exact golden output; verified with a balance (task 7) |
+| AC-2  | Mutations produce a mismatch                  | Partial | Middle rows only on synthetic files; the ends need the cross-file chain (backlog)   |
+| AC-3  | Two real CSV layouts, two fixtures each       | Partial | Synthetic layouts done; real TD and CIBC fixtures need the owner                    |
+| AC-4  | No cross-origin requests, no request bodies   | —       |                                                                                     |
+| AC-5  | Works offline after load                      | —       |                                                                                     |
+| AC-6  | Detection precision ≥ 0.90, recall ≥ 0.80     | —       |                                                                                     |
+| AC-7  | ≥ 80% of hand-listed subscriptions found      | —       |                                                                                     |
+| AC-8  | CSV round-trip and injection safety           | —       |                                                                                     |
+| AC-9  | 12 files in under 5 s                         | —       |                                                                                     |
+| AC-10 | Demo works with no user file                  | —       |                                                                                     |
+| AC-11 | CSP header on the deployed site               | —       |                                                                                     |
+| AC-12 | README complete                               | —       |                                                                                     |
+| AC-13 | Stage 2: two PDF formats, three fixtures each | —       |                                                                                     |
+| AC-14 | Calendar file and list download are correct   | —       |                                                                                     |
+| AC-15 | Five outside testers, findings recorded       | —       |                                                                                     |
 
 ## Risk watch
 
