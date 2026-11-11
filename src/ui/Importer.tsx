@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { toStatement } from "../core/csv/toStatement";
 import { formatCents } from "../core/money";
 import { reconcile } from "../core/reconcile";
@@ -25,6 +25,8 @@ interface Entry {
   readonly dateFormat: DateFormat;
 }
 
+// A bank CSV is kilobytes; this stops a wrong file from freezing the tab.
+const MAX_BYTES = 10 * 1024 * 1024;
 const ACCOUNTS = ["A", "B", "C", "D"] as const;
 const DATE_FORMATS: readonly DateFormat[] = [
   "YYYY-MM-DD",
@@ -56,21 +58,24 @@ function convert(e: Entry) {
 export function Importer() {
   const [entries, setEntries] = useState<readonly Entry[]>([]);
   const [errors, setErrors] = useState<readonly string[]>([]);
-  const [nextId, setNextId] = useState(1);
+  const nextId = useRef(1);
 
   async function addFiles(list: FileList | null) {
     if (!list) return;
-    let id = nextId;
     const added: Entry[] = [];
     const failed: string[] = [];
     for (const file of Array.from(list)) {
+      if (file.size > MAX_BYTES) {
+        failed.push(`${file.name}: cannot read this file (over 10 MB)`);
+        continue;
+      }
       const analysis = analyzeCsv(await file.text());
       if (analysis.status === "error") {
         failed.push(`${file.name}: cannot read this file (${analysis.reason})`);
         continue;
       }
       added.push({
-        id: id++,
+        id: nextId.current++,
         name: file.name,
         rows: analysis.rows,
         mapping: analysis.mapping,
@@ -82,9 +87,8 @@ export function Importer() {
         dateFormat: analysis.mapping.dateFormat,
       });
     }
-    setNextId(id);
     setEntries((prev) => [...prev, ...added]);
-    setErrors(failed);
+    setErrors([...new Set(failed)]);
   }
 
   const update = (id: number, patch: Partial<Entry>) =>
@@ -159,8 +163,9 @@ export function Importer() {
           </p>
           <table className="my-2 text-sm">
             <tbody>
-              {e.sample.map((row) => (
-                <tr key={row.join("\u0000")}>
+              {e.sample.map((row, r) => (
+                // biome-ignore lint/suspicious/noArrayIndexKey: sample rows may be identical and are static
+                <tr key={r}>
                   {row.map((cell, i) => (
                     // biome-ignore lint/suspicious/noArrayIndexKey: cells have no id; the sample is static
                     <td key={i} className="pr-4">

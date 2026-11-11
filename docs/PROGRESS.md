@@ -17,8 +17,8 @@ Living document. Update it at the end of every working session. Never record sta
 **Next session, in order:**
 
 1. Run `git log origin/main` and `gh pr list` to confirm what is merged (task 11 may still be open). Never `--admin`; never force-push (merge `main` into the branch instead of rebasing).
-2. Tasks 8 and 9 (tools only; Claude never reads a real export). Build them against synthetic files; the owner's run on real exports is queued under "Waiting on the owner". If the owner says he is ready to download exports earlier, do 8 and 9 before 11.
-4. After M1: M2 (recurring-charge detection) needs the owner's hand-written subscription list first (see "Waiting on the owner").
+2. Tasks 8 and 9 (tools only; Claude never reads a real export). Build them against synthetic files; the owner's run on real exports is queued under "Waiting on the owner".
+3. After M1: M2 (recurring-charge detection) needs the owner's hand-written subscription list first (see "Waiting on the owner").
 
 **Requirements carried into task 11 and later** (found in reviews; most are pinned by a test or noted in code; the blank-description item is neither, add a test or a warning when touching `toStatement`):
 
