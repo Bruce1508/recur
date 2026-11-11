@@ -1,14 +1,16 @@
 import type { Cents, ParsedStatement, Reconciliation } from "./types";
 
 type Point = { amount: Cents; balance: Cents; row: number | undefined };
-type Failure = { index: number; expected: Cents };
+type Failure = { index: number; expected: Cents; actual: Cents };
 
 /**
  * Check every printed balance against the one before it (running-balance method).
  *
- * The file may list rows oldest-first or newest-first, and several rows can share a date, so
- * the direction is not read from the dates: both directions are tried and the one with fewer
- * broken steps is used (oldest-first on a tie). The balance of a credit account is the amount
+ * The file may list rows oldest-first or newest-first, and several rows can share a date. The
+ * direction comes from the dates (rising: oldest-first, falling: newest-first). If every date is
+ * the same the order is unknowable, so both are tried and the reading with fewer broken steps is
+ * used; an altered last-in-time row can then go unseen. Dates in no order give `unverifiable`.
+ * The balance of a credit account is the amount
  * owed, so a purchase (negative amount) raises it.
  *
  * Fails closed: no balances, one row, or rows that were skipped while converting give
@@ -45,9 +47,19 @@ export function reconcile(statement: ParsedStatement): Reconciliation {
     };
   }
 
+  const dates = statement.transactions.map((t) => t.date);
+  const ascending = dates.every((d, k) => k === 0 || (dates[k - 1] ?? d) <= d);
+  const descending = dates.every((d, k) => k === 0 || (dates[k - 1] ?? d) >= d);
+  if (!ascending && !descending) {
+    return {
+      status: "unverifiable",
+      reason: "rows are not in date order, so the chain cannot be checked",
+    };
+  }
+
   const step = statement.kind === "credit" ? -1 : 1;
-  // Steps where the printed balance does not follow from the previous row, per direction.
-  // `bad` is the later-in-time transaction of the pair.
+  // Steps where the printed balance does not follow from its neighbour. `index` is the
+  // later-in-time transaction of the pair; `expected` and `actual` are that row's balance.
   const oldestFirst: Failure[] = [];
   const newestFirst: Failure[] = [];
   for (let i = 1; i < points.length; i++) {
@@ -56,25 +68,38 @@ export function reconcile(statement: ParsedStatement): Reconciliation {
     if (prev === undefined || cur === undefined) continue;
     const expectedOld = prev.balance + step * cur.amount;
     if (expectedOld !== cur.balance) {
-      oldestFirst.push({ index: i, expected: expectedOld });
+      oldestFirst.push({
+        index: i,
+        expected: expectedOld,
+        actual: cur.balance,
+      });
     }
-    const expectedNew = prev.balance - step * prev.amount;
-    if (expectedNew !== cur.balance) {
-      newestFirst.push({ index: i - 1, expected: expectedNew });
+    const expectedNew = cur.balance + step * prev.amount;
+    if (expectedNew !== prev.balance) {
+      newestFirst.push({
+        index: i - 1,
+        expected: expectedNew,
+        actual: prev.balance,
+      });
     }
   }
 
-  const useOld = oldestFirst.length <= newestFirst.length;
-  const failures = useOld ? oldestFirst : newestFirst;
+  // Dates decide the direction. Only when every date is the same is the order unknowable, and
+  // then the reading with fewer broken steps is used (oldest-first on a tie).
+  let failures: Failure[];
+  if (ascending && descending) {
+    failures =
+      oldestFirst.length <= newestFirst.length ? oldestFirst : newestFirst;
+  } else {
+    failures = ascending ? oldestFirst : newestFirst;
+  }
   const first = failures[0];
   if (first !== undefined) {
-    // In the newest-first reading the broken step is between index and index + 1.
-    const printedAt = useOld ? first.index : first.index + 1;
     const row = points[first.index]?.row;
     return {
       status: "mismatch",
       expected: first.expected,
-      actual: points[printedAt]?.balance ?? 0,
+      actual: first.actual,
       ...(row === undefined ? {} : { firstBadRow: row }),
     };
   }

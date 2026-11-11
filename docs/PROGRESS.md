@@ -115,10 +115,11 @@ Newest first. One entry per session: date, what changed, what was verified, what
 
 ### 2026-11-11 — M1 task 5: running-balance reconciliation
 
-- Added `src/core/reconcile.ts`: `reconcile(statement)` checks each printed balance against the previous row. Both file orders are tried (oldest-first on a tie), so same-date rows do not matter. A credit account's balance is the amount owed, so purchases raise it. Result is `verified`, `mismatch` (with expected, actual and the first bad row) or `unverifiable` (no balances, a row without one, fewer than two rows, or rows skipped in `toStatement`). A mismatch wins over warnings.
+- Added `src/core/reconcile.ts`: `reconcile(statement)` checks each printed balance against the previous row. The dates pick the direction (rising: oldest-first, falling: newest-first); dates in no order are `unverifiable`. Only when every date is the same are both orders tried (fewer broken steps wins, oldest-first on a tie), and then an altered last-in-time row can go unseen. A credit account's balance is the amount owed, so purchases raise it. Result is `verified`, `mismatch` (with expected, actual and the first bad row) or `unverifiable` (no balances, a row without one, fewer than two rows, or rows skipped in `toStatement`). A mismatch wins over warnings.
 - **Known limit, by construction:** one file has no opening balance, so the first row's own amount and a row removed from either end are not detected. AC-2 ("removing or altering any one transaction") therefore holds for CSV only for middle rows; the ends need the ledger chain check (task 6: closing balance of one file against the next). Both limits are pinned by tests so they cannot change silently. Update the AC-2 wording in the PRD when task 6 lands.
 - Carried from the task 4 review: `source.row` counts rows after `readCsv` drops blank lines, so do not show it as a spreadsheet line; the UI (task 11) must make the user confirm a lone signed column and must not convert a `low` mapping unconfirmed; a blank description gives `""` without a warning; two identical files have the same statement id, so `ledger` must treat that as already imported.
-- Verified: `npm run verify` passes (196 tests); `reconcile.ts` 100% line coverage.
+- Review round 1 (opus, REQUEST_CHANGES, fixed): choosing the order by failure count let an altered last row verify (a purchase and its refund); and in the newest-first reading `expected`/`actual` belonged to the neighbouring row. Both pinned by tests.
+- Verified: `npm run verify` passes (203 tests); `reconcile.ts` fully covered except two defensive lines.
 - Next: task 6 (`ledger.ts`).
 
 ### 2026-11-11 — M1 task 4: rows to statement

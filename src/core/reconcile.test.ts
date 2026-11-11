@@ -8,11 +8,12 @@ type Row = { amount: Cents; balance?: Cents };
 function statement(
   rows: Row[],
   extra: Partial<Pick<ParsedStatement, "kind" | "warnings">> = {},
+  dates?: string[],
 ): ParsedStatement {
   const id = "csv-test";
   const transactions: Transaction[] = rows.map((r, i) => ({
     id: `${id}:${i + 2}`,
-    date: "2026-01-05",
+    date: dates?.[i] ?? "2026-01-05",
     description: "X",
     amount: r.amount,
     ...(r.balance === undefined ? {} : { balanceAfter: r.balance }),
@@ -119,6 +120,106 @@ describe("reconcile: running balance", () => {
       const rows = chain(AMOUNTS);
       rows[0] = { ...rows[0], amount: 999 };
       expect(reconcile(statement(rows)).status).toBe("verified");
+    });
+  });
+
+  describe("the dates decide the direction", () => {
+    const risingDates = (n: number) =>
+      Array.from(
+        { length: n },
+        (_, i) => `2026-01-${String(i + 1).padStart(2, "0")}`,
+      );
+
+    test("an altered last row is caught when the dates rise (a purchase and its refund)", () => {
+      // Refund of 500 altered to 501. Read newest-first this would pass; the dates forbid that.
+      const rows: Row[] = [
+        { amount: -500, balance: 9500 },
+        { amount: 501, balance: 10000 },
+      ];
+      const r = reconcile(statement(rows, {}, risingDates(2)));
+      expect(r).toEqual({
+        status: "mismatch",
+        expected: 10001,
+        actual: 10000,
+        firstBadRow: 3,
+      });
+    });
+
+    test("alternating amounts with rising dates and an altered last row", () => {
+      const rows: Row[] = [
+        { amount: -500, balance: 9500 },
+        { amount: 500, balance: 10000 },
+        { amount: -500, balance: 9500 },
+        { amount: 777, balance: 10000 },
+      ];
+      expect(reconcile(statement(rows, {}, risingDates(4))).status).toBe(
+        "mismatch",
+      );
+    });
+
+    test("falling dates read the file newest-first, and expected/actual belong to the named row", () => {
+      // Newest-first rows; row 3's amount is -301 where it should be -300.
+      const rows: Row[] = [
+        { amount: 200, balance: 8900 },
+        { amount: -301, balance: 8700 },
+        { amount: -1000, balance: 9000 },
+      ];
+      const r = reconcile(statement(rows, {}, risingDates(3).reverse()));
+      expect(r).toEqual({
+        status: "mismatch",
+        expected: 8699,
+        actual: 8700,
+        firstBadRow: 3,
+      });
+    });
+
+    test("the same rows oldest-first report the same row and the same difference", () => {
+      const rows: Row[] = [
+        { amount: -1000, balance: 9000 },
+        { amount: -301, balance: 8700 },
+        { amount: 200, balance: 8900 },
+      ];
+      const r = reconcile(statement(rows, {}, risingDates(3)));
+      expect(r).toEqual({
+        status: "mismatch",
+        expected: 8699,
+        actual: 8700,
+        firstBadRow: 3,
+      });
+    });
+
+    test("a correct file with rising dates and with falling dates verifies", () => {
+      expect(
+        reconcile(statement(chain(AMOUNTS), {}, risingDates(8))).status,
+      ).toBe("verified");
+      expect(
+        reconcile(
+          statement(chain(AMOUNTS).reverse(), {}, risingDates(8).reverse()),
+        ).status,
+      ).toBe("verified");
+    });
+
+    test("a correct oldest-first file whose dates fall is not accepted (order contradicts dates)", () => {
+      expect(
+        reconcile(statement(chain(AMOUNTS), {}, risingDates(8).reverse()))
+          .status,
+      ).toBe("mismatch");
+    });
+
+    test("dates in no order are unverifiable", () => {
+      const dates = [
+        "2026-01-03",
+        "2026-01-01",
+        "2026-01-02",
+        "2026-01-04",
+        "2026-01-05",
+        "2026-01-06",
+        "2026-01-07",
+        "2026-01-08",
+      ];
+      const r = reconcile(statement(chain(AMOUNTS), {}, dates));
+      expect(r.status).toBe("unverifiable");
+      if (r.status === "unverifiable") expect(r.reason).toMatch(/date order/i);
     });
   });
 
