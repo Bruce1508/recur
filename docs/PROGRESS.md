@@ -6,14 +6,14 @@ Living document. Update it at the end of every working session. Never record sta
 
 ## Current status
 
-**Phase:** M1 in progress (stage 1, CSV first, ADR-018). Task 1 (types, money, dates) is merged (#5). Task 2 (`csv/read.ts`) is merged (#6). Task 3 (`csv/mapColumns.ts`) is merged (#7). Task 4 (`csv/toStatement.ts`) is merged (#8). Task 5 (`reconcile.ts`) is merged (#9). Task 6 (`ledger.ts`) is merged (#10). Task 7 (`tools/make-synthetic.ts`) is on branch `m1/07-make-synthetic`. `npm run verify` passes locally.
+**Phase:** M1 in progress (stage 1, CSV first, ADR-018). Task 1 (types, money, dates) is merged (#5). Task 2 (`csv/read.ts`) is merged (#6). Task 3 (`csv/mapColumns.ts`) is merged (#7). Task 4 (`csv/toStatement.ts`) is merged (#8). Task 5 (`reconcile.ts`) is merged (#9). Task 6 (`ledger.ts`) is merged (#10). Task 7 (`tools/make-synthetic.ts`) is merged (#11). Task 10 (import-boundary lint rule) is on branch `m1/10-import-boundary`. `npm run verify` passes locally.
 
 **CI note:** the earlier `verify` failures were not code. `npx playwright install --with-deps chromium` failed because the runner could not resolve `*.ubuntu.com` (apt, `Temporary failure resolving`). A rerun passed. If it recurs, cache the Playwright browsers or retry that step, in its own branch.
 
 **Next session, in order:**
 
-1. Merge task 7 once the reviewer approves and CI is green. Never `--admin`; never force-push (merge `main` into the branch instead of rebasing).
-2. Then M1 task 10 (import-boundary rule) and task 11 (walking-skeleton UI); tasks 8-9 wait for the owner's real exports.
+1. Merge task 10 once the reviewer approves and CI is green. Never `--admin`; never force-push (merge `main` into the branch instead of rebasing).
+2. Then M1 task 11 (walking-skeleton UI); tasks 8-9 wait for the owner's real exports.
 
 **Target files:** stage 1: CSV exports from TD (chequing) and CIBC (credit card). Stage 2: PDF statements for the same two accounts (A1 confirmed). Real exports and statements stay in `~/Statements/`.
 
@@ -112,6 +112,14 @@ Newest first. One entry per session: date, what changed, what was verified, what
 - Not decided: trailing-minus (`12.34-`) and `CR`/`DR` amounts are rejected for now; add them only if a real export shows them.
 - Reviewer: APPROVE; fixed leading-zero thousands group (`0,001`), year 0000, and the `formatCents` comment. Open for task 3: `1,234` reads as thousands, so a decimal-comma export would misread by 1000x; `mapColumns` must not assume dot decimals silently.
 - Next: M1 task 2 (`csv/read.ts`, PapaParse).
+
+### 2026-11-11 — M1 task 10: import-boundary rule
+
+- Added two `overrides` to `biome.json` using `style/noRestrictedImports` (error) with glob `patterns`: `src/core/**` may not import `pdfjs-dist`, `react`, `react-dom` (or any subpath of them) or anything under a `ui/` or `pdf/` directory; the rest of `src/` (except `src/pdf/extract.ts`) may not import `pdfjs-dist` or its subpaths. It runs in `npm run lint`, so it is part of `npm run verify` and CI.
+- Proof (throwaway files, deleted): in `src/core/csv/`, `pdfjs-dist/legacy/build/pdf.mjs`, `react/jsx-runtime`, `react-dom/client`, `../ui/x` and bare `pdfjs-dist` were all errors; `pdfjs-dist/build/pdf.mjs` in `src/ui/` and `src/pdf/other.ts` was an error; in `src/pdf/extract.ts` it was accepted; `react-dom/client` in `src/ui/` was accepted.
+- Review round 1 (fixed): the first version used exact package names (`paths`), so subpath imports like `pdfjs-dist/build/pdf.mjs`, the normal way to import it, passed. Patterns now cover subpaths. The reviewer also confirmed type-only imports and dynamic `import()` are flagged.
+- Verified: `npm run verify` passes.
+- Next: task 11 (walking-skeleton UI).
 
 ### 2026-11-11 — M1 task 7: synthetic exports
 
