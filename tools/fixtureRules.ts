@@ -18,8 +18,10 @@ export interface Violation {
 // amounts print with separators, so nine is the shortest run that is never a date or an amount.
 const DIGIT_RUN = /\d{9,}/;
 
-const isSyntheticPdfDir = (path: string) =>
-  path.startsWith("fixtures/synthetic/") && !path.includes("..");
+// The only places a PDF may be committed (CLAUDE.md): invented statements for tests and the demo.
+const isAllowedPdf = (path: string) =>
+  (path.startsWith("fixtures/synthetic/") || path.startsWith("src/demo/")) &&
+  !path.includes("..");
 
 export function checkFiles(
   files: readonly FixtureFile[],
@@ -31,8 +33,7 @@ export function checkFiles(
   const out: Violation[] = [];
   for (const file of files) {
     if (file.path.toLowerCase().endsWith(".pdf")) {
-      if (!isSyntheticPdfDir(file.path))
-        out.push({ path: file.path, rule: "pdf" });
+      if (!isAllowedPdf(file.path)) out.push({ path: file.path, rule: "pdf" });
       continue;
     }
     for (const [i, text] of file.text.split("\n").entries()) {

@@ -12,11 +12,13 @@ import {
   existsSync,
   mkdirSync,
   readFileSync,
+  realpathSync,
   unlinkSync,
   writeFileSync,
 } from "node:fs";
 import { dirname, isAbsolute, join, relative, resolve } from "node:path";
 import { checkFiles } from "./fixtureRules";
+import { isInside } from "./paths";
 import { redactCsv } from "./redact";
 
 function fail(message: string): never {
@@ -46,10 +48,21 @@ const part = (name: string) => {
 };
 const [bank, kind, name] = [part("bank"), part("kind"), part("name")];
 
-// Real exports stay outside the repository (ADR-016).
-const fromRepo = relative(process.cwd(), input);
-if (!fromRepo.startsWith("..") && !isAbsolute(fromRepo))
-  fail("the input is inside this repository; keep real exports outside it");
+// Real exports, the merchant map and the deny-list stay outside the repository (ADR-016): the map
+// holds real merchant names and the deny-list holds real names and numbers.
+const repo = realpathSync(process.cwd());
+function outside(what: string, path: string): string {
+  if (!isAbsolute(path)) fail(`${what} must be an absolute path`);
+  const dir = realpathSync(existsSync(path) ? path : dirname(path));
+  if (isInside(repo, dir))
+    fail(`${what} is inside this repository; keep it outside`);
+  return path;
+}
+outside("the input", input);
+
+const denyFlag = flags.get("deny-list");
+const deny =
+  denyFlag === undefined ? undefined : outside("--deny-list", denyFlag);
 
 const descFlag = flags.get("description");
 const descriptionColumn =
@@ -57,10 +70,16 @@ const descriptionColumn =
 if (descriptionColumn !== undefined && !Number.isInteger(descriptionColumn))
   fail("--description is a column number, counting from 1");
 
-const mapPath = flags.get("map") ?? join(dirname(input), "merchant-map.json");
-const previous: Record<string, string> = existsSync(mapPath)
+const mapPath = outside(
+  "--map",
+  flags.get("map") ?? join(dirname(input), "merchant-map.json"),
+);
+const loaded: unknown = existsSync(mapPath)
   ? JSON.parse(readFileSync(mapPath, "utf8"))
   : {};
+if (typeof loaded !== "object" || loaded === null || Array.isArray(loaded))
+  fail("the merchant map is not a JSON object");
+const previous = loaded as Record<string, string>;
 
 const result = redactCsv(readFileSync(input, "utf8"), previous, {
   descriptionColumn,
@@ -74,7 +93,6 @@ mkdirSync(dirname(outPath), { recursive: true });
 writeFileSync(outPath, `${result.csv}\n`);
 
 // The same rules CI applies, so a bad fixture never reaches a commit.
-const deny = flags.get("deny-list");
 const violations = checkFiles(
   [
     {

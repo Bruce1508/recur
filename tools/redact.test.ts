@@ -106,7 +106,7 @@ describe("redactCsv", () => {
     expect(Object.keys(map)).toEqual(["FAKE COFFEE"]);
   });
 
-  test("digit runs in header labels are masked", () => {
+  test("the source header is never copied: canonical labels are written instead", () => {
     const { csv } = ok(SOURCE.replace("Balance", "Balance 4500123412341234"));
     expect(csv.split("\n")[0]).not.toMatch(/\d{4}/);
   });
@@ -162,5 +162,20 @@ describe("redactCsv", () => {
       merchants: 3,
       blankedColumns: 0,
     });
+  });
+
+  test("a first row that only looks like a header (a name, an account label) is not copied", () => {
+    const { csv } = ok(
+      [
+        "Account holder,JANE DOE,Chequing,acct 123,",
+        ...SOURCE.split("\n").slice(1),
+      ].join("\n"),
+    );
+    expect(csv.split("\n")[0]).toBe("Date,Description,Debit,Credit,Balance");
+    expect(csv).not.toMatch(/JANE|acct|123,/);
+  });
+
+  test("a merchant map with a malformed value is refused", () => {
+    expect(redactCsv(SOURCE, { X: "MERCHANT_x" }).ok).toBe(false);
   });
 });

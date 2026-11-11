@@ -1,10 +1,11 @@
-// CI and local gate: no PDF outside fixtures/synthetic/, no run of nine or more digits in any
+// CI and local gate: no PDF outside fixtures/synthetic/ and src/demo/ (anywhere in the repository), no run of nine or more digits in any
 // fixture, and optionally no term from the owner's personal deny-list (ADR-005, ADR-016).
 //
 //   npm run fixtures:check [-- --deny-list /abs/path/deny.txt]
 //
 // Prints file, line and rule only, never the matched text.
 
+import { execFileSync } from "node:child_process";
 import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { checkFiles, type FixtureFile } from "./fixtureRules";
@@ -35,6 +36,16 @@ const files: FixtureFile[] = paths.map((p) => {
     text: path.toLowerCase().endsWith(".pdf") ? "" : readFileSync(p, "utf8"),
   };
 });
+
+// A PDF is a violation anywhere in the repository, not only under fixtures/ (CLAUDE.md), so ask git
+// which PDFs are tracked or staged. `git add -f` gets past the ignore rule but not past this.
+const known = new Set(files.map((f) => f.path));
+const tracked = execFileSync("git", ["ls-files", "-z", "--", "*.pdf"], {
+  encoding: "utf8",
+})
+  .split("\0")
+  .filter((p) => p !== "" && !known.has(p));
+for (const path of tracked) files.push({ path, text: "" });
 
 const violations = checkFiles(files, denyList);
 for (const v of violations)

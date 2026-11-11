@@ -45,3 +45,11 @@ test("blank deny-list lines and comments are ignored", () => {
     checkFiles([f("fixtures/x.csv", "anything")], ["", "  ", "# note"]),
   ).toEqual([]);
 });
+
+test("a PDF anywhere else in the repository is a violation; src/demo is allowed", () => {
+  expect(checkFiles([f("docs/statement.pdf")], [])).toEqual([
+    { path: "docs/statement.pdf", rule: "pdf" },
+  ]);
+  expect(checkFiles([f("src/foo.pdf")], [])).toHaveLength(1);
+  expect(checkFiles([f("src/demo/sample.pdf")], [])).toEqual([]);
+});

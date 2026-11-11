@@ -36,6 +36,19 @@ function read(
   return { rows: r.rows, mapping: m.mapping };
 }
 
+function canonicalHeader(m: ColumnMapping, width: number): string[] {
+  const labels = Array.from({ length: width }, () => "");
+  labels[m.date] = "Date";
+  labels[m.description] = "Description";
+  if ("signed" in m.amount) labels[m.amount.signed] = "Amount";
+  else {
+    labels[m.amount.debit] = "Debit";
+    labels[m.amount.credit] = "Credit";
+  }
+  if (m.balance !== undefined) labels[m.balance] = "Balance";
+  return labels;
+}
+
 function moneyColumns(m: ColumnMapping): number[] {
   const cols =
     "signed" in m.amount
@@ -62,6 +75,12 @@ export function redactCsv(
   previous: Readonly<Record<string, string>>,
   options: RedactOptions = {},
 ): RedactResult {
+  if (Object.values(previous).some((p) => !/^MERCHANT_\d+$/.test(p)))
+    return {
+      ok: false,
+      reason:
+        "the merchant map is not valid: every value must look like MERCHANT_07",
+    };
   const parsed = read(text);
   if (typeof parsed === "string")
     return { ok: false, reason: `cannot read the file: ${parsed}` };
@@ -109,7 +128,9 @@ export function redactCsv(
   const out: string[][] = [];
   for (const [i, row] of rows.entries()) {
     if (i === 0 && mapping.hasHeader) {
-      out.push(row.map(maskDigits));
+      // Never copy the source header: "has a header" only means no cell looks like a date or an
+      // amount, so the row could hold a name or an account label. Write our own labels.
+      out.push(canonicalHeader(mapping, row.length));
       continue;
     }
     const cells: string[] = [];
