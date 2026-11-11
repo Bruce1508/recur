@@ -6,14 +6,14 @@ Living document. Update it at the end of every working session. Never record sta
 
 ## Current status
 
-**Phase:** M1 in progress (stage 1, CSV first, ADR-018). Task 1 (types, money, dates) is merged (#5). Task 2 (`csv/read.ts`) is merged (#6). Task 3 (`csv/mapColumns.ts`) is merged (#7). Task 4 (`csv/toStatement.ts`) is merged (#8). Task 5 (`reconcile.ts`) is merged (#9). Task 6 (`ledger.ts`) is on branch `m1/06-ledger`. `npm run verify` passes locally.
+**Phase:** M1 in progress (stage 1, CSV first, ADR-018). Task 1 (types, money, dates) is merged (#5). Task 2 (`csv/read.ts`) is merged (#6). Task 3 (`csv/mapColumns.ts`) is merged (#7). Task 4 (`csv/toStatement.ts`) is merged (#8). Task 5 (`reconcile.ts`) is merged (#9). Task 6 (`ledger.ts`) is merged (#10). Task 7 (`tools/make-synthetic.ts`) is on branch `m1/07-make-synthetic`. `npm run verify` passes locally.
 
 **CI note:** the earlier `verify` failures were not code. `npx playwright install --with-deps chromium` failed because the runner could not resolve `*.ubuntu.com` (apt, `Temporary failure resolving`). A rerun passed. If it recurs, cache the Playwright browsers or retry that step, in its own branch.
 
 **Next session, in order:**
 
-1. Merge task 6 once the reviewer approves and CI is green. Never `--admin`; never force-push (merge `main` into the branch instead of rebasing).
-2. Then task 7 (make-synthetic).
+1. Merge task 7 once the reviewer approves and CI is green. Never `--admin`; never force-push (merge `main` into the branch instead of rebasing).
+2. Then M1 task 10 (import-boundary rule) and task 11 (walking-skeleton UI); tasks 8-9 wait for the owner's real exports.
 
 **Target files:** stage 1: CSV exports from TD (chequing) and CIBC (credit card). Stage 2: PDF statements for the same two accounts (A1 confirmed). Real exports and statements stay in `~/Statements/`.
 
@@ -112,6 +112,15 @@ Newest first. One entry per session: date, what changed, what was verified, what
 - Not decided: trailing-minus (`12.34-`) and `CR`/`DR` amounts are rejected for now; add them only if a real export shows them.
 - Reviewer: APPROVE; fixed leading-zero thousands group (`0,001`), year 0000, and the `formatCents` comment. Open for task 3: `1,234` reads as thousands, so a decimal-comma export would misread by 1000x; `mapColumns` must not assume dot decimals silently.
 - Next: M1 task 2 (`csv/read.ts`, PapaParse).
+
+### 2026-11-11 — M1 task 7: synthetic exports
+
+- Added `tools/make-synthetic.ts` (seeded, deterministic, fictional merchants): `generateLedger(seed)` (12 months: semi-monthly pay, rent, a streaming charge, a gym whose price rises after six months, random groceries, coffee and a bookshop with a comma in its name), `LAYOUTS` (header x signed/split x balance with all three date formats, plus a newest-first file and two files with `$` and thousands separators), `renderCsv`, `expectedMapping`, `makeSyntheticSet`. `tools/` is now in `tsconfig.json` and Vitest's include.
+- `tools/make-synthetic.test.ts` runs every layout through `readCsv → mapColumns → toStatement → reconcile`: exact golden transactions, `verified` with a balance and `unverifiable` without, and a one-cent alteration of a middle row flips to `mismatch` naming that row (AC-1, AC-2 for middle rows, AC-3 synthetic part). Two overlapping exports merge back into the original ledger through `buildLedger` (nothing lost, nothing doubled), and a file that skips months reports them.
+- **Bug found by these tests and fixed in `mapColumns`:** a debit/credit file whose balance chain was broken was refused ("Cannot tell which numeric columns are amounts"), so the user never saw a mismatch. A pair of complementary columns plus one always-filled column is now mapped as debit/credit + balance at low confidence, and `reconcile` reports the break.
+- No CLI writes files yet; the Playwright fixtures and the demo (tasks 11 and M3) import the generator or generate files when they need them.
+- Verified: `npm run verify` passes (269 tests).
+- Next: tasks 8-9 need the owner's real exports (see "Waiting on the owner"); task 10 (import-boundary rule) and task 11 (walking-skeleton UI) do not.
 
 ### 2026-11-11 — M1 task 6: ledger
 
