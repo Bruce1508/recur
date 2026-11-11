@@ -10,16 +10,18 @@ Living document. Update it at the end of every working session. Never record sta
 
 **Left in M1:** task 11 (walking-skeleton UI) can start now. Tasks 8 and 9 (fixture dump tool, fixture privacy check) can be built and tested on the synthetic files, but the owner must then run `fixture:dump` on his real exports and review the output, and the real-export acceptance criteria (AC-3) wait for that (see "Waiting on the owner"). M1 is done when two real export layouts import correctly.
 
+**Tooling note:** `gh` failed with `x509: OSStatus -26276` inside the Bash sandbox on 2026-11-11. It worked when that call was run with the sandbox disabled, so the sandbox is the cause. Use that only after a sandbox-caused failure of the same command, never as the default; if the owner gets a proper fix, drop this note.
+
 **CI note:** the earlier `verify` failures were not code. `npx playwright install --with-deps chromium` failed because the runner could not resolve `*.ubuntu.com` (apt, `Temporary failure resolving`). A rerun passed. If it recurs, cache the Playwright browsers or retry that step, in its own branch.
 
 **Next session, in order:**
 
 1. Run `git log origin/main` and `gh pr list` to confirm what is merged, then start M1 task 11 through `ship-task`. Never `--admin`; never force-push (merge `main` into the branch instead of rebasing).
-2. Task 11 (`src/ui/`): drop a CSV, confirm the column mapping when asked, see a plain table and the verification status. No styling effort. It must satisfy the "Requirements carried into task 11" list below. Check `docs/ARCHITECTURE.md` section 9 for the page states first.
-3. Tasks 8 and 9 (tools only; Claude never reads a real export). Build them against synthetic files; the owner's run on real exports is queued below. Do these after task 11 or before it, whichever lets the owner start downloading exports sooner.
+2. Task 11 (`src/ui/`): drop a CSV, confirm the column mapping when asked, see a plain table and the verification status. No styling effort. It must satisfy the "Requirements carried into task 11" list below. Read `docs/ARCHITECTURE.md` section 7 (User interface) first: it defines the page states and the "how to verify nothing is uploaded" footer.
+3. Then tasks 8 and 9 (tools only; Claude never reads a real export). Build them against synthetic files; the owner's run on real exports is queued under "Waiting on the owner". If the owner says he is ready to download exports earlier, do 8 and 9 before 11.
 4. After M1: M2 (recurring-charge detection) needs the owner's hand-written subscription list first (see "Waiting on the owner").
 
-**Requirements carried into task 11 and later** (found in reviews; each is pinned or noted in code):
+**Requirements carried into task 11 and later** (found in reviews; most are pinned by a test or noted in code; the blank-description item is neither, add a test or a warning when touching `toStatement`):
 
 - Group files by account and call `buildLedger` once per account. Two accounts of the same kind and bank with no balance column merge on an identical same-day charge (silent loss otherwise). The same account exported with and without a balance column, and (stage 2) as CSV and as PDF, is not de-duplicated.
 - A lone signed amount column has no sign convention in `ColumnMapping`: the UI must show a sample and let the user set `negateSigned` before `toStatement`. A `low` mapping must never be converted without the user confirming it. `toStatement` does not check `confidence`.
@@ -80,7 +82,6 @@ ADR-006 (MIT), ADR-015, ADR-016, ADR-017 and ADR-018 are Accepted. The rest stay
 Queued by the autonomous workflow. Claude does not attempt these.
 
 - [ ] `sudo chown -R 501:20 ~/.npm`: the npm cache has root-owned files, so `npm` fails in the sandbox (worked around with a temp cache).
-- [x] `gh` TLS error: works inside Claude Code when the Bash call runs with the sandbox disabled (2026-11-11); PRs, CI and merges now run from Claude's side.
 
 - [ ] M1: download a CSV of transactions from TD (chequing) and CIBC (credit card), as far back as each allows, and save them in `~/Statements/`. Answer open question 7.
 - [ ] M1: when `npm run fixture:dump` exists, run it on those files and review the redacted output before it is committed.
@@ -119,19 +120,18 @@ Queued by the autonomous workflow. Claude does not attempt these.
 | TypeScript 7 tooling friction                                          | Closed: `tsc --noEmit` runs clean on 7.0.2 in CI | —                        |
 | Real CSV exports differ from the synthetic layouts, or have no balance | Open                                             | M1, first real export    |
 | People will not download a file from their bank                        | Open                                             | M4 validation            |
-| `gh` TLS failure (`x509 -26276`) inside the sandbox                    | Works with the sandbox off (2026-11-11)          | Each session             |
+| `gh` TLS failure (`x509 -26276`) inside the sandbox                    | Worked around per call, see Tooling note         | Each session             |
 
 ## Session log
 
 Newest first. One entry per session: date, what changed, what was verified, what is next.
 
-### 2026-11-11 — M1 task 1: domain types, money, dates
+### 2026-11-11 — End of session: status sync
 
-- Added `src/core/types.ts` (the M1 subset of ARCHITECTURE §5), `money.ts` (`parseMoney` to integer cents without floats, bracketed and signed negatives, strict thousands grouping; `formatCents` via `Intl` en-CA CAD) and `plainDate.ts` (`parseDate` for the three `DateFormat`s with calendar validation; `daysBetween` by integer day numbers, no `Date`).
-- Verified: `npm run verify` passes (114 tests); `src/core` line coverage 100%.
-- Not decided: trailing-minus (`12.34-`) and `CR`/`DR` amounts are rejected for now; add them only if a real export shows them.
-- Reviewer: APPROVE; fixed leading-zero thousands group (`0,001`), year 0000, and the `formatCents` comment. Open for task 3: `1,234` reads as thousands, so a decimal-comma export would misread by 1000x; `mapColumns` must not assume dot decimals silently.
-- Next: M1 task 2 (`csv/read.ts`, PapaParse).
+- Brought this file to the real state: M1 tasks 1 to 7 and 10 are on `main` (PRs #5 to #12); added "Requirements carried into task 11 and later" and a backlog section; AC-1 to AC-3 marked Partial with evidence; the `gh` workaround recorded as a tooling note.
+- Verified: `npm run verify` passes locally (269 tests) and CI `verify` was green on this PR. Memory and the cross-project ledger were updated outside the repository.
+- Review (docs PR): one wrong pointer (page states are in ARCHITECTURE section 7, not 9) and five smaller points, all fixed.
+- Next: M1 task 11 (UI), see "Next session".
 
 ### 2026-11-11 — M1 task 10: import-boundary rule
 
@@ -197,6 +197,14 @@ Newest first. One entry per session: date, what changed, what was verified, what
 - Dependencies: `papaparse` 5.7.1 and `@types/papaparse` 5.5.2, exact pins, both already in `approved-deps.json`; RESEARCH §5 row updated (it said 5.7.0).
 - Verified: `npm run verify`, see the PR for the result lines.
 - Next: M1 task 3 (`csv/mapColumns.ts`). It must not assume dot decimals silently (see task 1 note), must check row widths (`readCsv` returns ragged rows as they are), and should treat a semicolon-delimited file with comma decimals as low confidence.
+
+### 2026-11-11 — M1 task 1: domain types, money, dates
+
+- Added `src/core/types.ts` (the M1 subset of ARCHITECTURE §5), `money.ts` (`parseMoney` to integer cents without floats, bracketed and signed negatives, strict thousands grouping; `formatCents` via `Intl` en-CA CAD) and `plainDate.ts` (`parseDate` for the three `DateFormat`s with calendar validation; `daysBetween` by integer day numbers, no `Date`).
+- Verified: `npm run verify` passes (114 tests); `src/core` line coverage 100%.
+- Not decided: trailing-minus (`12.34-`) and `CR`/`DR` amounts are rejected for now; add them only if a real export shows them.
+- Reviewer: APPROVE; fixed leading-zero thousands group (`0,001`), year 0000, and the `formatCents` comment. Open for task 3: `1,234` reads as thousands, so a decimal-comma export would misread by 1000x; `mapColumns` must not assume dot decimals silently.
+- Next: M1 task 2 (`csv/read.ts`, PapaParse).
 
 ### 2026-11-10 — Re-scope: CSV first, PDF second (ADR-018)
 
