@@ -2,11 +2,20 @@
 
 Living document. Update it at the end of every working session. Never record statement contents, merchant names from real statements, or account details here; counts and pass/fail only.
 
-**Last updated:** 2026-11-10
+**Last updated:** 2026-11-11
 
 ## Current status
 
-**Phase:** M0 done. Re-scoped on 2026-11-10 by ADR-018: **CSV import first (stage 1, M1–M4), PDF parsing second (stage 2, M5–M7)**; usefulness to real users is now the first goal. **Next:** M1 (CSV import, ledger, fixture tooling, walking skeleton).
+**Phase:** M1 in progress (stage 1, CSV first, ADR-018). Task 1 (types, money, dates) is merged (#5). Task 2 (`csv/read.ts`, papaparse 5.7.1) is PR #6, reviewed (reviewer APPROVE), awaiting CI and merge. `npm run verify` passes locally.
+
+**CI note:** the earlier `verify` failures were not code. `npx playwright install --with-deps chromium` failed because the runner could not resolve `*.ubuntu.com` (apt, `Temporary failure resolving`). A rerun passed. If it recurs, cache the Playwright browsers or retry that step, in its own branch.
+
+**Next session, in order:**
+
+1. Merge task 2 (#6) once CI is green. Never `--admin`; never force-push (merge `main` into the branch instead of rebasing).
+2. M1 task 3: `csv/mapColumns.ts`. It must check row widths (`readCsv` returns ragged rows), must not assume dot decimals silently, and must mark a `;`-delimited file with comma decimals low confidence.
+3. Then tasks 4-7 (toStatement, reconcile, ledger, make-synthetic). Task 4: guard against `-0` when negating a zero debit.
+4. Add the cross-field invariants to the task 4 tests: `source.statementId` equals the statement id, `input` agrees with each `source.input`, `period.start <= end`.
 
 **Target files:** stage 1: CSV exports from TD (chequing) and CIBC (credit card). Stage 2: PDF statements for the same two accounts (A1 confirmed). Real exports and statements stay in `~/Statements/`.
 
@@ -18,7 +27,7 @@ Living document. Update it at the end of every working session. Never record sta
 | --- | ----------------------------------------------------- | ----------- | ---------- | ---------- | ---------------------------------- |
 | —   | Discovery, research, architecture, planning           | Done        | 2026-11-10 | 2026-11-10 | Seven planning documents written   |
 | M0  | Validation gate and bootstrap                         | Done        | 2026-11-10 | 2026-11-10 | Gate: GO; A1 confirmed (TD + CIBC) |
-| M1  | CSV import, ledger, fixture tooling, walking skeleton | Not started |            |            | Stage 1                            |
+| M1  | CSV import, ledger, fixture tooling, walking skeleton | In progress | 2026-11-11 |            | Stage 1                            |
 | M2  | Recurring-charge detection                            | Not started |            |            | Stage 1                            |
 | M3  | Product UI, demo mode, exports, trust features        | Not started |            |            | Stage 1                            |
 | M4  | Hardening, deployment, small launch, validation       | Not started |            |            | Stage 1; ends with the stage gate  |
@@ -52,6 +61,8 @@ ADR-006 (MIT), ADR-015, ADR-016, ADR-017 and ADR-018 are Accepted. The rest stay
 ## Waiting on the owner
 
 Queued by the autonomous workflow. Claude does not attempt these.
+
+- [ ] `sudo chown -R 501:20 ~/.npm`: the npm cache has root-owned files, so `npm` fails in the sandbox (worked around with a temp cache).
 
 - [ ] M1: download a CSV of transactions from TD (chequing) and CIBC (credit card), as far back as each allows, and save them in `~/Statements/`. Answer open question 7.
 - [ ] M1: when `npm run fixture:dump` exists, run it on those files and review the redacted output before it is committed.
@@ -90,11 +101,19 @@ Queued by the autonomous workflow. Claude does not attempt these.
 | TypeScript 7 tooling friction                                          | Closed: `tsc --noEmit` runs clean on 7.0.2 in CI | —                        |
 | Real CSV exports differ from the synthetic layouts, or have no balance | Open                                             | M1, first real export    |
 | People will not download a file from their bank                        | Open                                             | M4 validation            |
-| `gh` fails inside the Claude Code process (TLS)                        | Open: the owner runs `gh pr` commands by hand    | Each session             |
+| `gh` TLS failure (`x509 -26276`) inside the sandbox                   | Works with the sandbox off (2026-11-11)          | Each session             |
 
 ## Session log
 
 Newest first. One entry per session: date, what changed, what was verified, what is next.
+
+### 2026-11-11 — M1 task 1: domain types, money, dates
+
+- Added `src/core/types.ts` (the M1 subset of ARCHITECTURE §5), `money.ts` (`parseMoney` to integer cents without floats, bracketed and signed negatives, strict thousands grouping; `formatCents` via `Intl` en-CA CAD) and `plainDate.ts` (`parseDate` for the three `DateFormat`s with calendar validation; `daysBetween` by integer day numbers, no `Date`).
+- Verified: `npm run verify` passes (114 tests); `src/core` line coverage 100%.
+- Not decided: trailing-minus (`12.34-`) and `CR`/`DR` amounts are rejected for now; add them only if a real export shows them.
+- Reviewer: APPROVE; fixed leading-zero thousands group (`0,001`), year 0000, and the `formatCents` comment. Open for task 3: `1,234` reads as thousands, so a decimal-comma export would misread by 1000x; `mapColumns` must not assume dot decimals silently.
+- Next: M1 task 2 (`csv/read.ts`, PapaParse).
 
 ### 2026-11-11 — M1 task 2: CSV reader
 
