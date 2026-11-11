@@ -134,6 +134,24 @@ describe("mapColumns", () => {
     expect(m.confidence).toBe("low");
   });
 
+  test("a Debit or Credit column whose partner is empty in every row is low confidence", () => {
+    const rows = [
+      ["Date", "Description", "Debit", "Credit"],
+      ["2026-01-02", "COFFEE", "4.50", ""],
+      ["2026-01-03", "BOOKS", "12.00", ""],
+    ];
+    expect(mapping(rows).confidence).toBe("low");
+  });
+
+  test("the same with a balance column", () => {
+    const m = mapping([
+      ["Date", "Description", "Debit", "Credit", "Balance"],
+      ["2026-01-02", "COFFEE", "4.50", "", "95.50"],
+      ["2026-01-03", "BOOKS", "12.00", "", "83.50"],
+    ]);
+    expect(m.confidence).toBe("low");
+  });
+
   test("two numeric columns that are not debit and credit and do not reconcile are low confidence", () => {
     const m = mapping([
       ["2026-01-05", "COFFEE", "10.00", "99.00"],

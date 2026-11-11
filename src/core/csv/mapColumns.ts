@@ -27,6 +27,8 @@ function continuitySign(
   balance: readonly number[],
   delta: readonly number[],
 ): 1 | -1 | null {
+  // With repeating deltas, (oldest-first, +1) and (newest-first, -1) can both fit; +1 wins.
+  // Only tiny or all-equal-amount files hit this.
   if (balance.length < 2) return null;
   for (const sign of [1, -1] as const) {
     const oldestFirst = balance.every(
@@ -123,6 +125,12 @@ export function mapColumns(rows: readonly (readonly string[])[]): MapResult {
     return creditFirst ? "credit-first" : "debit-first";
   };
 
+  // A lone numeric column whose header says Debit or Credit is half of a split pair whose other
+  // half is empty in every row: its sign convention is unknown, so the user must confirm.
+  const splitHalf = (c: number) =>
+    hasHeader &&
+    (DEBIT_LABEL.test(cell(first, c)) || CREDIT_LABEL.test(cell(first, c)));
+
   let amount: ColumnMapping["amount"] | undefined;
   let balance: number | undefined;
 
@@ -145,7 +153,7 @@ export function mapColumns(rows: readonly (readonly string[])[]): MapResult {
     if (r1 === undefined) {
       amount = { signed: r0 };
       // The mapping has no sign field, so a reversed sign must be confirmed.
-      if (sign === -1) low = true;
+      if (sign === -1 || splitHalf(r0)) low = true;
     } else {
       // Header labels decide the order. Without them the order is only assumed (debit
       // first), and a reversed balance sign (liability balance, or credit first) is a coin flip.
@@ -164,6 +172,7 @@ export function mapColumns(rows: readonly (readonly string[])[]): MapResult {
     if (r0 === undefined) return fail("No amount column found");
     if (money.length === 1) {
       amount = { signed: r0 };
+      if (splitHalf(r0)) low = true;
     } else if (money.length === 2 && r1 !== undefined) {
       const complementary = body.every(
         (r) => (cell(r, r0) === "") !== (cell(r, r1) === ""),
