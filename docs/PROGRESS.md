@@ -2,7 +2,7 @@
 
 Living document. Update it at the end of every working session. Never record statement contents, merchant names from real statements, or account details here; counts and pass/fail only.
 
-**Last updated:** 2026-11-10
+**Last updated:** 2026-11-11
 
 ## Current status
 
@@ -18,7 +18,7 @@ Living document. Update it at the end of every working session. Never record sta
 | --- | ----------------------------------------------------- | ----------- | ---------- | ---------- | ---------------------------------- |
 | —   | Discovery, research, architecture, planning           | Done        | 2026-11-10 | 2026-11-10 | Seven planning documents written   |
 | M0  | Validation gate and bootstrap                         | Done        | 2026-11-10 | 2026-11-10 | Gate: GO; A1 confirmed (TD + CIBC) |
-| M1  | CSV import, ledger, fixture tooling, walking skeleton | Not started |            |            | Stage 1                            |
+| M1  | CSV import, ledger, fixture tooling, walking skeleton | In progress | 2026-11-11 |            | Stage 1                            |
 | M2  | Recurring-charge detection                            | Not started |            |            | Stage 1                            |
 | M3  | Product UI, demo mode, exports, trust features        | Not started |            |            | Stage 1                            |
 | M4  | Hardening, deployment, small launch, validation       | Not started |            |            | Stage 1; ends with the stage gate  |
@@ -95,6 +95,13 @@ Queued by the autonomous workflow. Claude does not attempt these.
 ## Session log
 
 Newest first. One entry per session: date, what changed, what was verified, what is next.
+
+### 2026-11-11 — M1 task 1: domain types, money, dates
+
+- Added `src/core/types.ts` (the M1 subset of ARCHITECTURE §5), `money.ts` (`parseMoney` to integer cents without floats, bracketed and signed negatives, strict thousands grouping; `formatCents` via `Intl` en-CA CAD) and `plainDate.ts` (`parseDate` for the three `DateFormat`s with calendar validation; `daysBetween` by integer day numbers, no `Date`).
+- Verified: `npm run verify` passes (74 tests); `src/core` line coverage 100%.
+- Not decided: trailing-minus (`12.34-`) and `CR`/`DR` amounts are rejected for now; add them only if a real export shows them.
+- Next: M1 task 2 (`csv/read.ts`, PapaParse).
 
 ### 2026-11-10 — Re-scope: CSV first, PDF second (ADR-018)
 
