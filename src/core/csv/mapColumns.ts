@@ -113,6 +113,16 @@ export function mapColumns(rows: readonly (readonly string[])[]): MapResult {
     (columns[c] ?? []).map((x) => (x === "" ? null : parseMoney(x)));
   const filled = (c: number) => (columns[c] ?? []).every((x) => x !== "");
 
+  const labelOrder = (r0: number, r1: number) => {
+    const label = (c: number) => (hasHeader ? cell(first, c) : "");
+    const creditFirst =
+      CREDIT_LABEL.test(label(r0)) || DEBIT_LABEL.test(label(r1));
+    const debitFirst =
+      DEBIT_LABEL.test(label(r0)) || CREDIT_LABEL.test(label(r1));
+    if (creditFirst === debitFirst) return null; // absent or contradictory
+    return creditFirst ? "credit-first" : "debit-first";
+  };
+
   let amount: ColumnMapping["amount"] | undefined;
   let balance: number | undefined;
 
@@ -137,8 +147,14 @@ export function mapColumns(rows: readonly (readonly string[])[]): MapResult {
       // The mapping has no sign field, so a reversed sign must be confirmed.
       if (sign === -1) low = true;
     } else {
+      // Header labels decide the order. Without them the order is only assumed (debit
+      // first), and a reversed balance sign (liability balance, or credit first) is a coin flip.
+      const order = labelOrder(r0, r1);
       amount =
-        sign === 1 ? { debit: r0, credit: r1 } : { debit: r1, credit: r0 };
+        order === "credit-first"
+          ? { debit: r1, credit: r0 }
+          : { debit: r0, credit: r1 };
+      if (order === null && sign === -1) low = true;
     }
     break;
   }
@@ -153,16 +169,12 @@ export function mapColumns(rows: readonly (readonly string[])[]): MapResult {
         (r) => (cell(r, r0) === "") !== (cell(r, r1) === ""),
       );
       if (complementary) {
-        const label = (c: number) => (hasHeader ? cell(first, c) : "");
-        const creditFirst =
-          CREDIT_LABEL.test(label(r0)) || DEBIT_LABEL.test(label(r1));
-        const debitFirst =
-          DEBIT_LABEL.test(label(r0)) || CREDIT_LABEL.test(label(r1));
+        const order = labelOrder(r0, r1);
         amount =
-          creditFirst && !debitFirst
+          order === "credit-first"
             ? { debit: r1, credit: r0 }
             : { debit: r0, credit: r1 };
-        if (creditFirst === debitFirst) low = true; // labels absent or contradictory
+        if (order === null) low = true; // labels absent or contradictory
       } else {
         // Probably amount + a balance that does not reconcile; the user decides.
         amount = { signed: r0 };

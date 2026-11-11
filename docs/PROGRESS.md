@@ -121,6 +121,8 @@ Newest first. One entry per session: date, what changed, what was verified, what
 - Fails closed: ragged rows, decimal-comma amounts (refused rather than low confidence, because `toStatement` cannot convert them and `1,234` would read as 1234), no date, amount or description column, no transactions.
 - Verified: `npm run verify` passes; `mapColumns.ts` fully covered.
 - Known limit: a column of plain integers (cheque numbers) looks like money; it yields low confidence or a failure, not a silent wrong mapping.
+- Review round 1 (REQUEST_CHANGES, fixed): with a balance and separate debit/credit columns, the order came from the balance sign and ignored the header, so a card export swapped them at high confidence. Now the header decides; no labels and a reversed sign is low.
+- Open, non-blocking: a balance column with a blank cell is not detected (a three-money-column file is then refused, fail closed); French amounts like `4,50 $` or `1 234,56` are not recognised as decimal comma, so the error message is misleading.
 - Next: task 4 (`toStatement`).
 
 ### 2026-11-11 — M1 task 2: CSV reader

@@ -111,6 +111,29 @@ describe("mapColumns", () => {
     expect(m.confidence).toBe("low");
   });
 
+  test("debit and credit with a liability balance keep the header order, not the balance sign", () => {
+    // Card export: a debit raises the amount owed, so the balance moves with the debit column.
+    const m = mapping([
+      ["Date", "Description", "Debit", "Credit", "Balance"],
+      ["2026-01-05", "COFFEE", "4.50", "", "4.50"],
+      ["2026-01-06", "BOOKS", "20.00", "", "24.50"],
+      ["2026-01-07", "PAYMENT", "", "24.50", "0.00"],
+    ]);
+    expect(m.amount).toEqual({ debit: 2, credit: 3 });
+    expect(m.balance).toBe(4);
+    expect(m.confidence).toBe("high");
+  });
+
+  test("debit and credit with a reversed balance sign and no labels is low confidence", () => {
+    const m = mapping([
+      ["2026-01-05", "COFFEE", "4.50", "", "4.50"],
+      ["2026-01-06", "BOOKS", "20.00", "", "24.50"],
+      ["2026-01-07", "PAYMENT", "", "24.50", "0.00"],
+    ]);
+    expect(m.balance).toBe(4);
+    expect(m.confidence).toBe("low");
+  });
+
   test("two numeric columns that are not debit and credit and do not reconcile are low confidence", () => {
     const m = mapping([
       ["2026-01-05", "COFFEE", "10.00", "99.00"],
