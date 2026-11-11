@@ -6,15 +6,14 @@ Living document. Update it at the end of every working session. Never record sta
 
 ## Current status
 
-**Phase:** M1 in progress (stage 1, CSV first, ADR-018). Task 1 (types, money, dates) is merged (#5). Task 2 (`csv/read.ts`) is merged (#6). Task 3 (`csv/mapColumns.ts`) is PR #7, awaiting a final review and merge. `npm run verify` passes locally.
+**Phase:** M1 in progress (stage 1, CSV first, ADR-018). Task 1 (types, money, dates) is merged (#5). Task 2 (`csv/read.ts`) is merged (#6). Task 3 (`csv/mapColumns.ts`) is merged (#7). Task 4 (`csv/toStatement.ts`) is on branch `m1/04-to-statement`. `npm run verify` passes locally.
 
 **CI note:** the earlier `verify` failures were not code. `npx playwright install --with-deps chromium` failed because the runner could not resolve `*.ubuntu.com` (apt, `Temporary failure resolving`). A rerun passed. If it recurs, cache the Playwright browsers or retry that step, in its own branch.
 
 **Next session, in order:**
 
-1. Merge PR #7 once the reviewer approves and CI is green. Never `--admin`; never force-push (merge `main` into the branch instead of rebasing).
-2. Then tasks 4-7 (toStatement, reconcile, ledger, make-synthetic). Task 4: guard against `-0` when negating a zero debit.
-3. Add the cross-field invariants to the task 4 tests: `source.statementId` equals the statement id, `input` agrees with each `source.input`, `period.start <= end`.
+1. Merge task 4 once the reviewer approves and CI is green. Never `--admin`; never force-push (merge `main` into the branch instead of rebasing).
+2. Then tasks 5-7 (reconcile, ledger, make-synthetic).
 
 **Target files:** stage 1: CSV exports from TD (chequing) and CIBC (credit card). Stage 2: PDF statements for the same two accounts (A1 confirmed). Real exports and statements stay in `~/Statements/`.
 
@@ -113,6 +112,15 @@ Newest first. One entry per session: date, what changed, what was verified, what
 - Not decided: trailing-minus (`12.34-`) and `CR`/`DR` amounts are rejected for now; add them only if a real export shows them.
 - Reviewer: APPROVE; fixed leading-zero thousands group (`0,001`), year 0000, and the `formatCents` comment. Open for task 3: `1,234` reads as thousands, so a decimal-comma export would misread by 1000x; `mapColumns` must not assume dot decimals silently.
 - Next: M1 task 2 (`csv/read.ts`, PapaParse).
+
+### 2026-11-11 — M1 task 4: rows to statement
+
+- Added `src/core/csv/toStatement.ts`: `toStatement(rows, mapping, { kind, negateSigned? })` returns `{ ok: true, statement }` or `{ ok: false, reason }`. A row that cannot be converted (date, amount, both or neither of debit/credit, negative debit or credit) becomes a warning naming the row and field, never the cell text; the row is left out. An unreadable balance keeps the transaction and drops `balanceAfter`. Fails only when no row converts.
+- Statement id is `csv-` plus a 53-bit hash of the rows; transaction id is `<statementId>:<row>`; no `-0`.
+- Sign convention: `ColumnMapping` still has no sign field, so a lone signed column is taken as negative = out unless the UI passes `negateSigned` after the user confirms a sample. The M1 UI task (11) must ask when there is a lone signed column with no balance to check it against (review note on task 3).
+- Tests cover the cross-field invariants (`source.statementId`, `input`, `period.start <= end`).
+- Verified: `npm run verify` passes (169 tests); `toStatement.ts` 100% line coverage.
+- Next: task 5 (`reconcile.ts`, running-balance method).
 
 ### 2026-11-11 — M1 task 3: column mapping
 
