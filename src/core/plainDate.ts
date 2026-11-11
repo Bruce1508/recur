@@ -44,7 +44,7 @@ function dayNumber(date: PlainDate): number {
   return era * 146097 + doe - 719468;
 }
 
-/** Whole days from `a` to `b`; negative when `b` is earlier. */
+/** Whole days from `a` to `b`; negative when `b` is earlier. Inputs must come from `parseDate`: other strings give NaN. */
 export function daysBetween(a: PlainDate, b: PlainDate): number {
   return dayNumber(b) - dayNumber(a);
 }

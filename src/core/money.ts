@@ -39,5 +39,5 @@ const CAD = new Intl.NumberFormat("en-CA", {
 /** Display form, e.g. "-$1,234.56". For the UI only; exports write plain numbers. */
 export function formatCents(cents: Cents): string {
   // cents / 100 rounds back to the right cent for any realistic amount (well below 2^53 / 100).
-  return CAD.format(cents / 100);
+  return CAD.format(cents === 0 ? 0 : cents / 100); // avoids "-$0.00" for -0
 }

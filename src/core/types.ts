@@ -14,44 +14,58 @@ export type AccountKind = "deposit" | "credit";
 
 /** Which CSV column holds what. Indexes, because some exports have no header row. */
 export interface ColumnMapping {
-  hasHeader: boolean;
-  date: number;
-  dateFormat: DateFormat;
-  description: number;
-  amount: { signed: number } | { debit: number; credit: number };
-  balance?: number;
+  readonly hasHeader: boolean;
+  readonly date: number;
+  readonly dateFormat: DateFormat;
+  readonly description: number;
+  readonly amount:
+    | { readonly signed: number }
+    | { readonly debit: number; readonly credit: number };
+  readonly balance?: number;
   /** "low" means the UI must ask the user to confirm before use. */
-  confidence: "high" | "low";
+  readonly confidence: "high" | "low";
 }
 
 export interface Transaction {
   /** Stable hash of statement + row position. */
-  id: string;
-  date: PlainDate;
-  postedDate?: PlainDate;
+  readonly id: string;
+  readonly date: PlainDate;
+  readonly postedDate?: PlainDate;
   /** As printed, whitespace-collapsed. */
-  description: string;
+  readonly description: string;
   /** Signed: negative = money out. */
-  amount: Cents;
-  balanceAfter?: Cents;
-  source:
-    | { statementId: string; input: "csv"; row: number }
-    | { statementId: string; input: "pdf"; page: number; lineIndex: number };
+  readonly amount: Cents;
+  readonly balanceAfter?: Cents;
+  readonly source:
+    | {
+        readonly statementId: string;
+        readonly input: "csv";
+        readonly row: number;
+      }
+    | {
+        readonly statementId: string;
+        readonly input: "pdf";
+        readonly page: number;
+        readonly lineIndex: number;
+      };
 }
 
 export interface ParsedStatement {
-  id: string;
-  input: "csv" | "pdf";
-  /** "unknown" for a CSV the app could not attribute. */
-  bankId: string;
-  kind: AccountKind;
-  period: { start: PlainDate; end: PlainDate };
-  openingBalance?: Cents;
-  closingBalance?: Cents;
-  transactions: Transaction[];
-  warnings: string[];
+  readonly id: string;
+  readonly input: "csv" | "pdf";
+  /** A profile id from src/core/profiles/ (stage 2), or "unknown" for a CSV the app could not attribute. */
+  readonly bankId: string;
+  readonly kind: AccountKind;
+  readonly period: { readonly start: PlainDate; readonly end: PlainDate };
+  readonly openingBalance?: Cents;
+  readonly closingBalance?: Cents;
+  readonly transactions: readonly Transaction[];
+  readonly warnings: readonly string[];
 }
 
+// Row numbers: `source.row` and `firstBadRow` are 1-based line numbers in the CSV file,
+// counting the header row if there is one, so they match what a spreadsheet shows.
+// `expected` and `actual` are balances for "running-balance" and sums of amounts for "totals".
 export type Reconciliation =
   | { status: "verified"; method: "totals" | "running-balance" }
   | { status: "mismatch"; expected: Cents; actual: Cents; firstBadRow?: number }

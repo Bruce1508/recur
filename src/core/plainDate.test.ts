@@ -41,6 +41,47 @@ describe("parseDate", () => {
   });
 });
 
+describe("calendar table", () => {
+  const last = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+  test.each(last.map((day, i) => [i + 1, day] as const))(
+    "month %i has %i days",
+    (month, day) => {
+      const mm = String(month).padStart(2, "0");
+      expect(
+        parseDate(`2026-${mm}-${String(day).padStart(2, "0")}`, "YYYY-MM-DD"),
+      ).not.toBeNull();
+      expect(
+        parseDate(
+          `2026-${mm}-${String(day + 1).padStart(2, "0")}`,
+          "YYYY-MM-DD",
+        ),
+      ).toBeNull();
+    },
+  );
+
+  test.each(["2024-02-30", "2100-02-29", "2026-01-00"])(
+    "rejects %s",
+    (text) => {
+      expect(parseDate(text, "YYYY-MM-DD")).toBeNull();
+    },
+  );
+
+  test("every day from 1899 to 2101 follows the previous one", () => {
+    // Date.UTC has no daylight saving, so it is a clean oracle for the next calendar day.
+    for (
+      let t = Date.UTC(1899, 0, 1);
+      t < Date.UTC(2101, 0, 1);
+      t += 86_400_000
+    ) {
+      const today = new Date(t).toISOString().slice(0, 10);
+      const next = new Date(t + 86_400_000).toISOString().slice(0, 10);
+      expect(parseDate(next, "YYYY-MM-DD")).toBe(next);
+      expect(daysBetween(today, next)).toBe(1);
+      expect(daysBetween(next, today)).toBe(-1);
+    }
+  });
+});
+
 describe("daysBetween", () => {
   test.each([
     ["2026-01-01", "2026-01-01", 0],
@@ -52,6 +93,8 @@ describe("daysBetween", () => {
     ["2025-01-01", "2026-01-01", 365],
     ["2024-01-01", "2025-01-01", 366],
     ["1999-12-31", "2000-03-01", 61],
+    ["1900-02-28", "1900-03-01", 1],
+    ["2100-02-28", "2100-03-01", 1],
   ] as const)("%s -> %s = %i", (a, b, days) => {
     expect(daysBetween(a, b)).toBe(days);
   });

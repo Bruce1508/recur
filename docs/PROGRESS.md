@@ -99,7 +99,7 @@ Newest first. One entry per session: date, what changed, what was verified, what
 ### 2026-11-11 — M1 task 1: domain types, money, dates
 
 - Added `src/core/types.ts` (the M1 subset of ARCHITECTURE §5), `money.ts` (`parseMoney` to integer cents without floats, bracketed and signed negatives, strict thousands grouping; `formatCents` via `Intl` en-CA CAD) and `plainDate.ts` (`parseDate` for the three `DateFormat`s with calendar validation; `daysBetween` by integer day numbers, no `Date`).
-- Verified: `npm run verify` passes (74 tests); `src/core` line coverage 100%.
+- Verified: `npm run verify` passes (114 tests); `src/core` line coverage 100%.
 - Not decided: trailing-minus (`12.34-`) and `CR`/`DR` amounts are rejected for now; add them only if a real export shows them.
 - Reviewer: APPROVE; fixed leading-zero thousands group (`0,001`), year 0000, and the `formatCents` comment. Open for task 3: `1,234` reads as thousands, so a decimal-comma export would misread by 1000x; `mapColumns` must not assume dot decimals silently.
 - Next: M1 task 2 (`csv/read.ts`, PapaParse).
