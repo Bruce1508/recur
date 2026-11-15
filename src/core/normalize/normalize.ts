@@ -5,16 +5,42 @@ const SAME_LINE = 0.5;
 // Two fragments closer than this share of the text height are one word: a space is about a quarter
 // of the height, so anything tighter is kerning or a glyph drawn as its own item.
 const SAME_WORD = 0.2;
+// An item that repeats an earlier one's text within this share of the text height, both across and
+// down, is the same text drawn twice (a total row drawn twice for a bold or underline effect).
+const OVERDRAW = 0.25;
 
-/** Merges fragments that touch into one item; wider gaps (a space, a column gutter) stay apart. */
+/**
+ * Drops a copy of an item that is drawn again at nearly the same place. Fragments that merely
+ * overlap with different text are kept: they are not the same text, and dropping one loses it.
+ * `sorted` must be ordered by y.
+ */
+function dropOverdraw(sorted: readonly RawItem[]): RawItem[] {
+  const kept: RawItem[] = [];
+  for (const it of sorted) {
+    const tol = OVERDRAW * Math.max(it.h, 1);
+    let copy = false;
+    for (let k = kept.length - 1; k >= 0 && !copy; k--) {
+      const prev = kept[k] as RawItem;
+      if (it.y - prev.y > tol) break;
+      copy = prev.str === it.str && Math.abs(it.x - prev.x) <= tol;
+    }
+    if (!copy) kept.push(it);
+  }
+  return kept;
+}
+
+/**
+ * Merges fragments that touch into one item; wider gaps (a space, a column gutter) stay apart.
+ * Fragments that overlap by more than kerning are not merged either: concatenating them would
+ * produce text that is on the page nowhere.
+ */
 function mergeFragments(sorted: readonly RawItem[]): RawItem[] {
   const out: RawItem[] = [];
   for (const cur of sorted) {
     const prev = out[out.length - 1];
-    if (
-      prev &&
-      cur.x - (prev.x + prev.w) < SAME_WORD * Math.max(prev.h, cur.h)
-    ) {
+    const gap = prev ? cur.x - (prev.x + prev.w) : 0;
+    const reach = SAME_WORD * Math.max(prev?.h ?? 0, cur.h);
+    if (prev && gap < reach && gap >= -reach) {
       out[out.length - 1] = {
         ...prev,
         str: prev.str + cur.str,
@@ -48,9 +74,9 @@ function toLine(page: number, items: readonly RawItem[]): Line {
 export function normalize(doc: RawDocument): LineDocument {
   const lines: Line[] = [];
   doc.pages.forEach((page, index) => {
-    const items = page.items
-      .filter((i) => i.str.trim() !== "")
-      .sort((a, b) => a.y - b.y);
+    const items = dropOverdraw(
+      page.items.filter((i) => i.str.trim() !== "").sort((a, b) => a.y - b.y),
+    );
     let group: RawItem[] = [];
     let first: RawItem | undefined;
     for (const it of items) {
