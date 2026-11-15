@@ -2,11 +2,13 @@
 
 Living document. Update it at the end of every working session. Never record statement contents, merchant names from real statements, or account details here; counts and pass/fail only.
 
-**Last updated:** 2026-11-11 (end of session)
+**Last updated:** 2026-11-14
 
 ## Current status
 
-**Phase:** M1 in progress (stage 1, CSV first, ADR-018). The whole CSV pipeline up to the ledger is on `main`, tested end to end on synthetic data (269 tests, `npm run verify` green, CI green): `src/core/money.ts`, `plainDate.ts`, `csv/read.ts`, `csv/mapColumns.ts`, `csv/toStatement.ts`, `reconcile.ts`, `ledger.ts`, `tools/make-synthetic.ts`, and the import-boundary lint rule (PRs #5 to #12, tasks 1 to 7 and 10).
+**Scope change (2026-11-14, ADR-019):** the owner checked and both TD chequing and CIBC credit card offer statement PDFs only. PDF parsing now comes first: the order is M5, M6, M7, then M2, M3, M4. The CSV code below stays on `main` with no new work, and the real-CSV fixtures (AC-3, real part) are dropped. Next task: `src/pdf/extract.ts` and `tools/pdf-dump.ts` (M5 tasks 1 and 4), so the owner can produce a redacted layout dump from his PDFs.
+
+**Phase (before ADR-019):** M1 in progress (stage 1, CSV first, ADR-018). The whole CSV pipeline up to the ledger is on `main`, tested end to end on synthetic data (269 tests, `npm run verify` green, CI green): `src/core/money.ts`, `plainDate.ts`, `csv/read.ts`, `csv/mapColumns.ts`, `csv/toStatement.ts`, `reconcile.ts`, `ledger.ts`, `tools/make-synthetic.ts`, and the import-boundary lint rule (PRs #5 to #12, tasks 1 to 7 and 10).
 
 **Left in M1:** tasks 1 to 11 are built (11 is the UI, PR #15; 8 and 9 are the fixture tools, PR #16). What remains is the owner's: run `fixture:dump` on his real exports and review the output, then the real-export acceptance criteria (AC-3) and the manual check in the browser (see "Waiting on the owner"). M1 is done when two real export layouts import correctly.
 
@@ -14,12 +16,12 @@ Living document. Update it at the end of every working session. Never record sta
 
 **CI note:** the earlier `verify` failures were not code. `npx playwright install --with-deps chromium` failed because the runner could not resolve `*.ubuntu.com` (apt, `Temporary failure resolving`). A rerun passed. If it recurs, cache the Playwright browsers or retry that step, in its own branch.
 
-**Next session, in order:**
+**Next session, in order (ADR-019):**
 
-1. Run `git log origin/main` and `gh pr list` to confirm what is merged (tasks 8 and 9 are merged). Never `--admin`; never force-push (merge `main` into the branch instead of rebasing).
-2. If the owner has put redacted fixtures in `fixtures/`: write golden expectations and the mutation test for each (AC-1 to AC-3), and fix whatever the real layouts break in `mapColumns` and `toStatement`. Claude never reads a real export; only the redacted fixtures.
-3. Otherwise M2 needs the owner's hand-written subscription list first, so there is nothing to start; say so and stop rather than inventing work.
-4. After M1: M2 (recurring-charge detection) needs the owner's hand-written subscription list first (see "Waiting on the owner").
+1. Run `git log origin/main` and `gh pr list` to confirm what is merged. Never `--admin`; never force-push (merge `main` into the branch instead of rebasing).
+2. M5 tasks 1 and 4: `src/pdf/extract.ts` (the only file that imports `pdfjs-dist`) and `tools/pdf-dump.ts`, the owner-run CLI that writes a masked positioned-text dump.
+3. When the owner pastes a reviewed dump: record the quirks in this file, then `normalize` (M5 task 2), then the TD profile (M6). Claude never reads a real statement; only the masked dump.
+4. M2 (recurring-charge detection) needs the owner's hand-written subscription list first (see "Waiting on the owner"), and now follows M7.
 
 **Requirements carried into task 11 and later** (found in reviews; most are pinned by a test or noted in code; the blank-description item is neither, add a test or a warning when touching `toStatement`):
 
@@ -44,17 +46,17 @@ Living document. Update it at the end of every working session. Never record sta
 
 ## Milestones
 
-| #   | Milestone                                             | Status      | Started    | Finished   | Notes                              |
-| --- | ----------------------------------------------------- | ----------- | ---------- | ---------- | ---------------------------------- |
-| —   | Discovery, research, architecture, planning           | Done        | 2026-11-10 | 2026-11-10 | Seven planning documents written   |
-| M0  | Validation gate and bootstrap                         | Done        | 2026-11-10 | 2026-11-10 | Gate: GO; A1 confirmed (TD + CIBC) |
-| M1  | CSV import, ledger, fixture tooling, walking skeleton | In progress | 2026-11-11 |            | Stage 1                            |
-| M2  | Recurring-charge detection                            | Not started |            |            | Stage 1                            |
-| M3  | Product UI, demo mode, exports, trust features        | Not started |            |            | Stage 1                            |
-| M4  | Hardening, deployment, small launch, validation       | Not started |            |            | Stage 1; ends with the stage gate  |
-| M5  | PDF extraction, line model, PDF fixture tooling       | Not started |            |            | Stage 2; needs the M4 gate         |
-| M6  | First PDF format (TD chequing) with reconciliation    | Not started |            |            | Stage 2                            |
-| M7  | Second PDF format (CIBC credit card)                  | Not started |            |            | Stage 2                            |
+| #   | Milestone                                             | Status      | Started    | Finished   | Notes                                                     |
+| --- | ----------------------------------------------------- | ----------- | ---------- | ---------- | --------------------------------------------------------- |
+| —   | Discovery, research, architecture, planning           | Done        | 2026-11-10 | 2026-11-10 | Seven planning documents written                          |
+| M0  | Validation gate and bootstrap                         | Done        | 2026-11-10 | 2026-11-10 | Gate: GO; A1 confirmed (TD + CIBC)                        |
+| M1  | CSV import, ledger, fixture tooling, walking skeleton | Code done   | 2026-11-11 | 2026-11-13 | Tasks 1 to 11 merged; real-CSV fixtures dropped (ADR-019) |
+| M5  | PDF extraction, line model, PDF fixture tooling       | Next        |            |            | Now first (ADR-019)                                       |
+| M6  | First PDF format (TD chequing) with reconciliation    | Not started |            |            | After M5                                                  |
+| M7  | Second PDF format (CIBC credit card)                  | Not started |            |            | After M6                                                  |
+| M2  | Recurring-charge detection                            | Not started |            |            | Now after M7                                              |
+| M3  | Product UI, demo mode, exports, trust features        | Not started |            |            |                                                           |
+| M4  | Hardening, deployment, small launch, validation       | Not started |            |            | Ends with the launch and testers                          |
 
 ## What the planning phase established
 
@@ -65,27 +67,28 @@ Living document. Update it at the end of every working session. Never record sta
 
 ## Open questions
 
-| #   | Question                                                                                                             | Owner | Blocks        | Answer                                                                                |
-| --- | -------------------------------------------------------------------------------------------------------------------- | ----- | ------------- | ------------------------------------------------------------------------------------- |
-| 1   | Banks and account types with ≥ 3 months of PDF statements?                                                           | Bruce | M1            | TD chequing and CIBC credit card, ≥ 3 months of PDFs each (2026-11-10)                |
-| 2   | Hours per week through mid-December?                                                                                 | Bruce | Schedule      | More than 20 hours per week (2026-11-10)                                              |
-| 3   | Licence: MIT (recommended) or AGPL-3.0?                                                                              | Bruce | First commit  | MIT (choice delegated to Claude, 2026-11-10; ADR-006)                                 |
-| 4   | Project name; buy a domain?                                                                                          | Bruce | M6            | Working name `recur`; public repo `Bruce1508/recur`. Final name and domain still open |
-| 5   | Does Digital ToolPad (or any other browser tool) already parse your statements correctly?                            | Bruce | Positioning   |                                                                                       |
-| 6   | What CSV export does your bank offer, and how far back?                                                              | Bruce | Fallback plan | Bank offers CSV export, 12 months or more back (2026-11-10)                           |
-| 7   | For TD chequing and CIBC credit card: how far back does each CSV export go, and does the file have a balance column? | Bruce | M1 fixtures   |                                                                                       |
+| #   | Question                                                                                                             | Owner | Blocks        | Answer                                                                                                                  |
+| --- | -------------------------------------------------------------------------------------------------------------------- | ----- | ------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| 1   | Banks and account types with ≥ 3 months of PDF statements?                                                           | Bruce | M1            | TD chequing and CIBC credit card, ≥ 3 months of PDFs each (2026-11-10)                                                  |
+| 2   | Hours per week through mid-December?                                                                                 | Bruce | Schedule      | More than 20 hours per week (2026-11-10)                                                                                |
+| 3   | Licence: MIT (recommended) or AGPL-3.0?                                                                              | Bruce | First commit  | MIT (choice delegated to Claude, 2026-11-10; ADR-006)                                                                   |
+| 4   | Project name; buy a domain?                                                                                          | Bruce | M6            | Working name `recur`; public repo `Bruce1508/recur`. Final name and domain still open                                   |
+| 5   | Does Digital ToolPad (or any other browser tool) already parse your statements correctly?                            | Bruce | Positioning   |                                                                                                                         |
+| 6   | What CSV export does your bank offer, and how far back?                                                              | Bruce | Fallback plan | Bank offers CSV export, 12 months or more back (2026-11-10). Corrected 2026-11-14: TD and CIBC offer PDF only (ADR-019) |
+| 7   | For TD chequing and CIBC credit card: how far back does each CSV export go, and does the file have a balance column? | Bruce | M1 fixtures   |                                                                                                                         |
 
 ## Decisions pending sign-off
 
-ADR-006 (MIT), ADR-015, ADR-016, ADR-017 and ADR-018 are Accepted. The rest stay Proposed until the owner signs off on the PRD.
+ADR-006 (MIT), ADR-015, ADR-016, ADR-017, ADR-018 (stage order superseded by ADR-019) and ADR-019 are Accepted. The rest stay Proposed until the owner signs off on the PRD.
 
 ## Waiting on the owner
 
 Queued by the autonomous workflow. Claude does not attempt these.
 
 - [ ] `sudo chown -R 501:20 ~/.npm`: the npm cache has root-owned files, so `npm` fails in the sandbox (worked around with a temp cache).
-- [ ] M1: download a CSV of transactions from TD (chequing) and CIBC (credit card), as far back as each allows, and save them in `~/Statements/`. Answer open question 7.
-- [ ] M1: run `npm run fixture:dump -- /abs/path/export.csv --bank td --kind chequing --name 2025-01` on each export (add `--description <n>` when it refuses because of an extra text column such as a card number; add `--deny-list /abs/path/deny.txt` with your own names and numbers). Read each file written to `fixtures/` before committing. The merchant map it writes next to the input holds real merchant names: keep it there, never in the repository.
+- [x] ~~M1: download CSVs from TD and CIBC~~ Dropped by ADR-019: both banks offer PDF only (owner checked 2026-11-14). Open question 7 is moot.
+- [ ] M5: keep at least three statement PDFs per account (TD chequing, CIBC credit card) in `~/Statements/`. After the `pdf-dump` PR merges, run it on one PDF per account, read the output, and paste it here if it holds no real names, numbers or merchants.
+- [ ] Optional, only if you ever get a CSV: `npm run fixture:dump` still works (`--description <n>` for an extra text column, `--deny-list /abs/path/deny.txt` for your own names and numbers). Its merchant map holds real merchant names: keep it outside the repository.
 - [ ] M2: before looking at any detector output, write down the subscriptions you believe you have (ground truth for AC-7). Keep the list out of the repository.
 - [ ] Open question 5: try one of your own statements in Digital ToolPad (and StatementSensei if convenient) and write down what each got right and wrong. Do not paste statement contents into any AI tool. Positioning only; matters for stage 2.
 - [ ] Keep real exports and statements in `~/Statements/` only (created, mode 700), never inside the repository.
@@ -126,6 +129,13 @@ Queued by the autonomous workflow. Claude does not attempt these.
 ## Session log
 
 Newest first. One entry per session: date, what changed, what was verified, what is next.
+
+### 2026-11-14 — Re-scope: PDF first (ADR-019)
+
+- **Scope changed.** The owner found that TD chequing and CIBC credit card offer PDF statements only, so the CSV-first plan (ADR-018) cannot serve his own accounts. Added ADR-019: PDF first (M5, M6, M7), then M2 to M4; the CSV pipeline stays with no new work; real-CSV fixtures dropped from AC-3 (PRD v0.3, ROADMAP, this file updated). ADR-016 is unchanged: real PDFs are never read by Claude; the layout reaches it only through a masked dump the owner runs.
+- The owner edited `CLAUDE.md` locally to remove the "never read statements" rule; that edit is not part of this change, and the guard hook and sandbox still block those paths. Changing them needs an owner-made change and its own ADR.
+- Verified: docs-only change, `npm run verify` result in the PR. Not verified: that the PDFs have a text layer (the first dump will show it).
+- Next: `src/pdf/extract.ts` and `tools/pdf-dump.ts` in a separate PR.
 
 ### 2026-11-11 — M1 tasks 8 and 9: fixture tools
 
