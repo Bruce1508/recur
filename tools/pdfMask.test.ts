@@ -1,6 +1,6 @@
 import { describe, expect, test } from "vitest";
 import type { RawDocument } from "../src/core/types";
-import { deniedCount, maskDocument, maskRun } from "./pdfMask";
+import { deniedCount, hasUnmappedText, maskDocument, maskRun } from "./pdfMask";
 
 // Invented data only.
 describe("maskRun", () => {
@@ -32,6 +32,11 @@ describe("maskRun", () => {
 
   test("masks accented letters too", () => {
     expect(maskRun("Éléonore")).toBe("Xxxxxxxx");
+  });
+
+  test("symbols, combining marks and private-use characters do not survive", () => {
+    expect(maskRun("a\u0301@b\ue000\u2022")).toBe("x__x__");
+    expect(maskRun("john.doe@bank.com")).toBe("xxxx.xxx_xxxx.xxx");
   });
 
   test("leaves whitespace-only runs alone", () => {
@@ -83,6 +88,25 @@ describe("maskDocument", () => {
     expect(out.meta.title).toBe("Xxxxxxxxx xxx Xxxx X. Xxxxxx");
   });
 
+  test("keeps producer and creator only when they look like software names", () => {
+    const meta = (producer: string, creator: string): RawDocument => ({
+      meta: { producer, creator },
+      pages: [],
+    });
+    expect(
+      maskDocument(meta("Invented PDF Library 1.0", "Acme (R) Writer")).meta,
+    ).toEqual({
+      producer: "Invented PDF Library 1.0",
+      creator: "Acme (R) Writer",
+    });
+    expect(
+      maskDocument(meta("C:\\Users\\jane\\x.pdf", "jane@example.com")).meta,
+    ).toEqual({});
+    expect(maskDocument(meta("x".repeat(65), "ok")).meta).toEqual({
+      creator: "ok",
+    });
+  });
+
   test("does not change its input", () => {
     maskDocument(doc);
     expect(doc.pages[0]?.items[0]?.str).toBe("Jane Q. Public");
@@ -94,5 +118,30 @@ describe("deniedCount", () => {
     const text = '{"str":"Xxxx"} jane public';
     expect(deniedCount(text, ["Jane Public", "", "  ", "Nobody Here"])).toBe(1);
     expect(deniedCount(text, [])).toBe(0);
+  });
+});
+
+describe("hasUnmappedText", () => {
+  const withText = (str: string): RawDocument => ({
+    meta: {},
+    pages: [
+      {
+        width: 612,
+        height: 792,
+        items: [{ str, x: 0, y: 0, w: 1, h: 1, font: "f" }],
+      },
+    ],
+  });
+
+  test("flags control, private-use and replacement characters (a font with no Unicode map)", () => {
+    expect(hasUnmappedText(withText("-$\u00031(\u000338%/"))).toBe(true);
+    expect(hasUnmappedText(withText("ab\ue000"))).toBe(true);
+    expect(hasUnmappedText(withText("ab\ufffd"))).toBe(true);
+  });
+
+  test("accepts ordinary text, tabs and line breaks", () => {
+    expect(hasUnmappedText(withText("Jane Q. Public 12.30"))).toBe(false);
+    expect(hasUnmappedText(withText("a\tb\r\nc"))).toBe(false);
+    expect(hasUnmappedText(withText("Éléonore"))).toBe(false);
   });
 });

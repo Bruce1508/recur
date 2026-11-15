@@ -4,7 +4,11 @@ import { extractPdf } from "./extract";
 
 // Invented data only.
 const SPEC = {
-  info: { producer: "Invented PDF Library", creator: "Invented Statements" },
+  info: {
+    producer: "Invented PDF Library",
+    creator: "Invented Statements",
+    title: "Statement for Jane Q. Public",
+  },
   pages: [
     {
       width: 612,
@@ -63,6 +67,7 @@ describe("extractPdf", () => {
     expect(r.doc.meta).toMatchObject({
       producer: "Invented PDF Library",
       creator: "Invented Statements",
+      title: "Statement for Jane Q. Public",
     });
   });
 
@@ -87,5 +92,43 @@ describe("extractPdf", () => {
     const r = await extractPdf(new TextEncoder().encode("not a pdf at all"));
     expect(r.ok).toBe(false);
     if (!r.ok) expect(r.reason).not.toContain("not a pdf");
+  });
+
+  test("a page box that does not start at 0,0 does not shift the coordinates", async () => {
+    const r = await extractPdf(
+      makeTextPdf({
+        pages: [
+          {
+            width: 612,
+            height: 792,
+            origin: { x: 0, y: 100 },
+            items: [{ str: "Date", x: 50, y: 100 }],
+          },
+        ],
+      }),
+    );
+    if (!r.ok) throw new Error(r.reason);
+    expect(r.doc.pages[0]).toMatchObject({ width: 612, height: 792 });
+    expect(r.doc.pages[0]?.items[0]).toMatchObject({ x: 50, y: 100 });
+  });
+
+  test("a rotated page reports the displayed size and top-left coordinates of the displayed page", async () => {
+    const r = await extractPdf(
+      makeTextPdf({
+        pages: [
+          {
+            width: 612,
+            height: 792,
+            rotate: 90,
+            items: [{ str: "Date", x: 50, y: 100 }],
+          },
+        ],
+      }),
+    );
+    if (!r.ok) throw new Error(r.reason);
+    // Rotated clockwise: the page is now landscape, and the unrotated point (50, 100) from the
+    // top-left lands 100 from the right edge and 50 from the top.
+    expect(r.doc.pages[0]).toMatchObject({ width: 792, height: 612 });
+    expect(r.doc.pages[0]?.items[0]).toMatchObject({ x: 692, y: 50 });
   });
 });

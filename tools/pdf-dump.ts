@@ -11,7 +11,7 @@ import { existsSync, readFileSync, realpathSync, writeFileSync } from "node:fs";
 import { basename, dirname, isAbsolute, join } from "node:path";
 import { extractPdf } from "../src/pdf/extract";
 import { isInside } from "./paths";
-import { deniedCount, maskDocument } from "./pdfMask";
+import { deniedCount, hasUnmappedText, maskDocument } from "./pdfMask";
 
 function fail(message: string): never {
   console.error(`pdf:dump: ${message}`);
@@ -28,6 +28,10 @@ for (let i = 0; i < argv.length; i++) {
   else positional.push(a);
 }
 
+// An unknown flag is refused: a mistyped --deny-list would otherwise skip that check silently.
+for (const k of flags.keys())
+  if (k !== "out" && k !== "deny-list") fail(`unknown option --${k}`);
+
 const input = positional[0];
 if (positional.length !== 1 || !input || !isAbsolute(input))
   fail("give exactly one absolute path to the PDF");
@@ -38,7 +42,9 @@ if (!existsSync(input)) fail("the input file does not exist");
 const repo = realpathSync(process.cwd());
 function outside(what: string, path: string): string {
   if (!isAbsolute(path)) fail(`${what} must be an absolute path`);
-  const dir = realpathSync(existsSync(path) ? path : dirname(path));
+  const where = existsSync(path) ? path : dirname(path);
+  if (!existsSync(where)) fail(`${what}: the folder does not exist`);
+  const dir = realpathSync(where);
   if (isInside(repo, dir))
     fail(`${what} is inside this repository; keep it outside`);
   return path;
@@ -60,6 +66,10 @@ const deny =
 const extracted = await extractPdf(new Uint8Array(readFileSync(input)));
 if (!extracted.ok) fail(extracted.reason);
 
+if (hasUnmappedText(extracted.doc))
+  fail(
+    "this PDF's text has no Unicode mapping (control or private-use characters), so it cannot be masked safely; nothing was written",
+  );
 const masked = maskDocument(extracted.doc);
 const json = `${JSON.stringify(masked, null, 1)}\n`;
 
@@ -78,7 +88,19 @@ if (total === 0)
     "this PDF has no text layer (a scan or an image?); nothing was written. Tell Claude: ADR-019 says to revisit the plan",
   );
 
-writeFileSync(outPath, json, { mode: 0o600 });
+// "wx" fails on any existing path, a dangling symlink included, so the write cannot be redirected
+// into the repository after the checks above.
+try {
+  writeFileSync(outPath, json, { mode: 0o600, flag: "wx" });
+} catch {
+  fail(
+    `cannot create ${outPath} (it exists, even as a link, or is not writable)`,
+  );
+}
+if (denyFlag === undefined)
+  console.log(
+    "No --deny-list given: only the built-in mask protects this dump.",
+  );
 console.log(
   `wrote ${outPath}: ${masked.pages.length} page(s), ${total} text runs (per page: ${runs.join(", ")})`,
 );

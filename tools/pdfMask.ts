@@ -44,14 +44,42 @@ export function maskRun(str: string): string {
   const t = str.trim();
   if (t === "") return str;
   if (MONEY.test(t) || DATE.test(t) || LABELS.has(t.toLowerCase())) return str;
-  return str.replace(/\p{L}|\p{N}/gu, (c) => {
+  // Whitespace and a few ASCII punctuation marks stay; every other character, including symbols,
+  // combining marks and private-use characters, becomes "_".
+  return Array.from(str, (c) => {
+    if (/\s/u.test(c) || PUNCTUATION.has(c)) return c;
     if (/\p{N}/u.test(c)) return "9";
-    return c === c.toLowerCase() ? "x" : "X";
-  });
+    if (/\p{L}/u.test(c)) return c === c.toLowerCase() ? "x" : "X";
+    return "_";
+  }).join("");
 }
 
+const PUNCTUATION = new Set([..."., -/$()%:#&"]);
+
+/**
+ * True when some run holds a control, private-use or replacement character other than tab and
+ * line breaks. That is what pdf.js returns for a font with no Unicode map: the text is then glyph
+ * codes, and masking by shape would leave a readable substitution of the real text. Callers must
+ * refuse such a document rather than write it.
+ */
+export function hasUnmappedText(doc: RawDocument): boolean {
+  return doc.pages.some((p) =>
+    p.items.some((i) =>
+      /[\p{Cc}\p{Co}�]/u.test(i.str.replace(/[\t\r\n]/g, "")),
+    ),
+  );
+}
+
+// Software names are kept only when they look like one: some generators put a user name or a
+// file path in these fields.
+const SOFTWARE = /^[\w .\-+()®©]{1,64}$/;
+const software = (v: string | undefined) =>
+  v !== undefined && SOFTWARE.test(v) ? v : undefined;
+
 export function maskDocument(doc: RawDocument): RawDocument {
-  const { producer, creator, title } = doc.meta;
+  const { title } = doc.meta;
+  const producer = software(doc.meta.producer);
+  const creator = software(doc.meta.creator);
   return {
     // Producer and creator name software, which profile detection needs; the title can hold a name.
     meta: {

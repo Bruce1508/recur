@@ -7,6 +7,10 @@ export interface PdfSpec {
   pages: {
     width: number;
     height: number;
+    /** Page rotation in degrees, clockwise (the /Rotate entry). */
+    rotate?: 0 | 90 | 180 | 270;
+    /** Lower-left corner of the page box, when it does not start at 0,0. */
+    origin?: { x: number; y: number };
     /** `y` is measured from the top of the page, like `RawItem.y`. */
     items: { str: string; x: number; y: number }[];
   }[];
@@ -36,14 +40,15 @@ export function makeTextPdf(spec: PdfSpec): Uint8Array {
   objects[3] = "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>";
   objects[4] = `<< ${infoEntries} >>`;
   spec.pages.forEach((p, i) => {
+    const { x: ox, y: oy } = p.origin ?? { x: 0, y: 0 };
     const content = p.items
       .map(
         (it) =>
-          `BT /F1 ${FONT_SIZE} Tf 1 0 0 1 ${it.x} ${p.height - it.y} Tm (${esc(it.str)}) Tj ET`,
+          `BT /F1 ${FONT_SIZE} Tf 1 0 0 1 ${ox + it.x} ${oy + p.height - it.y} Tm (${esc(it.str)}) Tj ET`,
       )
       .join("\n");
     objects[pageNo(i)] =
-      `<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${p.width} ${p.height}] /Resources << /Font << /F1 3 0 R >> >> /Contents ${pageNo(i) + 1} 0 R >>`;
+      `<< /Type /Page /Parent 2 0 R /MediaBox [${ox} ${oy} ${ox + p.width} ${oy + p.height}] /Rotate ${p.rotate ?? 0} /Resources << /Font << /F1 3 0 R >> >> /Contents ${pageNo(i) + 1} 0 R >>`;
     objects[pageNo(i) + 1] =
       `<< /Length ${content.length} >>\nstream\n${content}\nendstream`;
   });

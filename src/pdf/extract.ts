@@ -33,15 +33,19 @@ export async function extractPdf(data: Uint8Array): Promise<ExtractResult> {
     const pages: RawPage[] = [];
     for (let n = 1; n <= pdf.numPages; n++) {
       const page = await pdf.getPage(n);
-      const { width, height } = page.getViewport({ scale: 1 });
+      // The viewport applies the page box origin and /Rotate, so x and y are from the top-left of
+      // the page as displayed, and width and height match.
+      const viewport = page.getViewport({ scale: 1 });
+      const { width, height } = viewport;
       const items: RawItem[] = [];
       for (const item of (await page.getTextContent()).items) {
         if (!("str" in item) || item.str === "") continue;
         const [, , , , e, f] = item.transform as number[];
+        const [x, y] = viewport.convertToViewportPoint(e ?? 0, f ?? 0);
         items.push({
           str: item.str,
-          x: round(e ?? 0),
-          y: round(height - (f ?? 0)),
+          x: round(x ?? 0),
+          y: round(y ?? 0),
           w: round(item.width),
           h: round(item.height),
           font: item.fontName,
