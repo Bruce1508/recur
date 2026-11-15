@@ -19,10 +19,10 @@ describe("maskRun", () => {
       "Balance",
       "WITHDRAWALS",
       "Date",
-      "SEP01",
+      "JAN05",
       "STARTING BALANCE",
       "Total",
-      "AUG 31/26 - SEP 29/26",
+      "JAN 05/25 - FEB 04/25",
       "Oct 1, 2025 - Oct 31, 2025",
       "OCT 01/25 TO OCT 31/25",
     ])
@@ -37,11 +37,20 @@ describe("maskRun", () => {
   });
 
   test("a period that carries more than two dates is not kept", () => {
-    expect(maskRun("AUG 31/26 - SEP 29/26 - NOV 02/26")).toBe(
+    expect(maskRun("JAN 05/25 - FEB 04/25 - MAR 02/25")).toBe(
       "XXX 99/99 - XXX 99/99 - XXX 99/99",
     );
-    expect(maskRun("Jane AUG 31/26 - SEP 29/26")).toBe(
+    expect(maskRun("Jane JAN 05/25 - FEB 04/25")).toBe(
       "Xxxx XXX 99/99 - XXX 99/99",
+    );
+  });
+
+  test("two things that merely look like a period are masked: only month names and short days qualify", () => {
+    expect(maskRun("Acct 4500123412341234 - Ref 12")).toBe(
+      "Xxxx 9999999999999999 - Xxx 99",
+    );
+    expect(maskRun("Jane 4165550123 to Bob 1")).toBe(
+      "Xxxx 9999999999 xx Xxx 9",
     );
   });
 

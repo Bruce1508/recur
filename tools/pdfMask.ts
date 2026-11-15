@@ -15,7 +15,7 @@ const DATE = new RegExp(
 );
 
 // A statement period: exactly two dates joined by a dash or "to". The parser needs it to infer the
-// year, because the rows print only "SEP01".
+// year, because the rows print only "JAN05".
 const PERIOD_DATE = `(${MONTH})\\.? ?\\d{1,2}(/\\d{2,4}|, ?\\d{4})?`;
 const PERIOD = new RegExp(`^${PERIOD_DATE} ?(-|to) ?${PERIOD_DATE}$`, "i");
 
