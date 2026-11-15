@@ -109,13 +109,13 @@ The product has no telemetry by design (it would undercut the privacy claim), so
 **Stage 1 — the launch (M1–M4)**
 
 - Drag-and-drop one or many CSV transaction exports, from any bank.
-- Automatic column detection, with a confirmation screen when the app is not sure. Tested layouts: TD and CIBC exports.
+- Automatic column detection, with a confirmation screen when the app is not sure. Tested layouts: synthetic CSV layouts only (ADR-019; TD and CIBC offer PDF only).
 - A verification status for every file: checked against its running balance where the file has one, labelled "Cannot verify" where it does not.
 - Merged, de-duplicated ledger across files; CSV export.
 - Recurring-charge detection with cadence (weekly to annual), typical amount, monthly and yearly cost, price-change flag, confidence, and the evidence rows.
 - Clear labels on charges whose real service cannot be known from the description (app-store and payment-processor charges).
 - Take the result away: download the recurring list, and a calendar file with the next renewal dates.
-- "How to download your transactions" help for the tested banks.
+- "How to download your statements" help for the supported banks (PDF for TD and CIBC; CSV help only for a bank that offers CSV and has been verified).
 - "Try with sample data" demo using synthetic data.
 - A "How to verify nothing is uploaded" panel.
 - English UI.
@@ -208,4 +208,4 @@ Added by ADR-018:
 2. How many hours a week can you commit through mid-December? Answered 2026-11-10: more than 20.
 3. Licence: MIT as recommended in ADR-006, or AGPL-3.0?
 4. Final project name and whether to buy a domain (optional; about $10–15 a year would be the only cost).
-5. **For M1:** download a CSV of transactions from TD (chequing) and from CIBC (credit card), as far back as each allows, and save them in `~/Statements/`. How far back does each go, and does each file have a balance column? (Blocks the M1 fixtures.)
+5. ~~**For M1:** download a CSV of transactions from TD (chequing) and from CIBC (credit card).~~ Dropped by ADR-019: both banks offer PDF statements only (owner checked 2026-11-14). Nothing is blocked on it.
