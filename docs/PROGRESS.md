@@ -135,6 +135,7 @@ Newest first. One entry per session: date, what changed, what was verified, what
 - **Scope changed.** The owner found that TD chequing and CIBC credit card offer PDF statements only, so the CSV-first plan (ADR-018) cannot serve his own accounts. Added ADR-019: PDF first (M5, M6, M7), then M2 to M4; the CSV pipeline stays with no new work; real-CSV fixtures dropped from AC-3 (PRD v0.3, ROADMAP, this file updated). ADR-016 is unchanged: real PDFs are never read by Claude; the layout reaches it only through a masked dump the owner runs.
 - The owner edited `CLAUDE.md` locally to remove the "never read statements" rule; that edit is not part of this change, and the guard hook and sandbox still block those paths. Changing them needs an owner-made change and its own ADR.
 - Verified: docs-only change, `npm run verify` result in the PR. Not verified: that the PDFs have a text layer (the first dump will show it).
+- Review of PR #18: round 1 (REQUEST_CHANGES, fixed): stale CSV and M4-gate wording in ROADMAP and PROGRESS. Round 2 (REQUEST_CHANGES, fixed in the next commit): M6 "remains CSV-only" fallback, PRD "after the launch gate" heading, A8/A9 and the M4 "Done when" wording. Two rounds with blocking findings, so the PR is left open for the owner's decision on a third round.
 - Next: `src/pdf/extract.ts` and `tools/pdf-dump.ts` in a separate PR.
 
 ### 2026-11-11 — M1 tasks 8 and 9: fixture tools

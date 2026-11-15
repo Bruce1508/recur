@@ -170,7 +170,7 @@ Scaffold, CSP placeholder, CI job `verify`, privacy probe, and the gate decision
 
 **Verification.** Release checklist and the validation notes in `docs/PROGRESS.md`.
 
-**Done when** the site is live and the stage gate decision (continue to stage 2, change scope, or stop) is recorded.
+**Done when** the site is live and the validation result (support more banks, change scope, or stop) is recorded. PDF stage 2 already ran before M4 (ADR-019).
 
 ---
 
@@ -214,7 +214,7 @@ Scaffold, CSP placeholder, CI job `verify`, privacy probe, and the gate decision
 3. `reconcile.ts`: add the totals method and statement chaining.
 4. First profile, written against the redacted fixtures. Collect three or more statements of this format as fixtures.
 5. Golden tests and mutation tests. Property test: random ledger → synthetic `LineDocument` → parse → equal.
-6. UI: accept PDFs alongside CSVs; merge both into one ledger without double-counting the overlap.
+6. UI: accept PDFs as the main input (the existing CSV path stays for anyone who has a CSV); merge both into one ledger without double-counting the overlap.
 
 **Acceptance criteria**
 
@@ -224,7 +224,7 @@ Scaffold, CSP placeholder, CI job `verify`, privacy probe, and the gate decision
 
 **Verification.** CI test report; a manual check by the owner recorded without statement contents.
 
-**Done when** one PDF format is verified end to end. If no format reconciles by the end of this milestone, PDF support stays out and the product remains CSV-only.
+**Done when** one PDF format is verified end to end. If no format reconciles by the end of this milestone, stop and revisit ADR-019 with the owner: the owner has no CSV to fall back on, so there is no automatic CSV-only fallback.
 
 ---
 
