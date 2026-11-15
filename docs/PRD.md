@@ -1,11 +1,11 @@
 # PRD — Recur (working name)
 
-|             |                                                                                    |
-| ----------- | ---------------------------------------------------------------------------------- |
-| **Status**  | Draft v0.2 — re-scoped by ADR-018 (CSV first, PDF second)                          |
-| **Owner**   | Bruce Vo                                                                           |
-| **Date**    | 2026-11-10                                                                         |
-| **Related** | `docs/RESEARCH.md`, `docs/ARCHITECTURE.md`, `docs/DECISIONS.md`, `docs/ROADMAP.md` |
+|             |                                                                                               |
+| ----------- | --------------------------------------------------------------------------------------------- |
+| **Status**  | Draft v0.3 — re-scoped by ADR-019 (PDF first for TD and CIBC; CSV code kept, no new CSV work) |
+| **Owner**   | Bruce Vo                                                                                      |
+| **Date**    | 2026-11-10                                                                                    |
+| **Related** | `docs/RESEARCH.md`, `docs/ARCHITECTURE.md`, `docs/DECISIONS.md`, `docs/ROADMAP.md`            |
 
 "Recur" is a placeholder name. Rename freely before the first public commit.
 
@@ -69,17 +69,17 @@ The product has no telemetry by design (it would undercut the privacy claim), so
 
 ## 5. Assumptions
 
-| ID  | Assumption                                                                                                                                                              | Status                                                                                                                                   | How to validate                                           | If false                                                                            |
-| --- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------- | ----------------------------------------------------------------------------------- |
-| A1  | Bruce can obtain ≥ 3 consecutive monthly PDF statements for at least one chequing account and one credit card at a Big-5 bank                                           | **Confirmed 2026-11-10: TD chequing + CIBC credit card**                                                                                 | Bruce checks his online banking                           | Start with whatever formats he has; if none, the project is not viable as specified |
-| A2  | Statements are digital PDFs with a real text layer, not scans                                                                                                           | Unconfirmed                                                                                                                              | Select text in the PDF viewer                             | OCR is out of scope; those statements are unsupported                               |
-| A3  | A bank's layout is stable enough that one profile covers at least 12 months of statements                                                                               | Unconfirmed; prior art warns that banks tweak formats                                                                                    | Parse statements from different months                    | Profiles need variants; more maintenance                                            |
-| A4  | Friends will share redacted fixtures for other banks                                                                                                                    | Unconfirmed                                                                                                                              | Ask 2–3 people during M4                                  | Bank coverage stays at what Bruce owns                                              |
-| A5  | No existing client-side tool already parses Canadian statements well                                                                                                    | Partly verified: two were inspected and neither supports Canadian banks. Digital ToolPad is closed-source and untested                   | M0: Bruce tries it on one of his own statements           | The differentiator narrows to the subscription finder; still viable                 |
-| A6  | Three months of data is enough to detect monthly subscriptions                                                                                                          | Reasonable; matches the 3-occurrence approach in Actual Budget                                                                           | Labelled test suite in M3                                 | Require more statements; say so in the UI                                           |
-| A7  | Bruce has roughly 15–20 hours a week for this through mid-December                                                                                                      | **Confirmed 2026-11-10: more than 20 hours a week**                                                                                      | Bruce confirms                                            | Timeline stretches; cut order is in `docs/ROADMAP.md`                               |
-| A8  | Canadian banks let customers download transactions as CSV, with enough history (≥ 12 months) and enough columns (date, description, amount) to detect recurring charges | Partly confirmed: the owner's bank offers 12 months or more. Other banks unverified; one vendor guide says BMO has no full-statement CSV | M1 fixtures from TD and CIBC; M4 testers from other banks | Those banks need PDF support (stage 2) or stay unsupported                          |
-| A9  | People are willing to download a file from online banking and drop it into a web page                                                                                   | Unconfirmed                                                                                                                              | M4 validation with ≥ 5 outside testers                    | Re-plan at the stage gate (ADR-018)                                                 |
+| ID  | Assumption                                                                                                                                                              | Status                                                                                                                                                                             | How to validate                                 | If false                                                                            |
+| --- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------- | ----------------------------------------------------------------------------------- |
+| A1  | Bruce can obtain ≥ 3 consecutive monthly PDF statements for at least one chequing account and one credit card at a Big-5 bank                                           | **Confirmed 2026-11-10: TD chequing + CIBC credit card**                                                                                                                           | Bruce checks his online banking                 | Start with whatever formats he has; if none, the project is not viable as specified |
+| A2  | Statements are digital PDFs with a real text layer, not scans                                                                                                           | Unconfirmed                                                                                                                                                                        | Select text in the PDF viewer                   | OCR is out of scope; those statements are unsupported                               |
+| A3  | A bank's layout is stable enough that one profile covers at least 12 months of statements                                                                               | Unconfirmed; prior art warns that banks tweak formats                                                                                                                              | Parse statements from different months          | Profiles need variants; more maintenance                                            |
+| A4  | Friends will share redacted fixtures for other banks                                                                                                                    | Unconfirmed                                                                                                                                                                        | Ask 2–3 people during M4                        | Bank coverage stays at what Bruce owns                                              |
+| A5  | No existing client-side tool already parses Canadian statements well                                                                                                    | Partly verified: two were inspected and neither supports Canadian banks. Digital ToolPad is closed-source and untested                                                             | M0: Bruce tries it on one of his own statements | The differentiator narrows to the subscription finder; still viable                 |
+| A6  | Three months of data is enough to detect monthly subscriptions                                                                                                          | Reasonable; matches the 3-occurrence approach in Actual Budget                                                                                                                     | Labelled test suite in M3                       | Require more statements; say so in the UI                                           |
+| A7  | Bruce has roughly 15–20 hours a week for this through mid-December                                                                                                      | **Confirmed 2026-11-10: more than 20 hours a week**                                                                                                                                | Bruce confirms                                  | Timeline stretches; cut order is in `docs/ROADMAP.md`                               |
+| A8  | Canadian banks let customers download transactions as CSV, with enough history (≥ 12 months) and enough columns (date, description, amount) to detect recurring charges | Refuted for the owner's banks (2026-11-14): TD chequing and CIBC credit card offer PDF only (ADR-019). Other banks unverified; one vendor guide says BMO has no full-statement CSV | M4 testers from other banks                     | Those banks need PDF support (stage 2) or stay unsupported                          |
+| A9  | People are willing to download a file from online banking and drop it into a web page                                                                                   | Unconfirmed                                                                                                                                                                        | M4 validation with ≥ 5 outside testers          | Re-plan at the stage gate (ADR-018)                                                 |
 
 ## 6. Constraints
 
@@ -109,18 +109,18 @@ The product has no telemetry by design (it would undercut the privacy claim), so
 **Stage 1 — the launch (M1–M4)**
 
 - Drag-and-drop one or many CSV transaction exports, from any bank.
-- Automatic column detection, with a confirmation screen when the app is not sure. Tested layouts: TD and CIBC exports.
+- Automatic column detection, with a confirmation screen when the app is not sure. Tested layouts: synthetic CSV layouts only (ADR-019; TD and CIBC offer PDF only).
 - A verification status for every file: checked against its running balance where the file has one, labelled "Cannot verify" where it does not.
 - Merged, de-duplicated ledger across files; CSV export.
 - Recurring-charge detection with cadence (weekly to annual), typical amount, monthly and yearly cost, price-change flag, confidence, and the evidence rows.
 - Clear labels on charges whose real service cannot be known from the description (app-store and payment-processor charges).
 - Take the result away: download the recurring list, and a calendar file with the next renewal dates.
-- "How to download your transactions" help for the tested banks.
+- "How to download your statements" help for the supported banks (PDF for TD and CIBC; CSV help only for a bank that offers CSV and has been verified).
 - "Try with sample data" demo using synthetic data.
 - A "How to verify nothing is uploaded" panel.
 - English UI.
 
-**Stage 2 — after the launch gate (M5–M7)**
+**Stage 2 — PDF, built first (M5–M7, before M2–M4; ADR-019)**
 
 - PDF statements as a second input, for history older than the CSV export reaches and for accounts with no export.
 - Two verified PDF formats: TD chequing and CIBC credit card, with balance reconciliation.
@@ -163,22 +163,22 @@ More PDF formats, French-language files, scanned PDFs (OCR), password-protected 
 
 ## 11. Acceptance criteria
 
-Stage 1 is done when AC-1 to AC-12, AC-14 and AC-15 hold. Stage 2 adds AC-13. The thresholds in AC-6 and AC-7 did not change in ADR-018.
+Stage 1 is done when AC-1 to AC-12, AC-14 and AC-15 hold. Stage 2 adds AC-13. ADR-019 builds AC-13's PDF formats (M5 to M7) before the rest of stage 1; the criteria themselves are unchanged apart from AC-3. The thresholds in AC-6 and AC-7 did not change in ADR-018.
 
-| ID    | Criterion                                                                                                                                                                               | Verified by                                 |
-| ----- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------- |
-| AC-1  | Every fixture (CSV and PDF) parses to exactly its golden transaction list, and every fixture that carries balances reconciles as **Verified**                                           | Golden tests in CI                          |
-| AC-2  | Removing or altering any one transaction in a fixture flips the result to **Mismatch**                                                                                                  | Mutation tests in CI                        |
-| AC-3  | ≥ 2 real CSV export layouts (TD and CIBC), each backed by ≥ 2 redacted fixtures, plus synthetic layouts with and without a header, one or two amount columns, with and without balances | Fixture count                               |
-| AC-4  | During an end-to-end run in a real browser, zero requests go to any origin other than the app's own, and no request carries a body                                                      | Playwright network assertion                |
-| AC-5  | The app parses a statement with the network disabled after page load                                                                                                                    | Playwright offline test                     |
-| AC-6  | On a labelled synthetic suite of ≥ 30 scenarios, recurring detection reaches precision ≥ 0.90 and recall ≥ 0.80 for weekly, bi-weekly and monthly cadences                              | Unit tests with a reported confusion matrix |
-| AC-7  | On Bruce's own data, the detector finds at least 80% of the subscriptions he lists by hand beforehand                                                                                   | Manual check recorded in `docs/PROGRESS.md` |
-| AC-8  | Exported CSV re-imports to an identical ledger, and a description starting with `=`, `+`, `-` or `@` is neutralised while amounts stay numeric                                          | Unit tests                                  |
-| AC-9  | 12 synthetic files (about 12 months of transactions each) process in under 5 s in CI                                                                                                    | Playwright timing                           |
-| AC-10 | The demo loads and shows recurring charges without the user supplying a file                                                                                                            | Playwright                                  |
-| AC-11 | The deployed site sends the Content-Security-Policy defined in `docs/ARCHITECTURE.md` §8                                                                                                | `curl -I` check in the release checklist    |
-| AC-12 | The README has a demo GIF, a supported-files table, privacy verification steps, and fixture contribution steps                                                                          | Review                                      |
+| ID    | Criterion                                                                                                                                                                             | Verified by                                 |
+| ----- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------- |
+| AC-1  | Every fixture (CSV and PDF) parses to exactly its golden transaction list, and every fixture that carries balances reconciles as **Verified**                                         | Golden tests in CI                          |
+| AC-2  | Removing or altering any one transaction in a fixture flips the result to **Mismatch**                                                                                                | Mutation tests in CI                        |
+| AC-3  | Synthetic CSV layouts with and without a header, one or two amount columns, with and without balances. (ADR-019 dropped the real TD and CIBC CSV fixtures: both banks offer PDF only) | Fixture count                               |
+| AC-4  | During an end-to-end run in a real browser, zero requests go to any origin other than the app's own, and no request carries a body                                                    | Playwright network assertion                |
+| AC-5  | The app parses a statement with the network disabled after page load                                                                                                                  | Playwright offline test                     |
+| AC-6  | On a labelled synthetic suite of ≥ 30 scenarios, recurring detection reaches precision ≥ 0.90 and recall ≥ 0.80 for weekly, bi-weekly and monthly cadences                            | Unit tests with a reported confusion matrix |
+| AC-7  | On Bruce's own data, the detector finds at least 80% of the subscriptions he lists by hand beforehand                                                                                 | Manual check recorded in `docs/PROGRESS.md` |
+| AC-8  | Exported CSV re-imports to an identical ledger, and a description starting with `=`, `+`, `-` or `@` is neutralised while amounts stay numeric                                        | Unit tests                                  |
+| AC-9  | 12 synthetic files (about 12 months of transactions each) process in under 5 s in CI                                                                                                  | Playwright timing                           |
+| AC-10 | The demo loads and shows recurring charges without the user supplying a file                                                                                                          | Playwright                                  |
+| AC-11 | The deployed site sends the Content-Security-Policy defined in `docs/ARCHITECTURE.md` §8                                                                                              | `curl -I` check in the release checklist    |
+| AC-12 | The README has a demo GIF, a supported-files table, privacy verification steps, and fixture contribution steps                                                                        | Review                                      |
 
 Added by ADR-018:
 
@@ -197,7 +197,7 @@ Added by ADR-018:
 | Users do not trust a web page with bank statements                                     | High       | Adoption                                                | Open source, CSP, offline test, demo mode, plain-language verification steps                                      |
 | Bank changes its layout                                                                | Medium     | Silent wrong output                                     | Reconciliation gate makes failures loud; header-anchored columns rather than fixed coordinates                    |
 | CSV exports differ between banks, and some carry no balance (A8)                       | High       | Some imports cannot be verified; some banks unsupported | Column mapper with user confirmation; "Cannot verify" shown plainly; PDF support in stage 2                       |
-| People will not download a file and drop it into a web page (A9)                       | Medium     | Adoption                                                | Per-bank download steps; demo mode; M4 validation before stage 2                                                  |
+| People will not download a file and drop it into a web page (A9)                       | Medium     | Adoption                                                | Per-bank download steps; demo mode; M4 validation                                                                 |
 | The tool is used once and forgotten                                                    | High       | Low repeat use                                          | Calendar file and summary download give lasting value without storing data; accepted as the nature of the product |
 | Scope creep into a budgeting app                                                       | Medium     | Never ships                                             | Non-goals in §4; backlog parked in `docs/ROADMAP.md`                                                              |
 | Fall exams and the internship search compete for time (A7)                             | High       | Slip                                                    | Hour-based milestones with a stated cut order                                                                     |
@@ -208,4 +208,4 @@ Added by ADR-018:
 2. How many hours a week can you commit through mid-December? Answered 2026-11-10: more than 20.
 3. Licence: MIT as recommended in ADR-006, or AGPL-3.0?
 4. Final project name and whether to buy a domain (optional; about $10–15 a year would be the only cost).
-5. **For M1:** download a CSV of transactions from TD (chequing) and from CIBC (credit card), as far back as each allows, and save them in `~/Statements/`. How far back does each go, and does each file have a balance column? (Blocks the M1 fixtures.)
+5. ~~**For M1:** download a CSV of transactions from TD (chequing) and from CIBC (credit card).~~ Dropped by ADR-019: both banks offer PDF statements only (owner checked 2026-11-14). Nothing is blocked on it.

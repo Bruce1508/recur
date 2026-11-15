@@ -4,26 +4,27 @@
 
 A record is changed only by adding a new record that supersedes it. Statuses: Proposed, Accepted, Superseded.
 
-| #   | Decision                                                                        | Status                                               |
-| --- | ------------------------------------------------------------------------------- | ---------------------------------------------------- |
-| 001 | Client-only static app; no backend, no telemetry                                | Proposed                                             |
-| 002 | `pdfjs-dist` for PDF text extraction                                            | Proposed                                             |
-| 003 | Header-anchored column geometry for parsing                                     | Proposed                                             |
-| 004 | Balance reconciliation is a hard gate; fail closed                              | Proposed                                             |
-| 005 | Redacted positioned-text fixtures; no real PDFs anywhere                        | Proposed                                             |
-| 006 | MIT licence; independent implementation; monopoly as a reference for facts only | Accepted (choice delegated by the owner, 2026-11-10) |
-| 007 | React + Vite + TypeScript                                                       | Proposed                                             |
-| 008 | No custom Web Worker in the MVP                                                 | Proposed                                             |
-| 009 | Cloudflare Pages, with a host-independent CSP                                   | Proposed                                             |
-| 010 | In-memory state only                                                            | Proposed                                             |
-| 011 | Integer cents and plain date strings                                            | Proposed                                             |
-| 012 | TypeScript 7 + Biome + Vitest + Playwright, npm, Node 24                        | Proposed                                             |
-| 013 | No LLM in the product path                                                      | Proposed                                             |
-| 014 | Rule-based recurring detection                                                  | Proposed                                             |
-| 015 | Autonomous PR workflow and Claude Code automation                               | Accepted                                             |
-| 016 | Real statements live outside the repository                                     | Accepted                                             |
-| 017 | Run `gh` and `git push/fetch/pull` as standalone commands                       | Accepted                                             |
-| 018 | CSV import first, PDF parsing second; usefulness is the first goal              | Accepted (owner's decision, 2026-11-10)              |
+| #   | Decision                                                                        | Status                                                                 |
+| --- | ------------------------------------------------------------------------------- | ---------------------------------------------------------------------- |
+| 001 | Client-only static app; no backend, no telemetry                                | Proposed                                                               |
+| 002 | `pdfjs-dist` for PDF text extraction                                            | Proposed                                                               |
+| 003 | Header-anchored column geometry for parsing                                     | Proposed                                                               |
+| 004 | Balance reconciliation is a hard gate; fail closed                              | Proposed                                                               |
+| 005 | Redacted positioned-text fixtures; no real PDFs anywhere                        | Proposed                                                               |
+| 006 | MIT licence; independent implementation; monopoly as a reference for facts only | Accepted (choice delegated by the owner, 2026-11-10)                   |
+| 007 | React + Vite + TypeScript                                                       | Proposed                                                               |
+| 008 | No custom Web Worker in the MVP                                                 | Proposed                                                               |
+| 009 | Cloudflare Pages, with a host-independent CSP                                   | Proposed                                                               |
+| 010 | In-memory state only                                                            | Proposed                                                               |
+| 011 | Integer cents and plain date strings                                            | Proposed                                                               |
+| 012 | TypeScript 7 + Biome + Vitest + Playwright, npm, Node 24                        | Proposed                                                               |
+| 013 | No LLM in the product path                                                      | Proposed                                                               |
+| 014 | Rule-based recurring detection                                                  | Proposed                                                               |
+| 015 | Autonomous PR workflow and Claude Code automation                               | Accepted                                                               |
+| 016 | Real statements live outside the repository                                     | Accepted                                                               |
+| 017 | Run `gh` and `git push/fetch/pull` as standalone commands                       | Accepted                                                               |
+| 018 | CSV import first, PDF parsing second; usefulness is the first goal              | Accepted (owner's decision, 2026-11-10); stage order superseded by 019 |
+| 019 | PDF first for the owner's banks; no further CSV work                            | Accepted (owner's decision, 2026-11-14)                                |
 
 All records become Accepted when Bruce signs off on the PRD.
 
@@ -303,3 +304,26 @@ All records become Accepted when Bruce signs off on the PRD.
 **Consequences.** The product is usable by far more people from day one, and feedback arrives before the expensive parser work. The resume piece moves later and depends on the stage gate. CSV layouts differ between banks and some carry no balance, so some imports cannot be verified. The old fallback plan ("switch to CSV if PDF fails") is gone because CSV is now the main path; if PDF parsing fails in M6 the product stays CSV-only.
 
 **Revisit when** the M4 validation shows that people cannot or will not download a CSV from their bank. Then PDF, or another input, moves up.
+
+---
+
+## ADR-019 — PDF first for the owner's banks; no further CSV work
+
+**Context.** ADR-018 put CSV first because the owner said his bank offers a CSV export (open question 6). On 2026-11-14 he checked both target accounts: TD chequing offers statement PDFs only, and CIBC credit card is also PDF only. The owner therefore has no real CSV to build a fixture from, and the product would not work on his own data. ADR-018's fallback ("if PDF parsing fails the product stays CSV-only") would leave him with nothing.
+
+| Option                                                             | Works on the owner's accounts | Cost                                     |
+| ------------------------------------------------------------------ | ----------------------------- | ---------------------------------------- |
+| A. Keep CSV first, wait for a CSV from another bank                | No                            | Stalls with no real fixture              |
+| **B. PDF first for TD and CIBC; keep the CSV code, stop CSV work** | Yes                           | Parser work comes before M2              |
+| C. Delete the CSV pipeline                                         | Yes                           | Throws away tested, merged, working code |
+
+**Decision.** B.
+
+- The CSV pipeline on `main` (M1 tasks 1 to 11, 312 tests) stays as it is. No new CSV tasks. The real-CSV fixtures for TD and CIBC (the real part of AC-3) are dropped; the synthetic CSV layouts keep AC-3's synthetic part.
+- Milestone order becomes M1 (code done), M5, M6, M7, then M2, M3, M4. Milestone numbers do not change. The M4 stage gate no longer blocks PDF work, because PDF is now the owner's only input; M4 still ends with the small launch and outside testers.
+- ADR-016 is unchanged. Real PDFs stay in the statements folder outside the repository, Claude never reads them, and they never enter the repository. Layout facts reach Claude only through `tools/pdf-dump.ts` (M5 task 4), which the owner runs. It writes positioned text in which every text run is replaced by a mask that keeps its shape (digits, letters, punctuation), except dates, amounts and a short list of structural labels. The owner reads the output before sharing it.
+- ADR-004 and ADR-005 stand: reconciliation is a hard gate, and fixtures are redacted positioned text.
+
+**Consequences.** The hard technical piece comes first and the owner can use the product on his own accounts. Recurring-charge detection (M2) waits on a working PDF format, so the first usable demo moves later. If the PDFs turn out to have no text layer (scanned images), parsing is out of scope and this decision is revisited.
+
+**Revisit when** the first real dump shows no text layer, or a bank format cannot be reconciled in M6.
