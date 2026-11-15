@@ -10,7 +10,7 @@ Living document. Update it at the end of every working session. Never record sta
 
 **Phase (before ADR-019):** M1 in progress (stage 1, CSV first, ADR-018). The whole CSV pipeline up to the ledger is on `main`, tested end to end on synthetic data (269 tests, `npm run verify` green, CI green): `src/core/money.ts`, `plainDate.ts`, `csv/read.ts`, `csv/mapColumns.ts`, `csv/toStatement.ts`, `reconcile.ts`, `ledger.ts`, `tools/make-synthetic.ts`, and the import-boundary lint rule (PRs #5 to #12, tasks 1 to 7 and 10).
 
-**Left in M1:** tasks 1 to 11 are built (11 is the UI, PR #15; 8 and 9 are the fixture tools, PR #16). What remains is the owner's: run `fixture:dump` on his real exports and review the output, then the real-export acceptance criteria (AC-3) and the manual check in the browser (see "Waiting on the owner"). M1 is done when two real export layouts import correctly.
+**M1 is code-complete:** tasks 1 to 11 are built (11 is the UI, PR #15; 8 and 9 are the fixture tools, PR #16; 312 tests on `main` at `e25ea6f`). The real-export criteria were dropped by ADR-019. Optional for the owner: try the UI with `npm run dev` on a synthetic CSV.
 
 **Tooling note:** `gh` failed with `x509: OSStatus -26276` inside the Bash sandbox on 2026-11-11. It worked when that call was run with the sandbox disabled, so the sandbox is the cause. Use that only after a sandbox-caused failure of the same command, never as the default; if the owner gets a proper fix, drop this note.
 
@@ -40,9 +40,9 @@ Living document. Update it at the end of every working session. Never record sta
 - `reconcile` reports `mismatch` rather than `unverifiable` when an export lists same-day rows against its overall date direction; check against the real TD and CIBC fixtures.
 - `mapColumns`: a balance column with a blank cell is not detected (fail closed); a lone Amount column with mixed signs and no balance is `high` (sign convention is the UI's job, above).
 
-**Target files:** stage 1: CSV exports from TD (chequing) and CIBC (credit card). Stage 2: PDF statements for the same two accounts (A1 confirmed). Real exports and statements stay in `~/Statements/`.
+**Target files (ADR-019):** PDF statements from TD (chequing) and CIBC (credit card); neither bank offers CSV. Real statements stay in `~/Statements/`.
 
-**Blocked on the owner:** nothing blocks Claude's next tasks (11, 8, 9). Real-export fixtures and AC-3 need the owner's own CSV exports in the statements folder (outside the repository) and his review of the redacted output.
+**Blocked on the owner:** nothing blocks the next Claude tasks (`src/pdf/extract.ts`, `tools/pdf-dump.ts`). Real layout facts need the owner to run the dump on one PDF per account and review its output (see "Waiting on the owner").
 
 ## Milestones
 
@@ -100,7 +100,7 @@ Queued by the autonomous workflow. Claude does not attempt these.
 | ----- | --------------------------------------------- | ------- | ----------------------------------------------------------------------------------- |
 | AC-1  | Fixtures match golden output and reconcile    | Partial | 11 synthetic layouts parse to exact golden output; verified with a balance (task 7) |
 | AC-2  | Mutations produce a mismatch                  | Partial | Middle rows only on synthetic files; the ends need the cross-file chain (backlog)   |
-| AC-3  | Two real CSV layouts, two fixtures each       | Partial | Synthetic layouts done; real TD and CIBC fixtures need the owner                    |
+| AC-3  | Synthetic CSV layouts (real CSV dropped)      | Met     | 11 synthetic layouts (task 7); real TD and CIBC CSV dropped by ADR-019              |
 | AC-4  | No cross-origin requests, no request bodies   | —       |                                                                                     |
 | AC-5  | Works offline after load                      | —       |                                                                                     |
 | AC-6  | Detection precision ≥ 0.90, recall ≥ 0.80     | —       |                                                                                     |
@@ -116,15 +116,15 @@ Queued by the autonomous workflow. Claude does not attempt these.
 
 ## Risk watch
 
-| Risk                                                                   | Status                                           | Next check               |
-| ---------------------------------------------------------------------- | ------------------------------------------------ | ------------------------ |
-| Too few real statements                                                | Reduced: A1 confirmed for two accounts           | M5                       |
-| Real PDFs differ from the synthetic spike                              | Open                                             | M5, first real statement |
-| Schedule against exams and internship applications                     | Open                                             | Weekly                   |
-| TypeScript 7 tooling friction                                          | Closed: `tsc --noEmit` runs clean on 7.0.2 in CI | —                        |
-| Real CSV exports differ from the synthetic layouts, or have no balance | Open                                             | M1, first real export    |
-| People will not download a file from their bank                        | Open                                             | M4 validation            |
-| `gh` TLS failure (`x509 -26276`) inside the sandbox                    | Worked around per call, see Tooling note         | Each session             |
+| Risk                                                                   | Status                                           | Next check                 |
+| ---------------------------------------------------------------------- | ------------------------------------------------ | -------------------------- |
+| Too few real statements                                                | Reduced: A1 confirmed for two accounts           | M5                         |
+| Real PDFs differ from the synthetic spike                              | Open                                             | M5, first real statement   |
+| Schedule against exams and internship applications                     | Open                                             | Weekly                     |
+| TypeScript 7 tooling friction                                          | Closed: `tsc --noEmit` runs clean on 7.0.2 in CI | —                          |
+| Real CSV exports differ from the synthetic layouts, or have no balance | Closed for the owner (no CSV, ADR-019)           | Only if a CSV user appears |
+| People will not download a file from their bank                        | Open                                             | M4 validation              |
+| `gh` TLS failure (`x509 -26276`) inside the sandbox                    | Worked around per call, see Tooling note         | Each session               |
 
 ## Session log
 

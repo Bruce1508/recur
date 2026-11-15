@@ -12,10 +12,10 @@ The earlier order was CSV first, PDF second (ADR-018). Stage 1 ships a useful pr
 | --- | ----------------------------------------------------- | ----- | ------- | ------------ | ---------- |
 | M0  | Validation gate and project bootstrap                 | —     | done    | Nov 10       | —          |
 | M1  | CSV import, ledger, fixture tooling, walking skeleton | 1     | 12–15 h | Nov 11–17    | M0         |
-| M2  | Recurring-charge detection                            | 1     | 12–15 h | Nov 18–24    | M1         |
+| M2  | Recurring-charge detection                            | 1     | 12–15 h | Nov 18–24    | M7         |
 | M3  | Product UI, demo mode, exports, trust features        | 1     | 12–14 h | Nov 25–Dec 1 | M2         |
 | M4  | Hardening, deployment, small launch, validation       | 1     | 8–10 h  | Dec 2–8      | M3         |
-| M5  | PDF extraction, line model, PDF fixture tooling       | 2     | 10–12 h | Dec 9–15     | M4 gate    |
+| M5  | PDF extraction, line model, PDF fixture tooling       | 2     | 10–12 h | Dec 9–15     | M1         |
 | M6  | First PDF format (TD chequing) with reconciliation    | 2     | 14–16 h | Dec 16–23    | M5         |
 | M7  | Second PDF format (CIBC credit card)                  | 2     | 8–10 h  | Dec 24–30    | M6         |
 
@@ -32,7 +32,7 @@ The earlier order was CSV first, PDF second (ADR-018). Stage 1 ships a useful pr
 
 **Stage gate after M4.** Superseded for TD and CIBC by ADR-019: M5 to M7 start now. The validation in M4 still decides whether to support other banks.
 
-**Resume checkpoint.** After M4 there is a live product with real users' feedback. After M6 the repository also shows the hardest technical part (verified PDF table extraction with tests).
+**Resume checkpoint.** After M6 the repository shows the hardest technical part (verified PDF table extraction with tests). After M4 there is also a live product with real users' feedback.
 
 ## Global Definition of Done
 
@@ -57,7 +57,7 @@ Scaffold, CSP placeholder, CI job `verify`, privacy probe, and the gate decision
 
 **Objective.** Turn a bank's CSV export into a clean, checked ledger, and see it in a browser.
 
-**Dependencies.** M0. For tasks 8 and 9: the owner's own CSV exports from TD and CIBC, saved in `~/Statements/`.
+**Dependencies.** M0. (Tasks 8 and 9 originally needed the owner's real CSV exports; ADR-019 dropped that, see below.)
 
 **Tasks**
 
@@ -75,14 +75,13 @@ Scaffold, CSP placeholder, CI job `verify`, privacy probe, and the gate decision
 
 **Acceptance criteria**
 
-- AC-1 and AC-2 hold for the synthetic CSV layouts and for the redacted fixtures.
-- AC-3: redacted fixtures from two real export layouts (TD and CIBC), at least two files each, committed after the owner's review.
+- AC-1 and AC-2 hold for the synthetic CSV layouts.
+- AC-3: synthetic CSV layouts only. The real TD and CIBC CSV fixtures were dropped by ADR-019 (both banks offer PDF only).
 - A file that is not a transaction export yields a clear "cannot read this file" state, not an exception.
-- Dropping a real export in the local dev build shows the right row count and status (checked by the owner on his own machine; counts only in `docs/PROGRESS.md`).
 
-**Verification.** CI test report; the owner's manual check recorded without file contents.
+**Verification.** CI test report.
 
-**Done when** two real export layouts import correctly and the pipeline up to the ledger is tested.
+**Done when** the pipeline up to the ledger is tested on synthetic layouts. Met on 2026-11-13 (tasks 1 to 11 merged); the real-export criteria were dropped by ADR-019.
 
 ---
 
@@ -90,7 +89,7 @@ Scaffold, CSP placeholder, CI job `verify`, privacy probe, and the gate decision
 
 **Objective.** Find recurring charges in a ledger and explain each finding.
 
-**Dependencies.** M1.
+**Dependencies.** M7 (ADR-019 order); the ledger it reads is M1 code, fed by PDF statements.
 
 **Tasks**
 
