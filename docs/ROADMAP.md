@@ -185,7 +185,7 @@ Scaffold, CSP placeholder, CI job `verify`, privacy probe, and the gate decision
 1. `src/pdf/extract.ts`: PDF bytes → `RawDocument` (metadata plus positioned items). Self-host the pdf.js worker; load it lazily.
 2. `src/core/normalize/`: items → lines (tolerance by font height, fragment merging, ordering).
 3. Extend `tools/make-synthetic.ts` to generate synthetic statement PDFs with known contents.
-4. Extend `tools/fixture-dump.ts` to write a redacted positioned-text `input.json` from a real PDF.
+4. `tools/pdf-dump.ts` (new owner-run CLI, ADR-019; not an extension of `fixture-dump.ts`): real PDF → masked positioned-text JSON outside the repository. Turning a reviewed dump into a committed fixture comes after the first real dump.
 5. Run the first real statement through extraction and the dump tool. Inspect the output by eye. Record quirks: fragmented or squashed text, hidden text, fonts, whether character maps or WebAssembly were needed.
 
 **Acceptance criteria**

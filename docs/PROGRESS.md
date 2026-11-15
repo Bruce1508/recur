@@ -6,7 +6,7 @@ Living document. Update it at the end of every working session. Never record sta
 
 ## Current status
 
-**Scope change (2026-11-14, ADR-019):** the owner checked and both TD chequing and CIBC credit card offer statement PDFs only. PDF parsing now comes first: the order is M5, M6, M7, then M2, M3, M4. The CSV code below stays on `main` with no new work, and the real-CSV fixtures (AC-3, real part) are dropped. Next task: `src/pdf/extract.ts` and `tools/pdf-dump.ts` (M5 tasks 1 and 4), so the owner can produce a redacted layout dump from his PDFs.
+**Scope change (2026-11-14, ADR-019):** the owner checked and both TD chequing and CIBC credit card offer statement PDFs only. PDF parsing now comes first: the order is M5, M6, M7, then M2, M3, M4. The CSV code below stays on `main` with no new work, and the real-CSV fixtures (AC-3, real part) are dropped. `src/pdf/extract.ts` and `tools/pdf-dump.ts` (M5 tasks 1 and 4) are built: the owner runs `npm run pdf:dump` on his PDFs to produce a masked layout dump. Next: `normalize` (M5 task 2) once a reviewed dump is shared.
 
 **Phase (before ADR-019):** M1 in progress (stage 1, CSV first, ADR-018). The whole CSV pipeline up to the ledger is on `main`, tested end to end on synthetic data (269 tests, `npm run verify` green, CI green): `src/core/money.ts`, `plainDate.ts`, `csv/read.ts`, `csv/mapColumns.ts`, `csv/toStatement.ts`, `reconcile.ts`, `ledger.ts`, `tools/make-synthetic.ts`, and the import-boundary lint rule (PRs #5 to #12, tasks 1 to 7 and 10).
 
@@ -19,7 +19,7 @@ Living document. Update it at the end of every working session. Never record sta
 **Next session, in order (ADR-019):**
 
 1. Run `git log origin/main` and `gh pr list` to confirm what is merged. Never `--admin`; never force-push (merge `main` into the branch instead of rebasing).
-2. M5 tasks 1 and 4: `src/pdf/extract.ts` (the only file that imports `pdfjs-dist`) and `tools/pdf-dump.ts`, the owner-run CLI that writes a masked positioned-text dump.
+2. M5 tasks 1 and 4 are done (`src/pdf/extract.ts`, the only file that imports `pdfjs-dist`, and `tools/pdf-dump.ts`, the owner-run CLI that writes a masked positioned-text dump). Next without the owner: M5 task 3 (synthetic statement PDFs, extend `tools/makePdf.ts`) and task 2 (`normalize`, against synthetic input).
 3. When the owner pastes a reviewed dump: record the quirks in this file, then `normalize` (M5 task 2), then the TD profile (M6). Claude never reads a real statement; only the masked dump.
 4. M2 (recurring-charge detection) needs the owner's hand-written subscription list first (see "Waiting on the owner"), and now follows M7.
 
@@ -87,7 +87,7 @@ Queued by the autonomous workflow. Claude does not attempt these.
 
 - [ ] `sudo chown -R 501:20 ~/.npm`: the npm cache has root-owned files, so `npm` fails in the sandbox (worked around with a temp cache).
 - [x] ~~M1: download CSVs from TD and CIBC~~ Dropped by ADR-019: both banks offer PDF only (owner checked 2026-11-14). Open question 7 is moot.
-- [ ] M5: keep at least three statement PDFs per account (TD chequing, CIBC credit card) in `~/Statements/`. After the `pdf-dump` PR merges, run it on one PDF per account, read the output, and paste it here if it holds no real names, numbers or merchants.
+- [ ] M5: keep at least three statement PDFs per account (TD chequing, CIBC credit card) in `~/Statements/`. Run `npm run pdf:dump -- /abs/path/statement.pdf` on one PDF per account (add `--deny-list /abs/path/deny.txt` with your own names and numbers). It writes `<name>.layout.json` next to the PDF, outside the repository, and refuses a PDF with no text layer. Read the output; if it holds no real names, numbers or merchants, paste it to Claude. Dates and amounts are kept as they are (the parser needs them), so look at those too.
 - [ ] Optional, only if you ever get a CSV: `npm run fixture:dump` still works (`--description <n>` for an extra text column, `--deny-list /abs/path/deny.txt` for your own names and numbers). Its merchant map holds real merchant names: keep it outside the repository.
 - [ ] M2: before looking at any detector output, write down the subscriptions you believe you have (ground truth for AC-7). Keep the list out of the repository.
 - [ ] Open question 5: try one of your own statements in Digital ToolPad (and StatementSensei if convenient) and write down what each got right and wrong. Do not paste statement contents into any AI tool. Positioning only; matters for stage 2.
@@ -129,6 +129,14 @@ Queued by the autonomous workflow. Claude does not attempt these.
 ## Session log
 
 Newest first. One entry per session: date, what changed, what was verified, what is next.
+
+### 2026-11-14 — M5 tasks 1 and 4: PDF extraction and the layout dump
+
+- Added `pdfjs-dist` 6.5.438 (exact pin; `npm view` 2026-11-14: Apache-2.0, engines node >=22.13 or >=24; already in `approved-deps.json`; RESEARCH §5 row added). Added `RawItem`, `RawPage`, `RawDocument` to `src/core/types.ts`; `src/pdf/extract.ts` (`extractPdf(bytes)` returns `{ ok, doc }` or a reason made of the error class name only; top-left coordinates; legacy build, which runs in Node); `tools/pdfMask.ts` (`maskRun`, `maskDocument`, `deniedCount`); `tools/pdf-dump.ts` with `npm run pdf:dump`; `tools/makePdf.ts` (in-memory test PDFs, nothing written to disk).
+- Masking: amounts, dates and a short list of column labels are kept; every other run keeps its shape (letter case, digit count, punctuation) and loses its characters; the PDF title is masked, producer and creator are kept. The CLI refuses inputs, outputs and deny-lists inside the repository, refuses to overwrite, fails if a deny-list entry survives masking, and fails on a PDF with no text layer. Output is mode 600 next to the input.
+- Finding from the tests: pdf.js emits whitespace-only items at line ends. They are kept (`normalize` needs the gaps) and show up in the dump as `" "`.
+- Verified: unit tests for the mask and for extraction on generated PDFs (positions, metadata, empty page, input bytes untouched, non-PDF fails closed); `pdf:dump` run on a synthetic PDF in a temp folder (mask output as expected, planted deny entry caught, output inside the repo refused). Not verified: anything on a real statement; whether real PDFs have a text layer.
+- Limit: dates and amounts stay readable in the dump by design; the owner must read it before sharing.
 
 ### 2026-11-14 — Re-scope: PDF first (ADR-019)
 

@@ -63,6 +63,31 @@ export interface ParsedStatement {
   readonly warnings: readonly string[];
 }
 
+/** One run of text from a PDF page. `x` and `y` are the run's origin from the top-left of the page. */
+export interface RawItem {
+  readonly str: string;
+  readonly x: number;
+  readonly y: number;
+  readonly w: number;
+  readonly h: number;
+  readonly font: string;
+}
+
+export interface RawPage {
+  readonly width: number;
+  readonly height: number;
+  readonly items: readonly RawItem[];
+}
+
+export interface RawDocument {
+  readonly meta: {
+    readonly producer?: string;
+    readonly creator?: string;
+    readonly title?: string;
+  };
+  readonly pages: readonly RawPage[];
+}
+
 // Row numbers: `source.row` and `firstBadRow` are 1-based line numbers in the CSV file,
 // counting the header row if there is one, so they match what a spreadsheet shows.
 // `expected` and `actual` are balances for "running-balance" and sums of amounts for "totals".
