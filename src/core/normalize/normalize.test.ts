@@ -126,6 +126,72 @@ describe("normalize", () => {
     expect(out.lines[0]?.y).toBe(100);
   });
 
+  test("pins the merge threshold: a gap or overlap under 0.2 of the text height merges, over it does not", () => {
+    // Text height 10, so the threshold is 2. The first item is 20 wide and ends at x = 70.
+    const pair = (x2: number) =>
+      normalize(doc([item("ab", 50, 100, 20), item("cd", x2, 100, 20)]))
+        .lines[0]?.items.length;
+    expect(pair(71.9)).toBe(1); // gap 1.9
+    expect(pair(72.1)).toBe(2); // gap 2.1
+    expect(pair(68.1)).toBe(1); // overlap 1.9
+    expect(pair(67.9)).toBe(2); // overlap 2.1
+  });
+
+  describe("text drawn twice (overdraw)", () => {
+    // A real statement draws its total row twice, 0.65 apart vertically and a fraction apart
+    // horizontally, so the second copy overlaps the first. The numbers here are invented; the
+    // offsets are the ones the layout dump showed.
+    const small = (str: string, x: number, y: number, w: number): RawItem => ({
+      str,
+      x,
+      y,
+      w,
+      h: 8.5,
+      font: "f1",
+    });
+
+    test("a near-identical copy is dropped, so a total is not doubled or repeated", () => {
+      const out = normalize(
+        doc([
+          small("Total", 69.12, 600.82, 18.9),
+          small("1,111.11", 273.49, 600.82, 33.08),
+          small("2,222.22", 372.38, 600.82, 33.08),
+          small("Total", 69.12, 600.17, 18.9),
+          small("1,111.11", 273.29, 600.17, 33.08),
+          small("2,222.22", 372.39, 600.17, 33.08),
+        ]),
+      );
+      expect(out.lines).toHaveLength(1);
+      expect(out.lines[0]?.text).toBe("Total 1,111.11 2,222.22");
+      expect(out.lines[0]?.y).toBe(600.17);
+    });
+
+    test("identical text on different rows, or in different columns of one row, is kept", () => {
+      const out = normalize(
+        doc([
+          small("5.07", 289.83, 381.59, 16.54),
+          small("5.07", 289.83, 505.13, 16.54),
+          small("SEP08", 417.48, 505.13, 26.46),
+          small("SEP08", 480, 505.13, 26.46),
+        ]),
+      );
+      expect(out.lines.map((l) => l.text)).toEqual([
+        "5.07",
+        "5.07 SEP08 SEP08",
+      ]);
+    });
+
+    test("different text at the same place is kept", () => {
+      const out = normalize(
+        doc([
+          small("1,111.11", 273, 600, 33),
+          small("1,111.12", 273, 600.2, 33),
+        ]),
+      );
+      expect(out.lines[0]?.items).toHaveLength(2);
+    });
+  });
+
   test("does not change its input", () => {
     const input = doc([item("b", 120, 100), item("a", 50, 100)]);
     normalize(input);
