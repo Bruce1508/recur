@@ -19,7 +19,7 @@ Living document. Update it at the end of every working session. Never record sta
 **Next session, in order (ADR-019):**
 
 1. Run `git log origin/main` and `gh pr list` to confirm what is merged. Never `--admin`; never force-push (merge `main` into the branch instead of rebasing).
-2. M5 tasks 1, 2 and 4 are done. M6 (ADR-020), in this order, each its own PR: (a) `reconcile` checkpoint and totals methods with mutation tests; (b) TD profile, `detect` and `parse` with a synthetic TD-style PDF generator built from the dump geometry, and a golden test through `extractPdf`, `normalize`, `parse`, `reconcile`; (c) UI accepts PDFs. Also pin the `normalize` overdraw threshold (0.25) with a test: same text and x at y distance 9.5 is kept, and just under and over 0.25 of the text height is dropped and kept.
+2. M5 tasks 1, 2 and 4 are done. M6 (ADR-020), in this order, each its own PR: (a) done: `reconcile` checkpoint and totals methods with mutation tests; (b) TD profile, `detect` and `parse` with a synthetic TD-style PDF generator built from the dump geometry, and a golden test through `extractPdf`, `normalize`, `parse`, `reconcile`; (c) UI accepts PDFs. Also pin the `normalize` overdraw threshold (0.25) with a test: same text and x at y distance 9.5 is kept, and just under and over 0.25 of the text height is dropped and kept.
 3. When the owner pastes more of a reviewed dump (pages 2 to 4, the second statement, the CIBC statement): record the quirks in this file and check the ADR-020 rules against them. Claude never reads a real statement; only the masked dump.
 4. M2 (recurring-charge detection) needs the owner's hand-written subscription list first (see "Waiting on the owner"), and now follows M7.
 
@@ -129,6 +129,16 @@ Queued by the autonomous workflow. Claude does not attempt these.
 ## Session log
 
 Newest first. One entry per session: date, what changed, what was verified, what is next.
+
+### 2026-11-14 — M6 task 3: reconcile checkpoints and totals (ADR-020)
+
+- `src/core/reconcile.ts`: `reconcile` now routes by input: a CSV statement goes to the unchanged running-balance code, a PDF statement to `reconcileAnchored`. `reconcileAnchored` follows ADR-020: the opening balance and each printed balance are checkpoints and the rows of a segment (up to and including the checkpoint row) must sum to the difference; then the printed totals and the closing balance are checked against the rows; `verified` needs at least one such anchor, every anchor in `requiredAnchors`, dates that do not go backwards (when row balances exist), and no warnings. Method is `checkpoints` when some row has a balance, `totals` when none has. A mismatch names the checkpoint row (`firstBadSource`) and wins over warnings. No opening balance, no anchor, a missing required anchor, backwards dates or a warning give `unverifiable`.
+- Types: `ParsedStatement.printedTotals` and `requiredAnchors`; `Reconciliation` method `checkpoints` and `firstBadSource`.
+- Tests (`src/core/reconcileAnchored.test.ts`, 63 tests, invented data, four days and eleven rows): every row removed, altered by a cent, or added at every position is a `mismatch` (AC-2); the first row is covered by the opening balance; a statement with its last day cut off is a `mismatch` with printed totals or a closing balance and `unverifiable` with neither; each anchor fails on its own by one cent; credit sign; rows after the last printed balance; totals method; the stated limit (two amounts swapped within a day stay verified) is pinned.
+- Mutation check of the code itself: removing the end-anchor requirement fails 4 tests, removing the checkpoint comparison fails 1 (the anchors catch the rest, the checkpoint adds the pinpoint), sending PDF statements through running-balance fails 55.
+- The round-trip with a real statement is not done: the profile and parser come next, so nothing here has run on a real statement. Coverage of `reconcile.ts`: 100% lines, 95.6% branches.
+- Verified: `npm run typecheck`, `npx biome check`, `npm test` (413 passed), `npm run fixtures:check`, `npm run build`. Not verified: behaviour on a real statement.
+- Next: the TD profile, `detect` and `parse` with the synthetic generator (M6 task 4).
 
 ### 2026-11-14 — ADR-020: checkpoint and totals reconciliation, amount columns from the amounts
 

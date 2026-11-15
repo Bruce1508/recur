@@ -59,6 +59,19 @@ export interface ParsedStatement {
   readonly period: { readonly start: PlainDate; readonly end: PlainDate };
   readonly openingBalance?: Cents;
   readonly closingBalance?: Cents;
+  /**
+   * The withdrawals and deposits the statement prints on its total row, as positive cents. Read
+   * from the labelled total row, never computed from the rows (ADR-020).
+   */
+  readonly printedTotals?: {
+    readonly withdrawals: Cents;
+    readonly deposits: Cents;
+  };
+  /**
+   * Anchors the profile requires before the statement may be verified (ADR-020). A required anchor
+   * that was not read gives `unverifiable`. The opening balance is always required for a PDF.
+   */
+  readonly requiredAnchors?: readonly ("printedTotals" | "closingBalance")[];
   readonly transactions: readonly Transaction[];
   readonly warnings: readonly string[];
 }
@@ -107,7 +120,19 @@ export interface LineDocument {
 // Row numbers: `source.row` and `firstBadRow` are 1-based line numbers in the CSV file,
 // counting the header row if there is one, so they match what a spreadsheet shows.
 // `expected` and `actual` are balances for "running-balance" and sums of amounts for "totals".
+// `firstBadSource` names the checkpoint row of the broken segment for a PDF statement (ADR-020);
+// `expected` and `actual` are then balances. For a failed anchor check they are the sum computed
+// from the rows and the figure the statement prints.
 export type Reconciliation =
-  | { status: "verified"; method: "totals" | "running-balance" }
-  | { status: "mismatch"; expected: Cents; actual: Cents; firstBadRow?: number }
+  | {
+      status: "verified";
+      method: "totals" | "running-balance" | "checkpoints";
+    }
+  | {
+      status: "mismatch";
+      expected: Cents;
+      actual: Cents;
+      firstBadRow?: number;
+      firstBadSource?: Transaction["source"];
+    }
   | { status: "unverifiable"; reason: string };
