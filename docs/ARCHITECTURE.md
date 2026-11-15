@@ -223,18 +223,19 @@ Real export layouts are facts to learn from the owner's redacted fixtures in M1.
 `(LineDocument, BankProfile) → ParsedStatement`.
 
 - **Header-anchored columns.** Find the header row by its labels, then derive each column's x-range from the label positions on that page. Nothing is a hard-coded coordinate, so small layout shifts do not break parsing.
-- **Right-edge matching for amounts.** Amount columns are right-aligned, so a number belongs to the column whose right edge is nearest (validated in the spike).
-- **Row assembly.** A line with an amount starts a transaction. A line without one, positioned in the description column, continues the previous description. A missing date inherits the previous row's date.
+- **Right-edge matching for amounts (ADR-020).** Amount columns are right-aligned, but header labels may be centred over them (the first real TD dump), so the labels give names and order, not x positions. Each amount label's left edge starts a span that runs to the next label's left edge; an amount-shaped item in the table body (from the header row to the total row) belongs to the span that contains its right edge. Items left of the first amount label are description text. Fail closed (a warning and no rows for the page) when the right edges inside one span differ by more than 1 point. A span with no items is allowed.
+- **Row assembly.** A line with a date and an amount in an amount span starts a transaction; a balance-only row (the starting balance), the total row and the closing-balance line are not transactions (ADR-020). A line without one, positioned in the description column, continues the previous description. A missing date inherits the previous row's date.
 - **Year inference.** Statements print "Oct 15", not a year. The year comes from the statement period, with December–January rollover handled explicitly.
 - **Sign convention** comes from the profile (separate withdrawal and deposit columns, a trailing minus, or a `CR` marker).
 
 ### 6.5 `reconcile`
 
-`ParsedStatement → Reconciliation`. Arithmetic is in integer cents. The profile chooses the method:
+`ParsedStatement → Reconciliation`. Arithmetic is in integer cents. The method follows from what the statement carries (ADR-020), by one ordered rule: a PDF statement with an opening balance and at least one row balance gives `checkpoints`; with an opening balance and no row balances, `totals`; a CSV whose every row has a balance, `running-balance` (CSV only, because it reads no anchors); anything else, including a PDF with no parsed opening balance, is `unverifiable`:
 
 - **`running-balance`** — every row's printed balance must equal the previous balance plus the row's amount. Pinpoints the first bad row.
-- **`totals`** — opening balance plus the sum of transactions must equal the closing balance.
-- If neither is available the result is `unverifiable`, never `verified`. A CSV with a balance column uses `running-balance`; a CSV without one is `unverifiable`.
+- **`totals`** — opening balance plus the sum of transactions must equal the closing balance (or the printed totals must equal the row sums); it cannot pinpoint a row.
+- **`checkpoints`** (ADR-020) — for statements that print a balance only on some rows (TD prints one on the last row of each day): the opening balance and each printed balance are checkpoints, and the rows between two checkpoints must sum to the difference. It gives `verified` only with an end anchor that does not come from the rows: the printed totals (`ParsedStatement.printedTotals`) equal to the parsed row sums, or the closing balance; the profile declares which anchors it requires, and a missing one gives `unverifiable`. Any warning gives `unverifiable`. A bad segment gives `mismatch` naming its checkpoint row. Errors that keep a segment's sum (swapped amounts, wrong description pairing, a charge and its reversal both dropped, a wrong date) are not detected.
+- If none of these applies the result is `unverifiable`, never `verified`. A CSV with a balance column on every row uses `running-balance`; a CSV without one is `unverifiable`.
 
 Statements are also chained: the closing balance of one must equal the opening balance of the next, which detects a missing month.
 

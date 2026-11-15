@@ -211,7 +211,7 @@ Scaffold, CSP placeholder, CI job `verify`, privacy probe, and the gate decision
 
 1. Profile schema and registry; `detect.ts`.
 2. `parse/`: header-anchored columns, right-edge amount matching, multi-line descriptions, date carry-forward, year inference, sign handling.
-3. `reconcile.ts`: add the totals method and statement chaining.
+3. `reconcile.ts`: add the checkpoint and totals methods (ADR-020; `ParsedStatement.printedTotals`, method `checkpoints`) with mutation tests, then statement chaining. This is its own PR, before the profile.
 4. First profile, written against the redacted fixtures. Collect three or more statements of this format as fixtures.
 5. Golden tests and mutation tests. Property test: random ledger → synthetic `LineDocument` → parse → equal.
 6. UI: accept PDFs as the main input (the existing CSV path stays for anyone who has a CSV); merge both into one ledger without double-counting the overlap.
