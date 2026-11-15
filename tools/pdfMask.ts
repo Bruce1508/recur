@@ -14,6 +14,11 @@ const DATE = new RegExp(
   "i",
 );
 
+// A statement period: exactly two dates joined by a dash or "to". The parser needs it to infer the
+// year, because the rows print only "SEP01".
+const PERIOD_DATE = `(${MONTH})\\.? ?\\d{1,2}(/\\d{2,4}|, ?\\d{4})?`;
+const PERIOD = new RegExp(`^${PERIOD_DATE} ?(-|to) ?${PERIOD_DATE}$`, "i");
+
 // Words that label the columns of a statement. Whole runs only, compared case-insensitively.
 const LABELS = new Set([
   "date",
@@ -35,6 +40,9 @@ const LABELS = new Set([
   "closing balance",
   "previous balance",
   "new balance",
+  "starting balance",
+  "ending balance",
+  "total",
   "posting date",
   "transaction date",
   "page",
@@ -43,7 +51,13 @@ const LABELS = new Set([
 export function maskRun(str: string): string {
   const t = str.trim();
   if (t === "") return str;
-  if (MONEY.test(t) || DATE.test(t) || LABELS.has(t.toLowerCase())) return str;
+  if (
+    MONEY.test(t) ||
+    DATE.test(t) ||
+    PERIOD.test(t) ||
+    LABELS.has(t.toLowerCase())
+  )
+    return str;
   // Whitespace and a few ASCII punctuation marks stay; every other character, including symbols,
   // combining marks and private-use characters, becomes "_".
   return Array.from(str, (c) => {

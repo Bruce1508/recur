@@ -19,6 +19,12 @@ describe("maskRun", () => {
       "Balance",
       "WITHDRAWALS",
       "Date",
+      "SEP01",
+      "STARTING BALANCE",
+      "Total",
+      "AUG 31/26 - SEP 29/26",
+      "Oct 1, 2025 - Oct 31, 2025",
+      "OCT 01/25 TO OCT 31/25",
     ])
       expect(maskRun(s)).toBe(s);
   });
@@ -28,6 +34,15 @@ describe("maskRun", () => {
     expect(maskRun("FAKE COFFEE #12")).toBe("XXXX XXXXXX #99");
     expect(maskRun("Acct 4500123412341234")).toBe("Xxxx 9999999999999999");
     expect(maskRun("123 Invented St.")).toBe("999 Xxxxxxxx Xx.");
+  });
+
+  test("a period that carries more than two dates is not kept", () => {
+    expect(maskRun("AUG 31/26 - SEP 29/26 - NOV 02/26")).toBe(
+      "XXX 99/99 - XXX 99/99 - XXX 99/99",
+    );
+    expect(maskRun("Jane AUG 31/26 - SEP 29/26")).toBe(
+      "Xxxx XXX 99/99 - XXX 99/99",
+    );
   });
 
   test("masks accented letters too", () => {
