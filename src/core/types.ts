@@ -88,6 +88,22 @@ export interface RawDocument {
   readonly pages: readonly RawPage[];
 }
 
+/** One visual line of a page: its items left to right, and their text joined by single spaces. */
+export interface Line {
+  /** 1-based page number. */
+  readonly page: number;
+  /** Top-left-origin y of the line's top-most item. */
+  readonly y: number;
+  readonly items: readonly RawItem[];
+  readonly text: string;
+}
+
+export interface LineDocument {
+  readonly meta: RawDocument["meta"];
+  /** Pages in order, and within a page from top to bottom. */
+  readonly lines: readonly Line[];
+}
+
 // Row numbers: `source.row` and `firstBadRow` are 1-based line numbers in the CSV file,
 // counting the header row if there is one, so they match what a spreadsheet shows.
 // `expected` and `actual` are balances for "running-balance" and sums of amounts for "totals".
