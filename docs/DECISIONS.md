@@ -25,6 +25,7 @@ A record is changed only by adding a new record that supersedes it. Statuses: Pr
 | 017 | Run `gh` and `git push/fetch/pull` as standalone commands                       | Accepted                                                               |
 | 018 | CSV import first, PDF parsing second; usefulness is the first goal              | Accepted (owner's decision, 2026-11-10); stage order superseded by 019 |
 | 019 | PDF first for the owner's banks; no further CSV work                            | Accepted (owner's decision, 2026-11-14)                                |
+| 020 | Checkpoint and totals reconciliation; amount columns found from the amounts     | Accepted (owner delegated the design, 2026-11-14)                      |
 
 All records become Accepted when Bruce signs off on the PRD.
 
@@ -327,3 +328,31 @@ All records become Accepted when Bruce signs off on the PRD.
 **Consequences.** The hard technical piece comes first and the owner can use the product on his own accounts. Recurring-charge detection (M2) waits on a working PDF format, so the first usable demo moves later. If the PDFs turn out to have no text layer (scanned images), parsing is out of scope and this decision is revisited.
 
 **Revisit when** the first real dump shows no text layer, or a bank format cannot be reconciled in M6.
+
+---
+
+## ADR-020 — Checkpoint and totals reconciliation; amount columns found from the amounts
+
+**Context.** The first real layout dump (TD chequing, 2026-11-14, see `docs/PROGRESS.md`) showed two facts that the design in ADR-003 and ADR-004 did not foresee.
+
+1. A balance is printed only on the last row of each day, plus on the opening row, not on every row. `reconcile` returns `unverifiable` as soon as one row lacks a balance, so this statement could never be Verified. By hand, every printed balance equals the previous printed balance plus the deposits minus the withdrawals of the rows between them, and the total row equals the sums, so the data does support a check.
+2. The header labels are centred over their columns while the amounts are right-aligned, 16 to 24 points further right. Matching an amount to the header whose right edge is nearest picks the wrong column.
+
+| Option for the check                                          | Verifies this layout | Pinpoints a bad row           | Cost                                                            |
+| ------------------------------------------------------------- | -------------------- | ----------------------------- | --------------------------------------------------------------- |
+| A. Keep running-balance only                                  | No                   | n/a                           | The owner's statements stay unverified                          |
+| **B. Checkpoints plus printed totals, extending `reconcile`** | Yes                  | To the day (the segment)      | One new method; the profile supplies opening balance and totals |
+| C. Totals only (opening plus sums equals closing)             | Yes                  | No: only "this file is wrong" | Weakest; an error anywhere gives the same answer                |
+
+**Decision.** B, and amount columns are found from the amounts.
+
+- **Checkpoint method.** When not every row has a balance, but the statement has an opening balance and at least one printed balance, rows are read in printed order and each printed balance is checked against the previous checkpoint (the opening balance, or the last printed balance) plus the signed amounts of the rows between them. A broken segment gives `mismatch` naming the checkpoint row. The profile states that rows are printed oldest first, because the dates inside one day cannot show the order.
+- **Totals method.** `ParsedStatement` gains optional `printedTotals` (the withdrawals and deposits the statement prints). When present, the printed totals must equal the sums of the parsed rows, and the opening balance plus deposits minus withdrawals must equal the last printed balance (or the closing balance when the statement has one). Any difference is `mismatch`.
+- **Verified** requires every available check to pass. A statement with an opening balance, checkpoints and printed totals reports method `checkpoints` (which includes the totals check). Rows after the last printed balance are covered only by the totals check; with no totals either, the statement is `unverifiable`, never `verified`.
+- **Stated limit:** within one segment, errors that cancel (two amounts swapped between rows of the same day) keep every sum and are not detected. The first and last rows are covered because the opening balance is a checkpoint and the last printed balance is the closing check.
+- `running-balance` is unchanged and still applies when every row has a balance (every CSV in the tests, and statements that print a balance on each row).
+- **Amount columns.** For each page, the right edges of the amount-shaped items in the table body are clustered; the clusters taken left to right are assigned to the amount header labels taken left to right (withdrawals, deposits, balance). The parse fails closed (returns a warning and no rows for that page) when the number of clusters differs from the number of amount labels. Header labels give the order and the names, not the x position. This replaces "right-edge matching to the nearest header" in ARCHITECTURE §6.4.
+
+**Consequences.** TD chequing statements can be Verified, with a bad row pinpointed to a day, which is what AC-1 and AC-2 need; the profile needs more fields (opening balance row, total row, row order). The types `Reconciliation` (method `checkpoints`, and a place for a PDF source in a mismatch) and `ParsedStatement` (`printedTotals`) change in the next PR, with tests including mutation tests (a removed, altered or added row inside a segment must give `mismatch`). Credit-card statements (CIBC, M7) are expected to print a balance differently; this ADR covers only what the TD dump showed.
+
+**Revisit when** the other pages of the TD statements, or the CIBC dump, show a layout this method cannot verify.

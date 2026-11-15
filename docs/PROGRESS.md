@@ -19,7 +19,7 @@ Living document. Update it at the end of every working session. Never record sta
 **Next session, in order (ADR-019):**
 
 1. Run `git log origin/main` and `gh pr list` to confirm what is merged. Never `--admin`; never force-push (merge `main` into the branch instead of rebasing).
-2. M5 tasks 1 and 4 are done (`src/pdf/extract.ts`, the only file that imports `pdfjs-dist`, and `tools/pdf-dump.ts`, the owner-run CLI that writes a masked positioned-text dump). Next without the owner: M5 task 3 (synthetic statement PDFs, extend `tools/makePdf.ts`) and task 2 (`normalize`, against synthetic input).
+2. M5 tasks 1, 2 and 4 are done. M6 (ADR-020), in this order, each its own PR: (a) `reconcile` checkpoint and totals methods with mutation tests; (b) TD profile, `detect` and `parse` with a synthetic TD-style PDF generator built from the dump geometry, and a golden test through `extractPdf`, `normalize`, `parse`, `reconcile`; (c) UI accepts PDFs. Also pin the `normalize` overdraw threshold (0.25) with a test: same text and x at y distance 9.5 is kept, and just under and over 0.25 of the text height is dropped and kept.
 3. When the owner pastes a reviewed dump: record the quirks in this file, then `normalize` (M5 task 2), then the TD profile (M6). Claude never reads a real statement; only the masked dump.
 4. M2 (recurring-charge detection) needs the owner's hand-written subscription list first (see "Waiting on the owner"), and now follows M7.
 
@@ -129,6 +129,13 @@ Queued by the autonomous workflow. Claude does not attempt these.
 ## Session log
 
 Newest first. One entry per session: date, what changed, what was verified, what is next.
+
+### 2026-11-14 — ADR-020: checkpoint and totals reconciliation, amount columns from the amounts
+
+- The owner asked Claude to proceed with the design while the other pages of the dump are still to come. Added ADR-020 (Accepted): a `checkpoints` method in `reconcile` for statements that print a balance on some rows only (opening balance and each printed balance are checkpoints; rows between two must sum to the difference), a totals check against `ParsedStatement.printedTotals`, and amount columns found by clustering the right edges of amounts in the table body, matched left to right to the amount labels, failing closed on a count mismatch. Updated ARCHITECTURE §6.4 and §6.5, ROADMAP M6 task 3, and the DECISIONS index.
+- Stated limit: errors that cancel within one day (two amounts swapped between rows of the same day) are not detected.
+- Docs only. Verified: `npx biome check` on the docs. Not verified: that pages 2 to 4 and the CIBC statement fit this method (the ADR says to revisit if not).
+- Next: the `reconcile` PR, see "Next session".
 
 ### 2026-11-14 — First real dump (TD chequing): findings and the overdraw fix
 

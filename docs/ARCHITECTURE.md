@@ -223,7 +223,7 @@ Real export layouts are facts to learn from the owner's redacted fixtures in M1.
 `(LineDocument, BankProfile) → ParsedStatement`.
 
 - **Header-anchored columns.** Find the header row by its labels, then derive each column's x-range from the label positions on that page. Nothing is a hard-coded coordinate, so small layout shifts do not break parsing.
-- **Right-edge matching for amounts.** Amount columns are right-aligned, so a number belongs to the column whose right edge is nearest (validated in the spike).
+- **Right-edge matching for amounts (ADR-020).** Amount columns are right-aligned, but header labels may be centred over them (the first real TD dump), so the labels give names and order, not x positions. Per page, cluster the right edges of the amount-shaped items in the table body; assign the clusters left to right to the amount labels left to right; fail closed when the counts differ.
 - **Row assembly.** A line with an amount starts a transaction. A line without one, positioned in the description column, continues the previous description. A missing date inherits the previous row's date.
 - **Year inference.** Statements print "Oct 15", not a year. The year comes from the statement period, with December–January rollover handled explicitly.
 - **Sign convention** comes from the profile (separate withdrawal and deposit columns, a trailing minus, or a `CR` marker).
@@ -234,6 +234,7 @@ Real export layouts are facts to learn from the owner's redacted fixtures in M1.
 
 - **`running-balance`** — every row's printed balance must equal the previous balance plus the row's amount. Pinpoints the first bad row.
 - **`totals`** — opening balance plus the sum of transactions must equal the closing balance.
+- **`checkpoints`** (ADR-020) — for statements that print a balance only on some rows (TD prints one on the last row of each day): the opening balance and each printed balance are checkpoints, and the rows between two checkpoints must sum to the difference. It also checks the statement's printed totals against the parsed rows (`ParsedStatement.printedTotals`) and the opening balance plus the net movement against the last printed balance. A bad segment gives `mismatch` naming its checkpoint row. Errors that cancel within one segment are not detected.
 - If neither is available the result is `unverifiable`, never `verified`. A CSV with a balance column uses `running-balance`; a CSV without one is `unverifiable`.
 
 Statements are also chained: the closing balance of one must equal the opening balance of the next, which detects a missing month.
