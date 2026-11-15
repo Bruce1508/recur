@@ -16,10 +16,12 @@
     "build": "vite build",
     "verify": "npm run typecheck && npm run lint && npm test && npm run fixtures:check && npm run build",
     "fixture:dump": "vite build --ssr tools/fixture-dump.ts --outDir .tooling --emptyOutDir --logLevel error && node .tooling/fixture-dump.js",
-    "fixtures:check": "vite build --ssr tools/check-fixtures.ts --outDir .tooling --emptyOutDir --logLevel error && node .tooling/check-fixtures.js"
+    "fixtures:check": "vite build --ssr tools/check-fixtures.ts --outDir .tooling --emptyOutDir --logLevel error && node .tooling/check-fixtures.js",
+    "pdf:dump": "vite build --ssr tools/pdf-dump.ts --outDir .tooling --emptyOutDir --logLevel error && node .tooling/pdf-dump.js"
   },
   "dependencies": {
     "papaparse": "5.7.1",
+    "pdfjs-dist": "6.5.438",
     "react": "19.3.1",
     "react-dom": "19.3.1"
   },
