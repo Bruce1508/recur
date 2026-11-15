@@ -223,14 +223,14 @@ Real export layouts are facts to learn from the owner's redacted fixtures in M1.
 `(LineDocument, BankProfile) → ParsedStatement`.
 
 - **Header-anchored columns.** Find the header row by its labels, then derive each column's x-range from the label positions on that page. Nothing is a hard-coded coordinate, so small layout shifts do not break parsing.
-- **Right-edge matching for amounts (ADR-020).** Amount columns are right-aligned, but header labels may be centred over them (the first real TD dump), so the labels give names and order, not x positions. Each amount label's left edge starts a span that runs to the next label's left edge; an amount-shaped item in the table body (from the header row to the total row) belongs to the span that contains its right edge. Fail closed (a warning and no rows for the page) when an amount lies outside every span or the right edges inside one span differ by more than 1 point. A span with no items is allowed.
+- **Right-edge matching for amounts (ADR-020).** Amount columns are right-aligned, but header labels may be centred over them (the first real TD dump), so the labels give names and order, not x positions. Each amount label's left edge starts a span that runs to the next label's left edge; an amount-shaped item in the table body (from the header row to the total row) belongs to the span that contains its right edge. Items left of the first amount label are description text. Fail closed (a warning and no rows for the page) when the right edges inside one span differ by more than 1 point. A span with no items is allowed.
 - **Row assembly.** A line with an amount starts a transaction. A line without one, positioned in the description column, continues the previous description. A missing date inherits the previous row's date.
 - **Year inference.** Statements print "Oct 15", not a year. The year comes from the statement period, with December–January rollover handled explicitly.
 - **Sign convention** comes from the profile (separate withdrawal and deposit columns, a trailing minus, or a `CR` marker).
 
 ### 6.5 `reconcile`
 
-`ParsedStatement → Reconciliation`. Arithmetic is in integer cents. The method follows from what the statement carries (ADR-020): `running-balance` when every transaction has a balance, else `checkpoints`, else `totals`:
+`ParsedStatement → Reconciliation`. Arithmetic is in integer cents. The method follows from what the statement carries (ADR-020): `checkpoints` whenever an opening balance is present, else `running-balance` when every transaction has a balance (CSV), else `totals`:
 
 - **`running-balance`** — every row's printed balance must equal the previous balance plus the row's amount. Pinpoints the first bad row.
 - **`totals`** — opening balance plus the sum of transactions must equal the closing balance.
