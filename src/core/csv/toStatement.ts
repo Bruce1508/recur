@@ -24,7 +24,7 @@ export type ToStatementResult =
 
 // cyrb53: a small, fast 53-bit string hash. Not cryptographic; it only has to tell a handful
 // of imported files apart and be the same on every run (Math.random and crypto are not).
-function hash53(text: string): string {
+export function hash53(text: string): string {
   let h1 = 0xdeadbeef;
   let h2 = 0x41c6ce57;
   for (let i = 0; i < text.length; i++) {
