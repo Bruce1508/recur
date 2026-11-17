@@ -193,9 +193,17 @@ export function parse(doc: LineDocument, profile: BankProfile): ParseResult {
       const by = (c: AmountColumn) =>
         line.items.filter((i) => isAmount(i) && columnOf(i) === c);
       const [w, d, b] = [by("withdrawals"), by("deposits"), by("balance")];
-      const stray = line.items.some((i) => isAmount(i) && columnOf(i) === null);
+      // Anything in the amount area that is not a placed amount or a row date (a trailing-minus
+      // amount, a stray label) is text the parser cannot place: warn rather than ignore it.
+      const stray = line.items.some(
+        (i) =>
+          i.str.trim() !== "" &&
+          (isAmount(i)
+            ? columnOf(i) === null
+            : i.x >= firstAmountX && !profile.rowDate.test(i.str.trim())),
+      );
       const description = line.items
-        .filter((i) => right(i) < firstAmountX)
+        .filter((i) => !isAmount(i) && i.x < firstAmountX)
         .map((i) => i.str.trim())
         .filter((s) => s !== "")
         .join(" ");
@@ -217,6 +225,10 @@ export function parse(doc: LineDocument, profile: BankProfile): ParseResult {
       }
       const balance = b[0] ? parseMoney(b[0].str) : null;
       const moved = w[0] ?? d[0];
+      if (!moved && dateText && balance === null && description !== "") {
+        warnings.push(`page ${page}: a dated row has no amount`);
+        continue;
+      }
       if (!moved) {
         if (balance !== null && draft.length === 0 && opening === undefined) {
           opening = balance;

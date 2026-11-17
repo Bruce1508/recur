@@ -8,6 +8,7 @@ import {
 import { detect } from "../core/detect";
 import { normalize } from "../core/normalize/normalize";
 import { parse } from "../core/parse/parse";
+import { tdChequing } from "../core/profiles/tdChequing";
 import { reconcile } from "../core/reconcile";
 import { extractPdf } from "./extract";
 
@@ -207,6 +208,99 @@ describe("TD chequing, synthetic PDF through the whole path", () => {
     if (!parsed?.ok) throw new Error("parse failed");
     expect(parsed.statement.warnings.length).toBeGreaterThan(0);
     expect(result?.status).toBe("unverifiable");
+  });
+
+  test("a description wider than the gap to the Withdrawals label is kept whole", async () => {
+    const { pdf } = makeTdStatement({
+      period: "SEP 01/25 - OCT 01/25",
+      opening: 100000,
+      days: [
+        {
+          date: "SEP02",
+          rows: [
+            {
+              desc: "PREAUTHORIZED DEBIT ACME INSURANCE COMPANY",
+              cents: -4500,
+            },
+          ],
+        },
+      ],
+    });
+    const { parsed, result } = await run(pdf);
+    if (!parsed?.ok) throw new Error("parse failed");
+    expect(parsed.statement.transactions[0]?.description).toBe(
+      "PREAUTHORIZED DEBIT ACME INSURANCE COMPANY",
+    );
+    expect(result?.status).toBe("verified");
+  });
+
+  test("text in the amount area that is not an amount or a date adds a warning", async () => {
+    const pdf = clone(made.pdf);
+    const row = made.rows[1] as Row;
+    pdf.pages[row.page]?.items.push({ str: "1,234.56-", x: 470, y: row.y });
+    const { parsed, result } = await run(pdf);
+    if (!parsed?.ok) throw new Error("parse failed");
+    expect(parsed.statement.warnings.length).toBeGreaterThan(0);
+    expect(result?.status).not.toBe("verified");
+  });
+
+  test("a dated row with no amount adds a warning", async () => {
+    const pdf = clone(made.pdf);
+    const row = made.rows[2] as Row;
+    const page = pdf.pages[row.page];
+    if (!page) throw new Error("no page");
+    page.items = page.items.filter(
+      (i) => !(Math.abs(i.y - row.y) < 0.01 && /^\d[\d,]*\.\d\d$/.test(i.str)),
+    );
+    const { parsed, result } = await run(pdf);
+    if (!parsed?.ok) throw new Error("parse failed");
+    expect(parsed.statement.warnings.length).toBeGreaterThan(0);
+    expect(result?.status).not.toBe("verified");
+  });
+
+  test("a total row with a missing figure adds a warning and gives unverifiable", async () => {
+    const pdf = clone(made.pdf);
+    const last = pdf.pages[pdf.pages.length - 1];
+    if (!last) throw new Error("no page");
+    last.items = last.items.filter((i) => i.str !== formatAmount(500000));
+    const { parsed, result } = await run(pdf);
+    if (!parsed?.ok) throw new Error("parse failed");
+    expect(parsed.statement.warnings.length).toBeGreaterThan(0);
+    expect(result?.status).toBe("unverifiable");
+  });
+
+  test("a row date outside the statement period adds a warning", async () => {
+    const pdf = clone(made.pdf);
+    const row = made.rows[0] as Row;
+    const date = onRow(pdf, row).find((i) => i.str === "SEP02");
+    if (!date) throw new Error("no date");
+    date.str = "AUG15";
+    const { parsed, result } = await run(pdf);
+    if (!parsed?.ok) throw new Error("parse failed");
+    expect(parsed.statement.warnings.length).toBeGreaterThan(0);
+    expect(result?.status).not.toBe("verified");
+  });
+
+  test("no period, or no transactions, is a failed parse with a reason", async () => {
+    const lines = async (pdf: PdfSpec) => {
+      const r = await extractPdf(makeTextPdf(pdf));
+      if (!r.ok) throw new Error(r.reason);
+      return normalize(r.doc);
+    };
+    const noPeriod = clone(made.pdf);
+    for (const p of noPeriod.pages)
+      p.items = p.items.filter((i) => i.str !== SPEC.period);
+    expect(parse(await lines(noPeriod), tdChequing)).toMatchObject({
+      ok: false,
+    });
+
+    const noRows = clone(made.pdf);
+    for (const row of made.rows) {
+      const page = noRows.pages[row.page];
+      if (page)
+        page.items = page.items.filter((i) => Math.abs(i.y - row.y) >= 0.01);
+    }
+    expect(parse(await lines(noRows), tdChequing)).toMatchObject({ ok: false });
   });
 
   test("an unknown PDF is not detected, and does not throw", async () => {
