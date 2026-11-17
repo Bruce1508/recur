@@ -20,7 +20,127 @@ type Failure = { index: number; expected: Cents; actual: Cents };
  * and a row removed from either end of the file are not covered by any step. Chaining files in
  * `ledger` (the closing balance of one against the next) is what covers the ends.
  */
+/**
+ * ADR-020: which check applies depends on what the statement carries, and `running-balance` is
+ * for CSV only because it reads no anchors. A PDF statement goes to `reconcileAnchored`.
+ */
 export function reconcile(statement: ParsedStatement): Reconciliation {
+  return statement.input === "csv"
+    ? reconcileRunningBalance(statement)
+    : reconcileAnchored(statement);
+}
+
+/**
+ * PDF statements (ADR-020). The opening balance is the first checkpoint and each printed balance
+ * is another: the rows of a segment, from after the previous checkpoint up to and including the
+ * checkpoint row, must sum to the difference. That proves what was read is consistent, not that
+ * all of it was read, so `verified` also needs an end anchor that does not come from the rows:
+ * the printed totals or the closing balance, and every anchor the profile requires.
+ *
+ * Fails closed: no opening balance, no anchor, a missing required anchor, rows whose dates go
+ * backwards, or any warning give `unverifiable`. A mismatch is reported even when there are
+ * warnings. Limit: errors that keep a segment's sum (two amounts swapped within a day, a wrong
+ * description pairing, a charge and its reversal both dropped, a wrong date) are not detected.
+ */
+function reconcileAnchored(statement: ParsedStatement): Reconciliation {
+  const open = statement.openingBalance;
+  if (open === undefined) {
+    return {
+      status: "unverifiable",
+      reason: "the opening balance was not read",
+    };
+  }
+  const rows = statement.transactions;
+  const step = statement.kind === "credit" ? -1 : 1;
+  const hasBalances = rows.some((t) => t.balanceAfter !== undefined);
+
+  // Checkpoints: each printed balance against the previous checkpoint plus its segment.
+  let checkpoint = open;
+  let segment = 0;
+  let net = 0;
+  let withdrawals = 0;
+  let deposits = 0;
+  for (const t of rows) {
+    segment += t.amount;
+    net += t.amount;
+    if (t.amount < 0) withdrawals -= t.amount;
+    else deposits += t.amount;
+    if (t.balanceAfter === undefined) continue;
+    const expected = checkpoint + step * segment;
+    if (expected !== t.balanceAfter) {
+      return {
+        status: "mismatch",
+        expected,
+        actual: t.balanceAfter,
+        firstBadSource: t.source,
+      };
+    }
+    checkpoint = t.balanceAfter;
+    segment = 0;
+  }
+
+  // Anchors: figures the statement prints that are not read from the rows' own balances.
+  const totals = statement.printedTotals;
+  if (totals !== undefined) {
+    if (totals.withdrawals !== withdrawals) {
+      return {
+        status: "mismatch",
+        expected: withdrawals,
+        actual: totals.withdrawals,
+      };
+    }
+    if (totals.deposits !== deposits) {
+      return {
+        status: "mismatch",
+        expected: deposits,
+        actual: totals.deposits,
+      };
+    }
+  }
+  const closing = statement.closingBalance;
+  if (closing !== undefined && closing !== open + step * net) {
+    return { status: "mismatch", expected: open + step * net, actual: closing };
+  }
+
+  const missing = (statement.requiredAnchors ?? []).filter((a) =>
+    a === "printedTotals" ? totals === undefined : closing === undefined,
+  );
+  if (missing.length > 0) {
+    return {
+      status: "unverifiable",
+      reason: `a required figure was not read (${missing.join(", ")})`,
+    };
+  }
+  if (totals === undefined && closing === undefined) {
+    return {
+      status: "unverifiable",
+      reason:
+        "the statement's printed totals and closing balance were not read, so a missing last page would go unseen",
+    };
+  }
+
+  if (hasBalances) {
+    const dates = rows.map((t) => t.date);
+    if (dates.some((d, k) => k > 0 && (dates[k - 1] ?? d) > d)) {
+      return {
+        status: "unverifiable",
+        reason: "rows are not in date order, so the chain cannot be checked",
+      };
+    }
+  }
+  if (statement.warnings.length > 0) {
+    return {
+      status: "unverifiable",
+      reason: `${statement.warnings.length} part(s) of the statement could not be read, so it may be incomplete`,
+    };
+  }
+  return {
+    status: "verified",
+    method: hasBalances ? "checkpoints" : "totals",
+  };
+}
+
+function reconcileRunningBalance(statement: ParsedStatement): Reconciliation {
   const points: Point[] = [];
   for (const t of statement.transactions) {
     if (t.balanceAfter !== undefined) {
