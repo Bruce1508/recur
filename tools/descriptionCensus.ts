@@ -6,7 +6,8 @@
 export type DescriptionClass = "processor-prefix" | "code-like" | "readable";
 
 const PROCESSOR_PREFIX = /^(SQ\s?\*|TST\*|PAYPAL\s?\*|PP\*|GOOGLE\s?\*)/i;
-// A word of four or more letters with a vowel looks like a name; a code usually has none.
+// A word of four or more letters with a vowel looks like a name; a code usually has none. Processor
+// strings such as "AMZN MKTP CA" pass this too, so the readable share is an upper bound.
 const WORD = /[A-Z]{4,}/gi;
 const VOWEL = /[AEIOUY]/i;
 // A trailing one-letter bank code such as "_V", as in the first layout dump.
@@ -69,7 +70,8 @@ export function formatCensus(c: Census): string[] {
   const lines = [
     `${c.transactions} transactions, ${c.distinct} distinct descriptions`,
   ];
-  for (const [name, v] of Object.entries(c.byClass)) {
+  for (const [key, v] of Object.entries(c.byClass)) {
+    const name = key === "readable" ? "readable-looking (upper bound)" : key;
     lines.push(
       `${name}: ${v.transactions} (${pct(v.transactions, c.transactions)}), ${v.distinct} distinct, ${v.repeated} in descriptions seen 3+ times`,
     );

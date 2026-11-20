@@ -258,6 +258,45 @@ describe("TD chequing, synthetic PDF through the whole path", () => {
     expect(result?.status).not.toBe("verified");
   });
 
+  test("a dated row that lost its amount but kept its balance gives a mismatch, not verified", async () => {
+    const pdf = clone(made.pdf);
+    const row = made.rows[2] as Row;
+    const page = pdf.pages[row.page];
+    if (!page) throw new Error("no page");
+    const amounts = onRow(pdf, row).filter((i) =>
+      /^\d[\d,]*\.\d\d$/.test(i.str),
+    );
+    const balance = amounts.reduce((a, b) => (b.x > a.x ? b : a));
+    page.items = page.items.filter(
+      (i) => !amounts.includes(i) || i === balance,
+    );
+    const { parsed, result } = await run(pdf);
+    if (!parsed?.ok) throw new Error("parse failed");
+    expect(result?.status).toBe("mismatch");
+  });
+
+  test.each([
+    ["a trailing-minus amount in the withdrawals column", "450.00-", 1],
+    ["a CR amount glued to its figure", "450.00CR", 1],
+    ["a CR marker beside the figure", "CR", 1],
+    ["a trailing-minus balance", "975.50-", 1],
+  ])(
+    "%s fails the row closed with a warning, never a guessed sign",
+    async (_name, text, rowIndex) => {
+      const pdf = clone(made.pdf);
+      const row = made.rows[rowIndex] as Row;
+      pdf.pages[row.page]?.items.push({
+        str: text,
+        x: text === "CR" ? 500 : 460,
+        y: row.y,
+      });
+      const { parsed, result } = await run(pdf);
+      if (!parsed?.ok) throw new Error("parse failed");
+      expect(parsed.statement.warnings.length).toBeGreaterThan(0);
+      expect(result?.status).not.toBe("verified");
+    },
+  );
+
   test("a total row with a missing figure adds a warning and gives unverifiable", async () => {
     const pdf = clone(made.pdf);
     const last = pdf.pages[pdf.pages.length - 1];

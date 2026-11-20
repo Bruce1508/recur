@@ -41,6 +41,12 @@ describe("census", () => {
     expect(c.withLongDigitRun).toBe(2);
   });
 
+  test("the readable share is labelled as an upper bound", () => {
+    const out = formatCensus(census(["AMZN MKTP CA", "FAKE COFFEE _V"]));
+    expect(out.some((l) => l.startsWith("readable:"))).toBe(false);
+    expect(out.some((l) => /readable-looking.*upper bound/.test(l))).toBe(true);
+  });
+
   test("the printed lines hold no description text", () => {
     const out = formatCensus(census(rows)).join("\n");
     for (const word of ["COFFEE", "CAFE", "XK7", "000111222"])
