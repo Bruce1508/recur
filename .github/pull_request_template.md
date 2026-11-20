@@ -10,6 +10,14 @@
 
 <!-- The commands you ran and their result lines. -->
 
+## Skills used
+
+<!-- Skills invoked, or "none" with a one-line reason for each routed skill that was skipped. -->
+
+## Evidence
+
+<!-- Screenshot for UI changes (synthetic data only), or "n/a: no UI change". -->
+
 ## Checklist
 
 - [ ] New `src/core/` logic has tests in this PR; no test removed, skipped or weakened
