@@ -432,7 +432,7 @@ Two facts constrain the answer.
 
 **Context.** Two skill packs are installed at user scope (`agent-skills:`, `ecc:`), plus others. Their descriptions overlap, a session-start hook says to invoke any skill with a 1% chance of applying, and several skills contradict this repo: `observability-and-instrumentation` (ADR-001), `documentation-and-adrs` (the `DECISIONS.md` format), examples with `useEffect`, `networkidle`, `test.skip` and per-slice commits (ADR-022, ADR-015). Left alone, each session picks differently and spends tokens on skills that fight the checks.
 
-**Decision.** `.claude/rules/skill-selection.md` maps task types to at most one skill, lists the skills that are manual only or not used (with the reason), names the review agents, and says repo checks and `CLAUDE.md` beat skill examples. Every name in it was checked on disk and the check date is in the file. It is the same structure as the one in the sibling Maple repository.
+**Decision.** `.claude/rules/skill-selection.md` maps task types to at most one skill, lists the skills that are manual only or not used (with the reason), names the review agents, and says repo checks and `CLAUDE.md` beat skill examples. Every name in it was checked on disk and the check date is in the file.
 
 **What it replaces.** Nothing in the repo: no check enforces skill choice, so this stays prose by design (judgment, not a lint rule). It does not weaken ADR-022: where a skill's example would break a lint rule, the page says to drop that part. A skill that misleads twice is removed from the page or fixed by a check, not annotated.
 

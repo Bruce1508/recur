@@ -17,7 +17,7 @@ Two skill packs are installed at user scope: Addy Osmani's agent-skills (`agent-
 
 | Work | Use | Notes |
 |---|---|---|
-| Logic in `src/core/` | `agent-skills:test-driven-development` | Vitest plus fast-check. Invariants (money, dates, reconcile, parse) also need property tests (`~/.claude/rules/agent-rules.md` R17); the skill does not cover them. Verify with `npm run verify`. |
+| Logic in `src/core/` | `agent-skills:test-driven-development` | Vitest plus fast-check. Invariants (money, dates, reconcile, parse) also need fast-check property tests; the skill does not cover them. Verify with `npm run verify`. |
 | UI in `src/ui/` (#28, M3) | `agent-skills:frontend-ui-engineering` | No `useEffect` or timers (lint-banned, ADR-022): derive in render or use event handlers. Keep the Playwright network assertions. Run the axe scan at M3. |
 | CSP, file handling, pdf.js, CSV export and formula injection | `agent-skills:security-and-hardening` | Ignore its "ask first" tier: `CLAUDE.md` "Ask the owner before" decides. |
 | `BankProfile`, chaining types (#31), decoder interfaces | `agent-skills:api-and-interface-design` | Contract-first parts only (types, invariants, error shapes). Not REST. |
@@ -41,11 +41,11 @@ Two skill packs are installed at user scope: Addy Osmani's agent-skills (`agent-
 
 ## Review agents (only when a review is due)
 - `reviewer` (this repo, `.claude/agents/reviewer.md`): the merge gate. Model `opus` for `src/core/parse/`, `src/core/reconcile.ts`, CSP, file handling and `.claude/`.
-- `ecc:security-reviewer`: additionally for CSP, `src/pdf/`, CSV export and file handling (`ship-task` step 8).
+- `ecc:security-reviewer`: additionally for CSP, `src/pdf/`, CSV export and file handling (`ship-task` step 8). Reviewers are read-only (ADR-015): tell it to report findings and not edit files.
 
 Dispatch one at a time.
 
 ## Do not confuse
 - `/ecc:security-scan` audits agent, hook, MCP and permission config. It does not scan app code.
 - The unprefixed `security-review` (Claude Code built-in) reviews the pending diff. `agent-skills:security-and-hardening` is a checklist.
-- ECC hooks may be active, for example a GateGuard fact-forcing gate on the first Edit, Write or Bash of a session. Answer the gate; do not disable it.
+- GateGuard is off in this repo (ADR-015, `ECC_GATEGUARD=off` in `.claude/settings.json`). If a gate still fires, answer it and report the missing env; do not change other hooks.
