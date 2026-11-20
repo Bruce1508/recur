@@ -84,7 +84,7 @@ export function describeEnds(ends: { start: boolean; end: boolean }): string {
   );
   return open.length === 0
     ? ""
-    : `Not checked: the ${open.join(" and the ")} of the file (no adjacent statement of this account to check it against)`;
+    : `Not checked: the ${open.join(" and the ")} of the file (no neighbouring statement of this account matches it; see the notes under Transactions)`;
 }
 
 export function describeBoundary(
@@ -97,7 +97,7 @@ export function describeBoundary(
     case "chained":
       return "";
     case "gap":
-      return `${files}: closing balance ${formatCents(o.expected)}, next opening ${formatCents(o.actual)}; a statement may be missing between them`;
+      return `${files}: closing balance ${formatCents(o.expected)}, next opening ${formatCents(o.actual)}; a statement between them, or the first or last rows of either file, may be missing`;
     case "mismatch":
       return `${files}: closing balance ${formatCents(o.expected)}, next opening ${formatCents(o.actual)}; a row at the end of one file or the start of the other is missing or wrong`;
     case "unchainable":

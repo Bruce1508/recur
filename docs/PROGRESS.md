@@ -160,6 +160,13 @@ Queued by the autonomous workflow. Claude does not attempt these.
 
 Newest first. One entry per session: date, what changed, what was verified, what is next.
 
+### 2026-11-20 — Review notes from PR #45
+
+- Fixed the non-blocking notes: the gap text now says a statement between the files, or the first or last rows of either file, may be missing (a CSV's period comes from its rows, so a removed edge row also shows as a gap); the per-file "Not checked" line no longer claims there is no neighbour; the unchainable reason no longer shows an internal id; a property pins that a newest-first CSV chains like the same CSV oldest-first. Screenshot `docs/evidence/chain-boundary.png` retaken.
+- Not done: the `doubt-driven-development` pass that ADR-025 and `skill-selection.md` name for #31 was not run; the Opus reviewer of PR #45 did an adversarial read with scratch tests through `toStatement` instead. PR #45's body gave a wrong reason for skipping it.
+- Previous PR (#45): one review round (APPROVE, five non-blocking notes), CI green on the first run.
+- Verified: typecheck, `npm test` (479 passed), `npm run e2e` (9 passed, outside the sandbox). Not verified: any real statement.
+
 ### 2026-11-20 — Statement chaining (#31, ADR-025)
 
 - Opus designed ADR-025 (accepted): the ends of a statement come only from a verified statement (PDF: printed opening balance, closing = opening + net; CSV: first and last row balances in time order), the caller groups by account, adjacent statements are judged `chained`, `gap`, `mismatch` or `unchainable`. New `src/core/chain.ts` (`chainStatements`), `Ledger.chain`, AC-2 reworded in the PRD. UI: a per-file note for unchecked CSV ends and a per-account list of boundaries that do not chain (names both files and both balances). Deviation from the ADR text: the file status stays "Verified: ..." and the unchecked ends are a separate line, so the existing wording and e2e checks are unchanged.

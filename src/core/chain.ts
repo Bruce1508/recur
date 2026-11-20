@@ -82,10 +82,10 @@ function judge(
     };
   }
   if (typeof a === "string") {
-    return { status: "unchainable", reason: `${prev.id}: ${a}` };
+    return { status: "unchainable", reason: `the earlier statement: ${a}` };
   }
   if (typeof b === "string") {
-    return { status: "unchainable", reason: `${next.id}: ${b}` };
+    return { status: "unchainable", reason: `the later statement: ${b}` };
   }
   const shared = next.period.start === prev.period.end;
   if (
