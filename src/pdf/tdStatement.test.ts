@@ -258,7 +258,7 @@ describe("TD chequing, synthetic PDF through the whole path", () => {
     expect(result?.status).not.toBe("verified");
   });
 
-  test("a dated row whose amount is unreadable but whose balance is printed adds a warning", async () => {
+  test("a dated row that lost its amount but kept its balance gives a mismatch, not verified", async () => {
     const pdf = clone(made.pdf);
     const row = made.rows[2] as Row;
     const page = pdf.pages[row.page];
@@ -272,8 +272,7 @@ describe("TD chequing, synthetic PDF through the whole path", () => {
     );
     const { parsed, result } = await run(pdf);
     if (!parsed?.ok) throw new Error("parse failed");
-    expect(parsed.statement.warnings.length).toBeGreaterThan(0);
-    expect(result?.status).not.toBe("verified");
+    expect(result?.status).toBe("mismatch");
   });
 
   test.each([

@@ -163,7 +163,7 @@ Newest first. One entry per session: date, what changed, what was verified, what
 
 ### 2026-11-20 — Small review findings (#30)
 
-- Parse: a dated row with a balance but no readable amount now adds a warning. Trailing-minus and CR amounts stay unplaceable text that fails the row closed (existing `stray` rule, ADR-020 fail-closed); four tests pin it, no ADR. Census CLI: the input file's own real path is checked against the repository and read errors print a fixed reason, no path (`readInput`, 3 tests). Census output labels the readable share an upper bound. PRD FR-16 and FR-18 reworded; FR-17 waits for ADR-021 acceptance.
+- Parse: no code change. A dated row that loses its amount but keeps its balance is already `mismatch` (checkpoint and printed-totals checks); a new warning would make multi-page statements with a balance-forward row unverifiable (ADR-020), so a test pins `mismatch` instead. Trailing-minus and CR amounts stay unplaceable text that fails the row closed (existing `stray` rule, ADR-020 fail-closed); four tests pin it, no ADR. Census CLI: the input file's own real path is checked against the repository and read errors print a fixed reason, no path (`readInput`, 3 tests). Census output labels the readable share an upper bound. PRD FR-16 and FR-18 reworded; FR-17 waits for ADR-021 acceptance.
 - Verified: typecheck, `npm test` (449 tests, 23 files, core line coverage 100%), build, `fixtures:check` pass. Lint passes on tracked files.
 - Not verified: the census CLI against a real PDF (owner runs it).
 - Next: #28.
