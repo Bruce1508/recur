@@ -137,7 +137,7 @@ export function makeTdStatement(spec: TdSpec): TdStatement {
         rows.push({ page: p, y });
         put(slot.row.desc, DESC_X, y);
         if (slot.row.suffix !== undefined)
-          put(slot.row.suffix, DESC_X + slot.row.desc.length * 8 + 7, y);
+          put(slot.row.suffix, DESC_X + width(slot.row.desc) + 34, y);
         amount(
           slot.row.cents,
           slot.row.cents < 0 ? WITHDRAWALS_RIGHT : DEPOSITS_RIGHT,

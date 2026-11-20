@@ -161,6 +161,14 @@ Queued by the autonomous workflow. Claude does not attempt these.
 
 Newest first. One entry per session: date, what changed, what was verified, what is next.
 
+### 2026-11-20 — Property test and generator fix (#29)
+
+- `src/pdf/tdStatement.property.test.ts` (fast-check 4.10.2, 100 runs): a random ledger goes through `makeTdStatement`, `extractPdf`, `normalize`, `detect`, `parse` and `reconcile` and must come back exactly with `verified` by checkpoints. Generator fix: the suffix is placed after the measured description width plus a fixed gap, so long descriptions no longer push it into the amount area. Mutation check: the old formula fails the property.
+- Found by the property, not fixed (real-layout geometry needed): a description continuation line that ends a non-final page with no total row is cut by `parse`'s body rule, silently (amounts and `verified` unaffected). The multi-page runs therefore carry no continuation lines. A negative running balance is printed without a sign by the generator, so balances stay positive; the real overdraft format is unknown.
+- Previous PR (#42/#43, from the git log): review rounds and first-run CI not re-checked this session.
+- Verified: `npm run typecheck`, `npx biome check` on tracked paths, `npm test` (457 passed), `npm run build`, `npm run fixtures:check`. Not verified: any real statement.
+- Next: #31 (statement chaining; Opus designs).
+
 ### 2026-11-20 — Strengthen the ship-task workflow (ADR-024)
 
 - `ship-task` gained: intended-behaviour list, fast-check property tests for invariants, UI screenshot evidence, doubt pass for `reconcile.ts` and `parse/`, per-PR outcome tracking and a sequential-until-five-clean-PRs line. `skill-selection.md` policy 2 requires the routed security and UI skills; the PR template has "Skills used" and "Evidence". Docs and config only.
