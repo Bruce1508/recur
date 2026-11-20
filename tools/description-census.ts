@@ -6,15 +6,15 @@
 // Each PDF goes through extract, normalize, detect and parse; a PDF that cannot be read is
 // reported by reason class only and left out of the counts.
 
-import { existsSync, readFileSync, realpathSync } from "node:fs";
-import { dirname, isAbsolute } from "node:path";
+import { realpathSync } from "node:fs";
+import { isAbsolute } from "node:path";
 import { detect } from "../src/core/detect";
 import { normalize } from "../src/core/normalize/normalize";
 import { parse } from "../src/core/parse/parse";
 import { reconcile } from "../src/core/reconcile";
 import { extractPdf } from "../src/pdf/extract";
 import { census, formatCensus } from "./descriptionCensus";
-import { isInside } from "./paths";
+import { readInput } from "./paths";
 
 function fail(message: string): never {
   console.error(`census: ${message}`);
@@ -25,12 +25,7 @@ const inputs = process.argv.slice(2);
 if (inputs.length === 0 || inputs.some((p) => p.startsWith("--")))
   fail("give one or more absolute paths to PDF files (no options)");
 const repo = realpathSync(process.cwd());
-for (const p of inputs) {
-  if (!isAbsolute(p)) fail("every path must be absolute");
-  if (!existsSync(p)) fail("an input file does not exist");
-  if (isInside(repo, realpathSync(dirname(p))))
-    fail("an input is inside this repository; keep statements outside");
-}
+for (const p of inputs) if (!isAbsolute(p)) fail("every path must be absolute");
 
 const descriptions: string[] = [];
 const statuses: Record<string, number> = {};
@@ -38,7 +33,9 @@ const note = (k: string) => {
   statuses[k] = (statuses[k] ?? 0) + 1;
 };
 for (const p of inputs) {
-  const r = await extractPdf(new Uint8Array(readFileSync(p)));
+  const file = readInput(repo, p);
+  if (!file.ok) fail(file.reason);
+  const r = await extractPdf(file.bytes);
   if (!r.ok) {
     note("could not be read as a PDF");
     continue;
