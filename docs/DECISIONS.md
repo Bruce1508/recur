@@ -28,6 +28,7 @@ A record is changed only by adding a new record that supersedes it. Statuses: Pr
 | 020 | Checkpoint and totals reconciliation; amount columns found from the amounts     | Accepted (owner delegated the design, 2026-11-14)                      |
 | 021 | Reframe: help the user read their transactions; verified numbers stay on device | Proposed (owner's direction, 2026-11-20; details after the census)     |
 | 022 | Prose rules become lint and coverage checks                                     | Accepted (2026-11-20)                                                  |
+| 023 | One routing page for installed skill packs                                      | Accepted (2026-11-20)                                                  |
 
 All records become Accepted when Bruce signs off on the PRD.
 
@@ -422,3 +423,17 @@ Two facts constrain the answer.
 **Not enforced yet.** `src/core/parse/parse.ts` imports the `BankProfile` type from `profiles/types`. Biome cannot allow type-only imports in a pattern, so a rule on `parse/**` would fail today. Whether that type should move to `src/core/types.ts` is a separate decision.
 
 **Consequences.** A real need for one of the banned APIs means changing `biome.json` through a PR, which is the point. Branch coverage (93%) is reported but not gated.
+
+---
+
+## ADR-023 — One routing page for installed skill packs
+
+**Status.** Accepted (2026-11-20).
+
+**Context.** Two skill packs are installed at user scope (`agent-skills:`, `ecc:`), plus others. Their descriptions overlap, a session-start hook says to invoke any skill with a 1% chance of applying, and several skills contradict this repo: `observability-and-instrumentation` (ADR-001), `documentation-and-adrs` (the `DECISIONS.md` format), examples with `useEffect`, `networkidle`, `test.skip` and per-slice commits (ADR-022, ADR-015). Left alone, each session picks differently and spends tokens on skills that fight the checks.
+
+**Decision.** `.claude/rules/skill-selection.md` maps task types to at most one skill, lists the skills that are manual only or not used (with the reason), names the review agents, and says repo checks and `CLAUDE.md` beat skill examples. Every name in it was checked on disk and the check date is in the file.
+
+**What it replaces.** Nothing in the repo: no check enforces skill choice, so this stays prose by design (judgment, not a lint rule). It does not weaken ADR-022: where a skill's example would break a lint rule, the page says to drop that part. A skill that misleads twice is removed from the page or fixed by a check, not annotated.
+
+**Consequences.** Adding or upgrading a pack means re-checking the names and the date. The file is under `.claude/`, so changes go through a PR with the `reviewer` on `opus`.
