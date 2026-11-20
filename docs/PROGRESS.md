@@ -31,7 +31,7 @@ Living document. Update it at the end of every working session. Never record sta
 **Next session, in order:**
 
 1. Run `git log origin/main` and `gh pr list` to confirm what is merged (PR #27 may still be open). Never `--admin`; never force-push (merge `main` into the branch instead of rebasing).
-2. Work the open issues in this order, one PR each, through `ship-task`: #30 (small review findings), #28 (UI accepts PDFs), #29 (property test and generator fix), #31 (statement chaining: Opus designs and writes the ADR, Sonnet implements). The model tier of each is in "Issues and model routing".
+2. Work the open issues in this order, one PR each, through `ship-task` (#30 is done in its own PR): #28 (UI accepts PDFs), #29 (property test and generator fix), #31 (statement chaining: Opus designs and writes the ADR, Sonnet implements). The model tier of each is in "Issues and model routing".
 3. Owner-blocked, do not attempt: #38 (census numbers, dumps of pages 2 to 4 and the CIBC statement, the hand-written subscription list). When the owner pastes a reviewed dump or the census counts, record the quirks here and check the ADR-020 rules against them. Claude never reads a real statement; only the masked dump and counts.
 4. After the census numbers: #32 (accept ADR-021, Opus). Then, following the ADR-019 order (M7 before M2): #35 (M7, needs the CIBC dump), then #33 (decoder) and #34 (recurring detection), then #36 (M3) and #37 (M4). If the CIBC dump is late, starting #33 after #32 would change the stated order and needs the owner's say-so recorded here; #34 always waits for M7.
 
@@ -160,6 +160,13 @@ Queued by the autonomous workflow. Claude does not attempt these.
 ## Session log
 
 Newest first. One entry per session: date, what changed, what was verified, what is next.
+
+### 2026-11-20 — Small review findings (#30)
+
+- Parse: a dated row with a balance but no readable amount now adds a warning. Trailing-minus and CR amounts stay unplaceable text that fails the row closed (existing `stray` rule, ADR-020 fail-closed); four tests pin it, no ADR. Census CLI: the input file's own real path is checked against the repository and read errors print a fixed reason, no path (`readInput`, 3 tests). Census output labels the readable share an upper bound. PRD FR-16 and FR-18 reworded; FR-17 waits for ADR-021 acceptance.
+- Verified: typecheck, `npm test` (449 tests, 23 files, core line coverage 100%), build, `fixtures:check` pass. Lint passes on tracked files.
+- Not verified: the census CLI against a real PDF (owner runs it).
+- Next: #28.
 
 ### 2026-11-20 — Skill routing page (ADR-023)
 
