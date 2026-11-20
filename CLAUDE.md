@@ -106,4 +106,4 @@ Work ships through pull requests. `main` changes only by squash-merge.
 - Merge only when CI is green and the `reviewer` agent returns APPROVE. At most two fix rounds; then leave the PR open and report.
 - Update `docs/PROGRESS.md` inside the task's own PR.
 - Tasks that need the owner (real statements, fixture review, manual checks, accounts, launch posts) go under "Waiting on the owner" in `docs/PROGRESS.md`. Do not attempt them.
-- Claude Code configuration lives in `.claude/`: `settings.json` (permissions, sandbox, hooks), `hooks/` (guard and formatter, tested by `node --test .claude/hooks/guard.test.mjs`), `agents/reviewer.md`, `skills/ship-task/`. Change it through a PR with an ADR.
+- Claude Code configuration lives in `.claude/`: `settings.json` (permissions, sandbox, hooks), `hooks/` (guard and formatter, tested by `node --test .claude/hooks/guard.test.mjs`), `agents/reviewer.md`, `skills/ship-task/`, `rules/skill-selection.md` (which installed skill to use for which task; ADR-023). Change it through a PR with an ADR.
