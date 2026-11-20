@@ -241,7 +241,7 @@ Statements are also chained: the closing balance of one must equal the opening b
 
 ### 6.6 `ledger`
 
-Merges statements, sorts by date, removes duplicates from overlapping periods using date, amount, description and running balance, and reports gaps.
+Merges statements, sorts by date, removes duplicates from overlapping periods using date, amount, description and running balance, and reports gaps. A PDF statement that verifies is the record for its period: CSV rows of the same account kind dated inside it are dropped as duplicates, since a CSV row and a PDF row for one transaction rarely match exactly.
 
 ### 6.7 `merchant`
 

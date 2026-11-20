@@ -12,7 +12,7 @@ Living document. Update it at the end of every working session. Never record sta
 - M5: `src/pdf/extract.ts` (the only `pdfjs-dist` importer), `normalize` (with the overdraw fix), the layout mask and `npm run pdf:dump`. The owner has run the dump on two real TD chequing statements and shared page 1 of one as a masked table; pages 2 to 4, the second statement and the CIBC statement have not been seen.
 - M6 so far: ADR-020 and `reconcile` checkpoints and totals (PRs #23, #24); the `BankProfile` type, the `td-chequing` profile, `detect`, `parse` and a synthetic TD statement generator (PR #25); the description census CLI (PR #26).
 
-**Not true yet, so do not assume it:** the parser has never run on a real PDF. Everything above is tested on invented data whose geometry comes from one masked page. There is no UI for PDFs (the importer takes CSV only), no real fixtures (AC-13 needs three per format), no second bank (M7), no recurring detection or decoder (M2), no exports or demo (M3), no deployment (M4). `reconcile` has never produced `verified` for a real statement.
+**Not true yet, so do not assume it:** the parser has never run on a real PDF. Everything above is tested on invented data whose geometry comes from one masked page. The importer accepts PDFs (#28), but only synthetic ones have been dropped in it. There are no real fixtures (AC-13 needs three per format), no second bank (M7), no recurring detection or decoder (M2), no exports or demo (M3), no deployment (M4). `reconcile` has never produced `verified` for a real statement.
 
 **Direction under discussion:** see the ADR-021 paragraph below. **Open work:** GitHub issues #28 to #38, listed with their model tier in "Issues and model routing".
 
@@ -37,7 +37,7 @@ Living document. Update it at the end of every working session. Never record sta
 
 **Requirements carried into task 11 and later** (found in reviews; most are pinned by a test or noted in code; the blank-description item is neither, add a test or a warning when touching `toStatement`):
 
-- Group files by account and call `buildLedger` once per account. Two accounts of the same kind and bank with no balance column merge on an identical same-day charge (silent loss otherwise). The same account exported with and without a balance column, and (stage 2) as CSV and as PDF, is not de-duplicated.
+- Group files by account and call `buildLedger` once per account. Two accounts of the same kind and bank with no balance column merge on an identical same-day charge (silent loss otherwise). The same account exported with and without a balance column is not de-duplicated. CSV and PDF of one account (#28): a verified PDF replaces the CSV rows dated inside its period; a PDF that does not verify replaces nothing, so its overlap with a CSV is counted twice. PDFs default to account A and CSVs to B, so the replacement needs the user to move the CSV (review of PR #42). Check against a real statement: periods share the boundary day (SEP 01 - OCT 01), and the end date counts as covered.
 - A lone signed amount column has no sign convention in `ColumnMapping`: the UI must show a sample and let the user set `negateSigned` before `toStatement`. A `low` mapping must never be converted without the user confirming it. `toStatement` does not check `confidence`.
 - `source.row` counts rows after `readCsv` drops blank lines; do not present it as a spreadsheet line number.
 - A blank description gives `""` without a warning; two identical files have the same statement id (`buildLedger` already treats that as one import).
@@ -62,7 +62,7 @@ Created 2026-11-20 as GitHub issues, each with a "Model routing" section from `/
 
 | Issue | Task                                      | Model                                | Fallback            | Blocked by                 |
 | ----- | ----------------------------------------- | ------------------------------------ | ------------------- | -------------------------- |
-| #28   | M6: UI accepts PDF statements             | Sonnet (Haiku for strings)           | Opus                | none                       |
+| #28   | M6: UI accepts PDF statements (PR open)   | Sonnet (Haiku for strings)           | Opus                | none                       |
 | #29   | M6: property test and generator fix       | Sonnet                               | Opus if a real bug  | none                       |
 | #30   | Small review findings from PRs #25 to #27 | Sonnet                               | Opus                | none                       |
 | #31   | Statement chaining in the ledger          | Opus (ADR), then Sonnet              | Sonnet only         | none                       |
@@ -160,6 +160,12 @@ Queued by the autonomous workflow. Claude does not attempt these.
 ## Session log
 
 Newest first. One entry per session: date, what changed, what was verified, what is next.
+
+### 2026-11-20 — UI accepts PDF statements (#28)
+
+- The importer takes PDFs and CSVs. A PDF goes `extractPdf → normalize → detect → parse → reconcile` (`src/ui/readPdf.ts`); pdf.js and its worker load on the first PDF only, from our own origin (`GlobalWorkerOptions.workerSrc` set from a Vite `?url` import). An unknown PDF shows "unsupported format" as an alert. Status text names the method when verified and the page and line for a PDF mismatch. Ledger (owner's choice): a verified PDF replaces the CSV rows of the same account kind dated inside its period; an unverified PDF replaces nothing.
+- Verified: typecheck, lint, `npm test` (456 tests), build, and `npm run e2e` (8 tests, 3 new: a synthetic TD PDF verifies under the built CSP with no cross-origin request; unknown PDF; CSV plus PDF not double-counted). A probe confirmed pdf.js runs in a real worker (`/assets/pdf.worker.min-*.mjs`), with no console errors, and that the 500 kB pdf.js chunk is not fetched on page load.
+- Not verified: a real statement (owner checks M6's "Verified" criterion on his machine).
 
 ### 2026-11-20 — Small review findings (#30)
 
