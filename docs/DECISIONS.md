@@ -26,6 +26,7 @@ A record is changed only by adding a new record that supersedes it. Statuses: Pr
 | 018 | CSV import first, PDF parsing second; usefulness is the first goal              | Accepted (owner's decision, 2026-11-10); stage order superseded by 019 |
 | 019 | PDF first for the owner's banks; no further CSV work                            | Accepted (owner's decision, 2026-11-14)                                |
 | 020 | Checkpoint and totals reconciliation; amount columns found from the amounts     | Accepted (owner delegated the design, 2026-11-14)                      |
+| 021 | Reframe: help the user read their transactions; verified numbers stay on device | Proposed (owner's direction, 2026-11-20; details after the census)     |
 
 All records become Accepted when Bruce signs off on the PRD.
 
@@ -360,3 +361,40 @@ All records become Accepted when Bruce signs off on the PRD.
 **Consequences.** TD chequing statements can be Verified, with a bad row pinpointed to a day, which is what AC-1 and AC-2 need; the profile needs more fields (opening balance row, total row, row order). The types `Reconciliation` (method `checkpoints`, and a place for a PDF source in a mismatch) and `ParsedStatement` (`printedTotals`, and a profile-declared list of required anchors) change in the next PR, with tests including mutation tests (a removed, altered or added row inside a segment must give `mismatch`). Credit-card statements (CIBC, M7) are expected to print a balance differently; this ADR covers only what the TD dump showed.
 
 **Revisit when** the other pages of the TD statements, or the CIBC dump, show a layout this method cannot verify.
+
+---
+
+## ADR-021 — Reframe: help the user read their transactions; verified numbers that stay on the device
+
+**Status.** Proposed. The direction is the owner's (2026-11-20); the design details wait for the description census (below).
+
+**Context.** The owner described a second persona who matters as much as the privacy-minded one: someone who spends freely, loses track of the total, and will not keep books because opening a statement shows lines they cannot read ("what is this charge?"). For this person, a recurring-charge list and a verified CSV answer questions they are not asking. Their question is "where did my money go, and what is this line?".
+
+Two facts constrain the answer.
+
+1. A chatbot can already read an uploaded statement and explain it, often better than rules can. So "smarter explanations" is not a position this project can hold. What a chatbot does not give: figures checked against the statement's own balances (it can drop or invent rows without saying so), no upload of the whole statement to a third party, and the same result every time. That is what ADR-004, ADR-001 and ADR-020 already provide.
+2. Some descriptions cannot be decoded by anyone. A string with no merchant name in it carries no name to recover. The honest output for those is "unknown", plus what the surrounding data does show.
+
+| Option                                                                                        | Helps the persona | Keeps ADR-001, ADR-013 | Cost                                                                       |
+| --------------------------------------------------------------------------------------------- | ----------------- | ---------------------- | -------------------------------------------------------------------------- |
+| A. Keep the plan: recurring charges and a CSV only                                            | Little            | Yes                    | None; the persona uses a chatbot instead                                   |
+| **B. A rule-based decoder plus behaviour hints plus user labels, on top of verified numbers** | Yes               | Yes                    | A brand list and rules to build and test; honest "unknown" for the rest    |
+| C. Train a model from scratch on transaction descriptions                                     | In theory         | Depends                | No labelled data exists to train on; synthetic data teaches only its rules |
+| D. Call an LLM at runtime                                                                     | Yes               | **No**                 | Breaks ADR-013 and the privacy claim                                       |
+
+**Decision (proposed).** B. The product gains a readout: drop in statements, see where the money went and what each line probably is.
+
+- **What the decoder does.** (1) Rules strip payment-processor prefixes, store numbers, cities and reference codes. (2) A bank-code table explains the bank's own suffixes (the first TD dump shows one-letter suffixes such as `_V`); each meaning must be verified from the bank's public documentation before it is written down. (3) Fuzzy matching against a public brand list, only if a list with a suitable licence is found and recorded in `docs/RESEARCH.md`. (4) Behaviour hints from the verified ledger: how often a description repeats, its cadence, whether the amount is stable ("seen 6 times, monthly, always the same amount"). (5) Labels the user sets once ("this is my gym"), applied to every matching line in the session.
+- **Unknown stays unknown.** A description with no match gets no guessed name. Each result carries its source (rule, bank code, brand list, behaviour, user label) and a confidence. Nothing is presented as fact that is a guess.
+- **No runtime model, no training.** ADR-013 stands. Fuzzy matching and the rules are classic, deterministic code. A small embedded model may be reconsidered only through a new ADR, if a measurement shows the rules are not enough; it would add a dependency and download size.
+- **Labels and privacy.** Labels live in memory (ADR-010). The user can download them as a file and load it next time. Nothing is stored by the app and nothing is sent anywhere.
+- **Position.** The claim is verified numbers that never leave the device, plus a readable summary. It is not "better explanations than a chatbot". Public copy and the README must say so.
+- **Not in scope.** Budgets, goals and spending categories stay out (PRD non-goals): that is where this persona gives up and where larger apps already compete.
+
+**Measurement before design.** The owner runs `npm run census` (PR #26) on his real statements and shares the counts only: the share of descriptions that are readable text, carry a processor prefix, or are opaque codes, and how many repeat. The census heuristics are rough (a word with a vowel counts as readable, so the readable share is an upper bound). If most descriptions are opaque codes, behaviour hints, bank-code meanings and labels carry the feature and the brand list matters less; if most are readable names, the brand list and cleaning rules matter most. This ADR moves to Accepted, with the details filled in, after those numbers.
+
+**Evaluation.** A hand-written descriptor suite with expected readings (invented strings shaped like real ones, never copied from a statement) and a printed report of how many each method decodes correctly, wrongly, or leaves unknown. A wrong decode counts worse than an unknown one.
+
+**Consequences.** M2 grows from "recurring detection" to "decoder plus recurring detection plus where the money went"; the `merchant/` stage in ARCHITECTURE §6.7 becomes the decoder. M3's main screen becomes the readout, with the recurring list as one section. M5 to M7 (PDF parsing and verification) are unchanged and still come first: the decoder needs correctly read transactions. ADR-013 and ADR-001 are unchanged.
+
+**Revisit when** the census shows that nearly all descriptions are opaque and no behaviour hint or label route is usable, or a licence-compatible brand list cannot be found, or a measurement shows the rules decode too few lines to be useful.

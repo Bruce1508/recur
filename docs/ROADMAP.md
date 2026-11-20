@@ -94,7 +94,7 @@ Scaffold, CSP placeholder, CI job `verify`, privacy probe, and the gate decision
 **Tasks**
 
 1. Before reading any detector output, the owner writes down the subscriptions he believes he has (ground truth for AC-7).
-2. `merchant/`: normalisation rules and alias table, tested against a hand-written list of realistic descriptors. Mark descriptors that hide the real service (app-store and payment-processor charges) as ambiguous (FR-14).
+2. (ADR-021, proposed: this task becomes the transaction decoder, with FR-16 to FR-18; wait for the owner's census numbers before designing it.) `merchant/`: normalisation rules and alias table, tested against a hand-written list of realistic descriptors. Mark descriptors that hide the real service (app-store and payment-processor charges) as ambiguous (FR-14).
 3. `recurring/`: grouping, cadence bucketing, consistency scoring, amount stability, price-change detection, confidence, next expected date, monthly and annual cost.
 4. Annual cadence: two charges from the same merchant about a year apart are a confirmed annual series; a single large charge stays "possible". This needs 13 months or more of history, and the UI says so when the history is shorter.
 5. Labelled scenario suite (≥ 30): fixed monthly, price increase, weekly, bi-weekly, annual, variable bills, groceries and coffee as negatives, refunds, missed month, duplicate merchants.

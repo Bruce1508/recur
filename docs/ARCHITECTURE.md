@@ -245,6 +245,8 @@ Merges statements, sorts by date, removes duplicates from overlapping periods us
 
 ### 6.7 `merchant`
 
+> ADR-021 (proposed) turns this stage into a decoder: rules, a bank-code table, an optional brand list, behaviour hints from the ledger and user labels, each result with its source and confidence, and "unknown" when nothing supports a name. Design after the description census.
+
 `description → merchantKey`. Upper-case; strip store numbers, phone numbers, city and province suffixes, reference codes and payment-processor prefixes; collapse whitespace; then apply a small alias table for common billers. The rules are tested against a hand-written list of realistic descriptors, not against anyone's real spending.
 
 ### 6.8 `recurring`

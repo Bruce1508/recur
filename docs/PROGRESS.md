@@ -6,22 +6,34 @@ Living document. Update it at the end of every working session. Never record sta
 
 ## Current status
 
+**State on 2026-11-20 (verified against `git log origin/main` and the GitHub issue list):** `main` is at `3c808b9` (PR #26), 440 tests, CI green. Open pull request: #27 (ADR-021 proposed, docs only). Built and merged:
+
+- M1, the CSV pipeline and walking-skeleton UI (PRs #5 to #16): code complete, synthetic data only.
+- M5: `src/pdf/extract.ts` (the only `pdfjs-dist` importer), `normalize` (with the overdraw fix), the layout mask and `npm run pdf:dump`. The owner has run the dump on two real TD chequing statements and shared page 1 of one as a masked table; pages 2 to 4, the second statement and the CIBC statement have not been seen.
+- M6 so far: ADR-020 and `reconcile` checkpoints and totals (PRs #23, #24); the `BankProfile` type, the `td-chequing` profile, `detect`, `parse` and a synthetic TD statement generator (PR #25); the description census CLI (PR #26).
+
+**Not true yet, so do not assume it:** the parser has never run on a real PDF. Everything above is tested on invented data whose geometry comes from one masked page. There is no UI for PDFs (the importer takes CSV only), no real fixtures (AC-13 needs three per format), no second bank (M7), no recurring detection or decoder (M2), no exports or demo (M3), no deployment (M4). `reconcile` has never produced `verified` for a real statement.
+
+**Direction under discussion:** see the ADR-021 paragraph below. **Open work:** GitHub issues #28 to #38, listed with their model tier in "Issues and model routing".
+
 **Scope change (2026-11-14, ADR-019):** the owner checked and both TD chequing and CIBC credit card offer statement PDFs only. PDF parsing now comes first: the order is M5, M6, M7, then M2, M3, M4. The CSV code below stays on `main` with no new work, and the real-CSV fixtures (AC-3, real part) are dropped. `src/pdf/extract.ts` and `tools/pdf-dump.ts` (M5 tasks 1 and 4) are built: the owner runs `npm run pdf:dump` on his PDFs to produce a masked layout dump. `normalize` (M5 task 2) is built too. The `reconcile` checkpoint and totals methods are merged (PR #24), and the TD profile, `detect` and `parse` are built against a synthetic generator (M6 task 4). Next: the UI accepts PDFs (M6 task 6).
 
 **Phase (before ADR-019):** M1 in progress (stage 1, CSV first, ADR-018). The whole CSV pipeline up to the ledger is on `main`, tested end to end on synthetic data (269 tests, `npm run verify` green, CI green): `src/core/money.ts`, `plainDate.ts`, `csv/read.ts`, `csv/mapColumns.ts`, `csv/toStatement.ts`, `reconcile.ts`, `ledger.ts`, `tools/make-synthetic.ts`, and the import-boundary lint rule (PRs #5 to #12, tasks 1 to 7 and 10).
 
 **M1 is code-complete:** tasks 1 to 11 are built (11 is the UI, PR #15; 8 and 9 are the fixture tools, PR #16; 312 tests on `main` at `e25ea6f`). The real-export criteria were dropped by ADR-019. Optional for the owner: try the UI with `npm run dev` on a synthetic CSV.
 
-**Tooling note:** `gh` failed with `x509: OSStatus -26276` inside the Bash sandbox on 2026-11-11. It worked when that call was run with the sandbox disabled, so the sandbox is the cause. Use that only after a sandbox-caused failure of the same command, never as the default; if the owner gets a proper fix, drop this note.
+**Tooling note:** `gh` fails with `x509: OSStatus -26276`. On 2026-11-11 it worked once the sandbox was disabled for that call; since 2026-11-17 it fails intermittently even with the sandbox disabled (`gh pr checks`, `gh pr create` and `gh issue create` worked, `gh pr merge` often did not, and a failed call can be followed by a working one). It is therefore not only the sandbox. Use `dangerouslyDisableSandbox` only for `gh` and `git push`/`fetch`, never retry in a loop, and when a merge keeps failing give the owner the exact `gh pr merge ... --match-head-commit <sha>` command to run from a terminal. If the owner fixes the macOS certificate setup, drop this note.
 
 **CI note:** the earlier `verify` failures were not code. `npx playwright install --with-deps chromium` failed because the runner could not resolve `*.ubuntu.com` (apt, `Temporary failure resolving`). A rerun passed. If it recurs, cache the Playwright browsers or retry that step, in its own branch.
 
-**Next session, in order (ADR-019):**
+**Direction under discussion (ADR-021, Proposed, 2026-11-20):** the owner wants the app to help read unfamiliar transaction descriptions (a readout of where the money went), without an LLM and without training a model. Read ADR-021 and PRD §1a before touching M2 or M3. It does not change M5 to M7. Waiting on the owner: run `npm run census` on his real statements and share the counts only; the ADR is completed from them.
 
-1. Run `git log origin/main` and `gh pr list` to confirm what is merged. Never `--admin`; never force-push (merge `main` into the branch instead of rebasing).
-2. M5 tasks 1, 2 and 4 are done. M6 (ADR-020), in this order, each its own PR: (a) done: `reconcile` checkpoint and totals methods with mutation tests; (b) done: TD profile, `detect` and `parse` with a synthetic TD-style PDF generator built from the dump geometry, and a golden test through `extractPdf`, `normalize`, `parse`, `reconcile`; (c) UI accepts PDFs (show `firstBadSource` for a checkpoints mismatch in `describeStatus`, `src/ui/Importer.tsx`). Also pin the `normalize` overdraw threshold (0.25) with a test: same text and x at y distance 9.5 is kept, and just under and over 0.25 of the text height is dropped and kept.
-3. When the owner pastes more of a reviewed dump (pages 2 to 4, the second statement, the CIBC statement): record the quirks in this file and check the ADR-020 rules against them. Claude never reads a real statement; only the masked dump.
-4. M2 (recurring-charge detection) needs the owner's hand-written subscription list first (see "Waiting on the owner"), and now follows M7.
+**Next session, in order:**
+
+1. Run `git log origin/main` and `gh pr list` to confirm what is merged (PR #27 may still be open). Never `--admin`; never force-push (merge `main` into the branch instead of rebasing).
+2. Work the open issues in this order, one PR each, through `ship-task`: #30 (small review findings), #28 (UI accepts PDFs), #29 (property test and generator fix), #31 (statement chaining: Opus designs and writes the ADR, Sonnet implements). The model tier of each is in "Issues and model routing".
+3. Owner-blocked, do not attempt: #38 (census numbers, dumps of pages 2 to 4 and the CIBC statement, the hand-written subscription list). When the owner pastes a reviewed dump or the census counts, record the quirks here and check the ADR-020 rules against them. Claude never reads a real statement; only the masked dump and counts.
+4. After the census numbers: #32 (accept ADR-021, Opus). Then, following the ADR-019 order (M7 before M2): #35 (M7, needs the CIBC dump), then #33 (decoder) and #34 (recurring detection), then #36 (M3) and #37 (M4). If the CIBC dump is late, starting #33 after #32 would change the stated order and needs the owner's say-so recorded here; #34 always waits for M7.
 
 **Requirements carried into task 11 and later** (found in reviews; most are pinned by a test or noted in code; the blank-description item is neither, add a test or a warning when touching `toStatement`):
 
@@ -42,21 +54,39 @@ Living document. Update it at the end of every working session. Never record sta
 
 **Target files (ADR-019):** PDF statements from TD (chequing) and CIBC (credit card); neither bank offers CSV. Real statements stay in `~/Statements/`.
 
-**Blocked on the owner:** nothing blocks the next Claude tasks (`src/pdf/extract.ts`, `tools/pdf-dump.ts`). Real layout facts need the owner to run the dump on one PDF per account and review its output (see "Waiting on the owner").
+**Blocked on the owner:** the census numbers (unblock ADR-021, #32), the dumps of TD pages 2 to 4, the second TD statement and the CIBC statement (unblock real-layout checks and M7, #35), and the hand-written subscription list (AC-7). Issues #28 to #31 do not need the owner. Full list: issue #38 and "Waiting on the owner".
+
+## Issues and model routing
+
+Created 2026-11-20 as GitHub issues, each with a "Model routing" section from `/ecc:model-route` (one routing agent per task; several worked from the task text without reading the docs, so the tiers are estimates to be corrected on evidence). Routing policy: `~/.claude/CLAUDE.md` (Sonnet default; escalate on evidence; the `reviewer` agent runs on every PR, opus for parse, reconcile, CSP, file handling).
+
+| Issue | Task                                      | Model                                | Fallback            | Blocked by                 |
+| ----- | ----------------------------------------- | ------------------------------------ | ------------------- | -------------------------- |
+| #28   | M6: UI accepts PDF statements             | Sonnet (Haiku for strings)           | Opus                | none                       |
+| #29   | M6: property test and generator fix       | Sonnet                               | Opus if a real bug  | none                       |
+| #30   | Small review findings from PRs #25 to #27 | Sonnet                               | Opus                | none                       |
+| #31   | Statement chaining in the ledger          | Opus (ADR), then Sonnet              | Sonnet only         | none                       |
+| #32   | ADR-021: complete and accept              | Opus                                 | Fable if messy      | owner census (#38)         |
+| #33   | M2: transaction decoder                   | Sonnet (Haiku for scaffolding)       | Opus                | #32                        |
+| #34   | M2: recurring-charge detection            | Sonnet                               | Opus                | M7 order; owner list (#38) |
+| #35   | M7: CIBC credit card                      | Opus (ADR), then Sonnet              | Sonnet only         | owner CIBC dump (#38)      |
+| #36   | M3: UI, demo, exports                     | Sonnet (Opus reviews the CSV export) | Opus                | M2                         |
+| #37   | M4: hardening, deployment, launch         | Sonnet                               | Opus on CSP failure | M3; owner approvals        |
+| #38   | Owner tasks                               | not for Claude                       | n/a                 | n/a                        |
 
 ## Milestones
 
-| #   | Milestone                                             | Status      | Started    | Finished   | Notes                                                              |
-| --- | ----------------------------------------------------- | ----------- | ---------- | ---------- | ------------------------------------------------------------------ |
-| —   | Discovery, research, architecture, planning           | Done        | 2026-11-10 | 2026-11-10 | Seven planning documents written                                   |
-| M0  | Validation gate and bootstrap                         | Done        | 2026-11-10 | 2026-11-10 | Gate: GO; A1 confirmed (TD + CIBC)                                 |
-| M1  | CSV import, ledger, fixture tooling, walking skeleton | Code done   | 2026-11-11 | 2026-11-13 | Tasks 1 to 11 merged; real-CSV fixtures dropped (ADR-019)          |
-| M5  | PDF extraction, line model, PDF fixture tooling       | Next        |            |            | Now first (ADR-019)                                                |
-| M6  | First PDF format (TD chequing) with reconciliation    | In progress | 2026-11-14 |            | Reconcile, profile, detect, parse built on synthetic data; UI next |
-| M7  | Second PDF format (CIBC credit card)                  | Not started |            |            | After M6                                                           |
-| M2  | Recurring-charge detection                            | Not started |            |            | Now after M7                                                       |
-| M3  | Product UI, demo mode, exports, trust features        | Not started |            |            |                                                                    |
-| M4  | Hardening, deployment, small launch, validation       | Not started |            |            | Ends with the launch and testers                                   |
+| #   | Milestone                                             | Status      | Started    | Finished   | Notes                                                                                                         |
+| --- | ----------------------------------------------------- | ----------- | ---------- | ---------- | ------------------------------------------------------------------------------------------------------------- |
+| —   | Discovery, research, architecture, planning           | Done        | 2026-11-10 | 2026-11-10 | Seven planning documents written                                                                              |
+| M0  | Validation gate and bootstrap                         | Done        | 2026-11-10 | 2026-11-10 | Gate: GO; A1 confirmed (TD + CIBC)                                                                            |
+| M1  | CSV import, ledger, fixture tooling, walking skeleton | Code done   | 2026-11-11 | 2026-11-13 | Tasks 1 to 11 merged; real-CSV fixtures dropped (ADR-019)                                                     |
+| M5  | PDF extraction, line model, PDF fixture tooling       | Mostly done | 2026-11-14 |            | Extract, normalize, mask and dump built; first real page seen; real fixtures wait on the owner                |
+| M6  | First PDF format (TD chequing) with reconciliation    | In progress | 2026-11-14 |            | Reconcile, profile, detect, parse built on synthetic data; UI (#28), property test (#29), chaining (#31) next |
+| M7  | Second PDF format (CIBC credit card)                  | Not started |            |            | After M6                                                                                                      |
+| M2  | Recurring-charge detection                            | Not started |            |            | Now after M7                                                                                                  |
+| M3  | Product UI, demo mode, exports, trust features        | Not started |            |            |                                                                                                               |
+| M4  | Hardening, deployment, small launch, validation       | Not started |            |            | Ends with the launch and testers                                                                              |
 
 ## What the planning phase established
 
@@ -97,39 +127,52 @@ Queued by the autonomous workflow. Claude does not attempt these.
 
 ## Acceptance criteria tracker
 
-| ID    | Criterion (short)                             | Status  | Evidence                                                                            |
-| ----- | --------------------------------------------- | ------- | ----------------------------------------------------------------------------------- |
-| AC-1  | Fixtures match golden output and reconcile    | Partial | 11 synthetic layouts parse to exact golden output; verified with a balance (task 7) |
-| AC-2  | Mutations produce a mismatch                  | Partial | Middle rows only on synthetic files; the ends need the cross-file chain (backlog)   |
-| AC-3  | Synthetic CSV layouts (real CSV dropped)      | Met     | 11 synthetic layouts (task 7); real TD and CIBC CSV dropped by ADR-019              |
-| AC-4  | No cross-origin requests, no request bodies   | —       |                                                                                     |
-| AC-5  | Works offline after load                      | —       |                                                                                     |
-| AC-6  | Detection precision ≥ 0.90, recall ≥ 0.80     | —       |                                                                                     |
-| AC-7  | ≥ 80% of hand-listed subscriptions found      | —       |                                                                                     |
-| AC-8  | CSV round-trip and injection safety           | —       |                                                                                     |
-| AC-9  | 12 files in under 5 s                         | —       |                                                                                     |
-| AC-10 | Demo works with no user file                  | —       |                                                                                     |
-| AC-11 | CSP header on the deployed site               | —       |                                                                                     |
-| AC-12 | README complete                               | —       |                                                                                     |
-| AC-13 | Stage 2: two PDF formats, three fixtures each | —       |                                                                                     |
-| AC-14 | Calendar file and list download are correct   | —       |                                                                                     |
-| AC-15 | Five outside testers, findings recorded       | —       |                                                                                     |
+| ID    | Criterion (short)                             | Status  | Evidence                                                                                                                       |
+| ----- | --------------------------------------------- | ------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| AC-1  | Fixtures match golden output and reconcile    | Partial | 11 synthetic CSV layouts and one synthetic TD PDF format (PR #25) parse to exact golden output and verify; no real fixture yet |
+| AC-2  | Mutations produce a mismatch                  | Partial | CSV: middle rows only (ends need the chain, #31). Synthetic TD PDF: every row removed or altered by a cent gives mismatch      |
+| AC-3  | Synthetic CSV layouts (real CSV dropped)      | Met     | 11 synthetic layouts (task 7); real TD and CIBC CSV dropped by ADR-019                                                         |
+| AC-4  | No cross-origin requests, no request bodies   | —       |                                                                                                                                |
+| AC-5  | Works offline after load                      | —       |                                                                                                                                |
+| AC-6  | Detection precision ≥ 0.90, recall ≥ 0.80     | —       |                                                                                                                                |
+| AC-7  | ≥ 80% of hand-listed subscriptions found      | —       |                                                                                                                                |
+| AC-8  | CSV round-trip and injection safety           | —       |                                                                                                                                |
+| AC-9  | 12 files in under 5 s                         | —       |                                                                                                                                |
+| AC-10 | Demo works with no user file                  | —       |                                                                                                                                |
+| AC-11 | CSP header on the deployed site               | —       |                                                                                                                                |
+| AC-12 | README complete                               | —       |                                                                                                                                |
+| AC-13 | Stage 2: two PDF formats, three fixtures each | —       |                                                                                                                                |
+| AC-14 | Calendar file and list download are correct   | —       |                                                                                                                                |
+| AC-15 | Five outside testers, findings recorded       | —       |                                                                                                                                |
 
 ## Risk watch
 
-| Risk                                                                   | Status                                           | Next check                 |
-| ---------------------------------------------------------------------- | ------------------------------------------------ | -------------------------- |
-| Too few real statements                                                | Reduced: A1 confirmed for two accounts           | M5                         |
-| Real PDFs differ from the synthetic spike                              | Open                                             | M5, first real statement   |
-| Schedule against exams and internship applications                     | Open                                             | Weekly                     |
-| TypeScript 7 tooling friction                                          | Closed: `tsc --noEmit` runs clean on 7.0.2 in CI | —                          |
-| Real CSV exports differ from the synthetic layouts, or have no balance | Closed for the owner (no CSV, ADR-019)           | Only if a CSV user appears |
-| People will not download a file from their bank                        | Open                                             | M4 validation              |
-| `gh` TLS failure (`x509 -26276`) inside the sandbox                    | Worked around per call, see Tooling note         | Each session               |
+| Risk                                                                         | Status                                                    | Next check                                 |
+| ---------------------------------------------------------------------------- | --------------------------------------------------------- | ------------------------------------------ |
+| Too few real statements                                                      | Reduced: A1 confirmed for two accounts                    | M5                                         |
+| Real PDFs differ from the synthetic data (parser built from one masked page) | Open: parser never run on a real PDF                      | Owner runs the census and more dumps (#38) |
+| Schedule against exams and internship applications                           | Open                                                      | Weekly                                     |
+| TypeScript 7 tooling friction                                                | Closed: `tsc --noEmit` runs clean on 7.0.2 in CI          | —                                          |
+| Real CSV exports differ from the synthetic layouts, or have no balance       | Closed for the owner (no CSV, ADR-019)                    | Only if a CSV user appears                 |
+| People will not download a file from their bank                              | Open                                                      | M4 validation                              |
+| `gh` TLS failure (`x509 -26276`)                                             | Intermittent, also with the sandbox off; see Tooling note | Each session                               |
 
 ## Session log
 
 Newest first. One entry per session: date, what changed, what was verified, what is next.
+
+### 2026-11-20 — Status sync, issues and model routing
+
+- Re-checked the state against `git log origin/main` (PRs #24 to #26 merged, #27 open) and the issue list, rewrote "State on 2026-11-20", the next-steps list, the M5 and M6 table rows, the AC-1 and AC-2 evidence, the risk rows and the `gh` tooling note, and added "Issues and model routing". The memory file and the cross-project ledger were updated outside the repository.
+- Created labels (`M2` to `M7`, `model:*`, `owner-blocked`, `chore`, `docs`) and issues #28 to #38, one per next step; nine routing agents (one per task, Sonnet) returned a recommendation, confidence, reason, fallback and cheaper sub-parts, copied into each issue.
+- Routing outcome: Sonnet for #28, #29, #30, #33, #34, #36, #37; Opus first, then Sonnet, for #31 and #35 (semantics of balances, false-verified risk); Opus for #32 (licence and design decision). No task needs Fable. Haiku only for mechanical sub-parts.
+- Verified: issue numbers and labels from the `gh` output; test count from the last `npm test` on `main`. Not verified: any behaviour on a real statement.
+
+### 2026-11-20 — ADR-021 proposed: transaction readout reframe
+
+- Wrote ADR-021 (Proposed), PRD §1a with persona P4 and FR-16 to FR-18, a pointer in ROADMAP M2 and ARCHITECTURE §6.7, and the "Direction under discussion" paragraph above. Decided: a rule-based decoder with behaviour hints and user labels, unknown stays unknown, no runtime LLM, no model trained from scratch (no labelled data). Position: verified numbers that stay on the device, not better explanations than a chatbot. Not decided: the brand list (none found or licence-checked yet), the bank-code meanings (unverified), whether a small embedded model is ever worth it.
+- Docs only. Verified: `npx biome check`. Not verified: any claim about how real descriptions look; the census is the first measurement.
+- Next: the owner runs the census; M6 task 6 (UI accepts PDFs).
 
 ### 2026-11-20 — Description census tool
 
