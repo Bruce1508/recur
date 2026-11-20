@@ -28,12 +28,13 @@ export type InputRead =
  */
 export function readInput(repo: string, path: string): InputRead {
   try {
-    if (isInside(repo, realpathSync(path)))
+    const real = realpathSync(path);
+    if (isInside(repo, real))
       return {
         ok: false,
         reason: "an input is inside this repository; keep statements outside",
       };
-    return { ok: true, bytes: new Uint8Array(readFileSync(path)) };
+    return { ok: true, bytes: new Uint8Array(readFileSync(real)) };
   } catch {
     return { ok: false, reason: "an input file could not be read" };
   }
