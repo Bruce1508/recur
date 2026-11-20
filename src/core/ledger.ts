@@ -1,3 +1,4 @@
+import { reconcile } from "./reconcile";
 import type { ParsedStatement, PlainDate, Transaction } from "./types";
 
 export interface Ledger {
@@ -28,6 +29,11 @@ const nextMonth = (ym: string): string => {
  * on a chequing and a card account, or on two accounts whose running balances differ, is not
  * merged.
  *
+ * A PDF statement that reconciles as verified is the record for its period: a CSV row of the same
+ * account kind dated inside that period (end date included) is dropped and counted in
+ * `duplicatesRemoved`, because a CSV row and the PDF row for one transaction rarely match exactly.
+ * A PDF that does not verify removes nothing.
+ *
  * Limits: the same account exported once with and once without a balance column is not
  * de-duplicated (the rows differ). **Two accounts of the same kind and bank with no balance
  * column cannot be told apart** (a CSV has no account id, `bankId` is "unknown"): an identical
@@ -44,9 +50,21 @@ export function buildLedger(statements: readonly ParsedStatement[]): Ledger {
     string,
     Map<number, { pos: number; t: Transaction }[]>
   >();
+  const covered = statements
+    .filter((s) => s.input === "pdf" && reconcile(s).status === "verified")
+    .map((s) => ({ kind: s.kind, ...s.period }));
   let pos = 0;
   for (const [si, s] of statements.entries()) {
     for (const t of s.transactions) {
+      if (
+        s.input === "csv" &&
+        covered.some(
+          (c) => c.kind === s.kind && c.start <= t.date && t.date <= c.end,
+        )
+      ) {
+        pos++;
+        continue;
+      }
       const key = JSON.stringify([
         s.bankId,
         s.kind,

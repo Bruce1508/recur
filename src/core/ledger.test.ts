@@ -251,3 +251,68 @@ describe("buildLedger: missing months", () => {
     expect(buildLedger([empty]).missingMonths).toEqual([]);
   });
 });
+
+describe("buildLedger: a verified PDF statement covers its period", () => {
+  // Invented data. Opening 1000.00; the PDF prints a balance on each row, a closing balance and
+  // its totals, so reconcile verifies it.
+  function pdfStatement(
+    amounts: Cents[] = [-10000, 5000],
+    kind: ParsedStatement["kind"] = "deposit",
+  ): ParsedStatement {
+    let balance = 100000;
+    const transactions: Transaction[] = amounts.map((amount, i) => {
+      balance += amount;
+      return {
+        id: `p:${i}`,
+        date: `2026-01-${String(i + 2).padStart(2, "0")}`,
+        description: `PDF ROW ${i}`,
+        amount,
+        balanceAfter: balance,
+        source: { statementId: "p", input: "pdf", page: 1, lineIndex: i },
+      };
+    });
+    return {
+      id: "p",
+      input: "pdf",
+      bankId: "td-chequing",
+      kind,
+      period: { start: "2026-01-01", end: "2026-01-31" },
+      openingBalance: 100000,
+      closingBalance: 95000,
+      printedTotals: { withdrawals: 10000, deposits: 5000 },
+      requiredAnchors: ["printedTotals"],
+      transactions,
+      warnings: [],
+    };
+  }
+
+  const csv = statement("c", [
+    { date: "2025-12-31", amount: -700, description: "BEFORE" },
+    { date: "2026-01-02", amount: -10000, description: "Same row, CSV text" },
+    { date: "2026-01-31", amount: -300, description: "LAST DAY" },
+    { date: "2026-02-01", amount: -200, description: "AFTER" },
+  ]);
+
+  test("CSV rows dated inside the period are dropped as duplicates, the rest are kept", () => {
+    const l = buildLedger([csv, pdfStatement()]);
+    expect(summary(l.transactions)).toEqual([
+      ["2025-12-31", -700, "BEFORE"],
+      ["2026-01-02", -10000, "PDF ROW 0"],
+      ["2026-01-03", 5000, "PDF ROW 1"],
+      ["2026-02-01", -200, "AFTER"],
+    ]);
+    expect(l.duplicatesRemoved).toBe(2);
+  });
+
+  test("a PDF that does not verify removes nothing", () => {
+    const broken = pdfStatement([-10001, 5000]);
+    const l = buildLedger([csv, broken]);
+    expect(l.transactions).toHaveLength(6);
+    expect(l.duplicatesRemoved).toBe(0);
+  });
+
+  test("a verified PDF of another account kind removes nothing", () => {
+    const l = buildLedger([csv, pdfStatement(undefined, "credit")]);
+    expect(l.transactions).toHaveLength(6);
+  });
+});
