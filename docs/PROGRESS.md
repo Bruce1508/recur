@@ -16,6 +16,8 @@ Living document. Update it at the end of every working session. Never record sta
 
 **CI note:** the earlier `verify` failures were not code. `npx playwright install --with-deps chromium` failed because the runner could not resolve `*.ubuntu.com` (apt, `Temporary failure resolving`). A rerun passed. If it recurs, cache the Playwright browsers or retry that step, in its own branch.
 
+**Direction under discussion (ADR-021, Proposed, 2026-11-20):** the owner wants the app to help read unfamiliar transaction descriptions (a readout of where the money went), without an LLM and without training a model. Read ADR-021 and PRD §1a before touching M2 or M3. It does not change M5 to M7. Waiting on the owner: run `npm run census` on his real statements and share the counts only; the ADR is completed from them.
+
 **Next session, in order (ADR-019):**
 
 1. Run `git log origin/main` and `gh pr list` to confirm what is merged. Never `--admin`; never force-push (merge `main` into the branch instead of rebasing).
@@ -130,6 +132,12 @@ Queued by the autonomous workflow. Claude does not attempt these.
 ## Session log
 
 Newest first. One entry per session: date, what changed, what was verified, what is next.
+
+### 2026-11-20 — ADR-021 proposed: transaction readout reframe
+
+- Wrote ADR-021 (Proposed), PRD §1a with persona P4 and FR-16 to FR-18, a pointer in ROADMAP M2 and ARCHITECTURE §6.7, and the "Direction under discussion" paragraph above. Decided: a rule-based decoder with behaviour hints and user labels, unknown stays unknown, no runtime LLM, no model trained from scratch (no labelled data). Position: verified numbers that stay on the device, not better explanations than a chatbot. Not decided: the brand list (none found or licence-checked yet), the bank-code meanings (unverified), whether a small embedded model is ever worth it.
+- Docs only. Verified: `npx biome check`. Not verified: any claim about how real descriptions look; the census is the first measurement.
+- Next: the owner runs the census; M6 task 6 (UI accepts PDFs).
 
 ### 2026-11-20 — Description census tool
 

@@ -1,11 +1,11 @@
 # PRD — Recur (working name)
 
-|             |                                                                                               |
-| ----------- | --------------------------------------------------------------------------------------------- |
-| **Status**  | Draft v0.3 — re-scoped by ADR-019 (PDF first for TD and CIBC; CSV code kept, no new CSV work) |
-| **Owner**   | Bruce Vo                                                                                      |
-| **Date**    | 2026-11-10                                                                                    |
-| **Related** | `docs/RESEARCH.md`, `docs/ARCHITECTURE.md`, `docs/DECISIONS.md`, `docs/ROADMAP.md`            |
+|             |                                                                                                 |
+| ----------- | ----------------------------------------------------------------------------------------------- |
+| **Status**  | Draft v0.4 — ADR-021 proposed: add a transaction readout (see §1a); ADR-019 order still applies |
+| **Owner**   | Bruce Vo                                                                                        |
+| **Date**    | 2026-11-10                                                                                      |
+| **Related** | `docs/RESEARCH.md`, `docs/ARCHITECTURE.md`, `docs/DECISIONS.md`, `docs/ROADMAP.md`              |
 
 "Recur" is a placeholder name. Rename freely before the first public commit.
 
@@ -16,6 +16,10 @@ A free, open-source web app that runs entirely in the browser. A user drops in t
 The input order changed on 2026-11-10 (ADR-018): CSV import ships first because it works for most banks at once; verified PDF parsing follows for the history and accounts that CSV exports do not reach.
 
 One-line pitch: _the "find my forgotten subscriptions" feature of Rocket Money, for Canadians, without handing over bank credentials._
+
+## 1a. Proposed direction (ADR-021, not yet accepted)
+
+A second persona is added: **P4, the person who loses track of spending and cannot read their own statement** ("what is this charge?"). For P4 the product becomes a readout: where the money went, and what each line probably is, with every figure checked against the statement. A chatbot can also explain a statement, so the claim is verified numbers that never leave the device, not better explanations. Descriptions that cannot be decoded are shown as unknown, never guessed. New requirements FR-16 to FR-18 below are proposed with it. Design details wait for the owner's description census (`npm run census`). Budgets, goals and categories remain non-goals.
 
 ## 2. Problem
 
@@ -34,6 +38,8 @@ The gap: no tool found is (a) fully client-side, (b) usable with Canadian banks'
 | **P1 — Privacy-conscious Canadian** (student or early-career, Big-5 bank customer) | Find forgotten subscriptions without linking a bank                           | Downloads 12 months of transactions from online banking, drops the file in, reviews the recurring list, cancels what they do not use |
 | **P2 — Spreadsheet budgeter / self-employed**                                      | Transactions as CSV for a spreadsheet or bookkeeping tool                     | Drops exports and statements from several accounts, downloads one merged CSV                                                         |
 | **P3 — Evaluator** (recruiter, engineer, potential contributor)                    | Judge the project in under two minutes without owning a Canadian bank account | Clicks "Try with a sample statement", reads the README, skims the code                                                               |
+
+P4 (proposed, ADR-021): a loose spender who keeps no books and cannot read statement lines. Needs: see where the money went and what unfamiliar lines are, without setup. Primary use case: drops in statements, reads the summary, labels the few lines they recognise.
 
 P1 is the primary persona since ADR-018. P3 still matters: a recruiter, and a cautious first-time visitor, will not hand over their own file. A one-click demo with synthetic data is a requirement, not a nice-to-have.
 
@@ -131,23 +137,26 @@ More PDF formats, French-language files, scanned PDFs (OCR), password-protected 
 
 ## 9. Functional requirements
 
-| ID    | Requirement                                                                                                                                                                   |
-| ----- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| FR-1  | Accept one or more CSV files (stage 1) and PDF files (stage 2) by drag-and-drop or file picker. Reject other files with a clear message                                       |
-| FR-2  | CSV: detect the columns; when unsure, ask the user to confirm them. PDF: detect the bank and statement type; if unknown, say so and link to "request support for this format" |
-| FR-3  | Extract every transaction: date (with correct year), description, amount, direction, and running balance where the statement prints one                                       |
-| FR-4  | Check each file and show one of three states: **Verified**, **Mismatch** (with the difference), or **Cannot verify** (for example a CSV with no balance column)               |
-| FR-5  | Merge statements into one ledger, remove duplicates from overlapping periods, and warn about missing months                                                                   |
-| FR-6  | Export the ledger as CSV that opens correctly in Excel and Google Sheets and is safe from formula injection                                                                   |
-| FR-7  | List recurring charges with cadence, typical amount, monthly-equivalent and annual cost, last and next expected date, confidence, and the underlying transactions             |
-| FR-8  | Flag price changes in a recurring series                                                                                                                                      |
-| FR-9  | Let the user dismiss a false positive for the current session                                                                                                                 |
-| FR-10 | Provide a demo mode that loads a bundled synthetic statement set                                                                                                              |
-| FR-11 | Offer "Report a parsing problem", which produces a redacted fixture file locally for the user to attach to a GitHub issue themselves. Nothing is sent automatically           |
-| FR-12 | Export a calendar file (`.ics`) with the next expected date of each recurring charge                                                                                          |
-| FR-13 | Download the recurring list as CSV and as a printable page, because nothing is stored between visits                                                                          |
-| FR-14 | Label a charge as ambiguous when its description names only an app store or a payment processor                                                                               |
-| FR-15 | Detect annual charges when the history holds two occurrences about a year apart; say how much history is needed when it is shorter                                            |
+| ID    | Requirement                                                                                                                                                                                                             |
+| ----- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| FR-1  | Accept one or more CSV files (stage 1) and PDF files (stage 2) by drag-and-drop or file picker. Reject other files with a clear message                                                                                 |
+| FR-2  | CSV: detect the columns; when unsure, ask the user to confirm them. PDF: detect the bank and statement type; if unknown, say so and link to "request support for this format"                                           |
+| FR-3  | Extract every transaction: date (with correct year), description, amount, direction, and running balance where the statement prints one                                                                                 |
+| FR-4  | Check each file and show one of three states: **Verified**, **Mismatch** (with the difference), or **Cannot verify** (for example a CSV with no balance column)                                                         |
+| FR-5  | Merge statements into one ledger, remove duplicates from overlapping periods, and warn about missing months                                                                                                             |
+| FR-6  | Export the ledger as CSV that opens correctly in Excel and Google Sheets and is safe from formula injection                                                                                                             |
+| FR-7  | List recurring charges with cadence, typical amount, monthly-equivalent and annual cost, last and next expected date, confidence, and the underlying transactions                                                       |
+| FR-8  | Flag price changes in a recurring series                                                                                                                                                                                |
+| FR-9  | Let the user dismiss a false positive for the current session                                                                                                                                                           |
+| FR-10 | Provide a demo mode that loads a bundled synthetic statement set                                                                                                                                                        |
+| FR-11 | Offer "Report a parsing problem", which produces a redacted fixture file locally for the user to attach to a GitHub issue themselves. Nothing is sent automatically                                                     |
+| FR-12 | Export a calendar file (`.ics`) with the next expected date of each recurring charge                                                                                                                                    |
+| FR-13 | Download the recurring list as CSV and as a printable page, because nothing is stored between visits                                                                                                                    |
+| FR-14 | Label a charge as ambiguous when its description names only an app store or a payment processor                                                                                                                         |
+| FR-15 | Detect annual charges when the history holds two occurrences about a year apart; say how much history is needed when it is shorter                                                                                      |
+| FR-16 | (Proposed, ADR-021) Decode each description into a readable name where a rule, bank code, brand list or behaviour supports it; show the source and a confidence; show "unknown" otherwise and never guess               |
+| FR-17 | (Proposed, ADR-021) A readout of where the money went: totals by decoded name for the period, the largest and the most frequent, new names that appeared this month, and lines that look unusual against earlier months |
+| FR-18 | (Proposed, ADR-021) Let the user name a line once and apply it to every matching line; download the labels as a file and load them later; nothing is stored by the app                                                  |
 
 ## 10. Non-functional requirements
 
