@@ -232,6 +232,10 @@ export function parse(doc: LineDocument, profile: BankProfile): ParseResult {
       if (!moved) {
         if (balance !== null && draft.length === 0 && opening === undefined) {
           opening = balance;
+        } else if (balance !== null && dateText) {
+          warnings.push(
+            `page ${page}: a dated row has a balance but no amount`,
+          );
         } else if (balance === null && description !== "" && !dateText) {
           const prev = draft[draft.length - 1];
           if (prev) prev.description += ` ${description}`;
