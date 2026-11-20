@@ -129,6 +129,17 @@ describe("chainStatements", () => {
     expect(outcomes(chainStatements([a, csvB()]))).toEqual(["chained"]);
   });
 
+  test("an unchainable reason names no internal id", () => {
+    const [b] = chainStatements([
+      { ...csvA(), warnings: ["x"] },
+      csvB(),
+    ]).boundaries;
+    expect(b?.outcome).toEqual({
+      status: "unchainable",
+      reason: "the earlier statement: it is not verified",
+    });
+  });
+
   test("every date the same: unchainable", () => {
     const flat = make({
       id: "a",
@@ -352,6 +363,21 @@ describe("chainStatements properties", () => {
           expect(e?.start).toBe(!(k === 0 && s.input === "csv"));
           expect(e?.end).toBe(!(k === specs.length - 1 && s.input === "csv"));
         });
+      }),
+      { numRuns: 100 },
+    );
+  });
+
+  test("a newest-first CSV gives the same chain as the same CSV oldest-first", () => {
+    fc.assert(
+      fc.property(history, (specs) => {
+        const stmts = build(specs);
+        const flipped = stmts.map((s) =>
+          s.input === "csv"
+            ? { ...s, transactions: [...s.transactions].reverse() }
+            : s,
+        );
+        expect(chainStatements(flipped)).toEqual(chainStatements(stmts));
       }),
       { numRuns: 100 },
     );

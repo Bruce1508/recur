@@ -71,6 +71,7 @@ test("describeBoundary names both files and the balances, and is empty when chai
   expect(gap).toContain("975.50");
   expect(gap).toContain("875.50");
   expect(gap).toMatch(/may be missing/);
+  expect(gap).toMatch(/first or last rows/);
   expect(
     describeBoundary(
       { ...base, outcome: { status: "mismatch", expected: 1, actual: 2 } },
