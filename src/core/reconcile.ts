@@ -4,23 +4,6 @@ type Point = { amount: Cents; balance: Cents; row: number | undefined };
 type Failure = { index: number; expected: Cents; actual: Cents };
 
 /**
- * Check every printed balance against the one before it (running-balance method).
- *
- * The file may list rows oldest-first or newest-first, and several rows can share a date. The
- * direction comes from the dates (rising: oldest-first, falling: newest-first). If every date is
- * the same the order is unknowable, so both are tried and the reading with fewer broken steps is
- * used; an altered last-in-time row can then go unseen. Dates in no order give `unverifiable`.
- * The balance of a credit account is the amount
- * owed, so a purchase (negative amount) raises it.
- *
- * Fails closed: no balances, one row, or rows that were skipped while converting give
- * `unverifiable`, never `verified`.
- *
- * Limit, by construction: a single file has no opening balance, so the first row's own amount
- * and a row removed from either end of the file are not covered by any step. Chaining files in
- * `ledger` (the closing balance of one against the next) is what covers the ends.
- */
-/**
  * ADR-020: which check applies depends on what the statement carries, and `running-balance` is
  * for CSV only because it reads no anchors. A PDF statement goes to `reconcileAnchored`.
  */
@@ -140,6 +123,23 @@ function reconcileAnchored(statement: ParsedStatement): Reconciliation {
   };
 }
 
+/**
+ * Check every printed balance against the one before it (running-balance method).
+ *
+ * The file may list rows oldest-first or newest-first, and several rows can share a date. The
+ * direction comes from the dates (rising: oldest-first, falling: newest-first). If every date is
+ * the same the order is unknowable, so both are tried and the reading with fewer broken steps is
+ * used; an altered last-in-time row can then go unseen. Dates in no order give `unverifiable`.
+ * The balance of a credit account is the amount
+ * owed, so a purchase (negative amount) raises it.
+ *
+ * Fails closed: no balances, one row, or rows that were skipped while converting give
+ * `unverifiable`, never `verified`.
+ *
+ * Limit, by construction: a single file has no opening balance, so the first row's own amount
+ * and a row removed from either end of the file are not covered by any step. Chaining files in
+ * `ledger` (the closing balance of one against the next) is what covers the ends.
+ */
 function reconcileRunningBalance(statement: ParsedStatement): Reconciliation {
   const points: Point[] = [];
   for (const t of statement.transactions) {

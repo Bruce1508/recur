@@ -2,11 +2,11 @@
 
 Living document. Update it at the end of every working session. Never record statement contents, merchant names from real statements, or account details here; counts and pass/fail only.
 
-**Last updated:** 2026-11-14
+**Last updated:** 2026-11-17
 
 ## Current status
 
-**Scope change (2026-11-14, ADR-019):** the owner checked and both TD chequing and CIBC credit card offer statement PDFs only. PDF parsing now comes first: the order is M5, M6, M7, then M2, M3, M4. The CSV code below stays on `main` with no new work, and the real-CSV fixtures (AC-3, real part) are dropped. `src/pdf/extract.ts` and `tools/pdf-dump.ts` (M5 tasks 1 and 4) are built: the owner runs `npm run pdf:dump` on his PDFs to produce a masked layout dump. `normalize` (M5 task 2) is built too. Next: M6, starting with the `reconcile` checkpoint and totals methods (ADR-020).
+**Scope change (2026-11-14, ADR-019):** the owner checked and both TD chequing and CIBC credit card offer statement PDFs only. PDF parsing now comes first: the order is M5, M6, M7, then M2, M3, M4. The CSV code below stays on `main` with no new work, and the real-CSV fixtures (AC-3, real part) are dropped. `src/pdf/extract.ts` and `tools/pdf-dump.ts` (M5 tasks 1 and 4) are built: the owner runs `npm run pdf:dump` on his PDFs to produce a masked layout dump. `normalize` (M5 task 2) is built too. The `reconcile` checkpoint and totals methods are merged (PR #24), and the TD profile, `detect` and `parse` are built against a synthetic generator (M6 task 4). Next: the UI accepts PDFs (M6 task 6).
 
 **Phase (before ADR-019):** M1 in progress (stage 1, CSV first, ADR-018). The whole CSV pipeline up to the ledger is on `main`, tested end to end on synthetic data (269 tests, `npm run verify` green, CI green): `src/core/money.ts`, `plainDate.ts`, `csv/read.ts`, `csv/mapColumns.ts`, `csv/toStatement.ts`, `reconcile.ts`, `ledger.ts`, `tools/make-synthetic.ts`, and the import-boundary lint rule (PRs #5 to #12, tasks 1 to 7 and 10).
 
@@ -19,7 +19,7 @@ Living document. Update it at the end of every working session. Never record sta
 **Next session, in order (ADR-019):**
 
 1. Run `git log origin/main` and `gh pr list` to confirm what is merged. Never `--admin`; never force-push (merge `main` into the branch instead of rebasing).
-2. M5 tasks 1, 2 and 4 are done. M6 (ADR-020), in this order, each its own PR: (a) done: `reconcile` checkpoint and totals methods with mutation tests; (b) TD profile, `detect` and `parse` with a synthetic TD-style PDF generator built from the dump geometry, and a golden test through `extractPdf`, `normalize`, `parse`, `reconcile`; (c) UI accepts PDFs. Also pin the `normalize` overdraw threshold (0.25) with a test: same text and x at y distance 9.5 is kept, and just under and over 0.25 of the text height is dropped and kept.
+2. M5 tasks 1, 2 and 4 are done. M6 (ADR-020), in this order, each its own PR: (a) done: `reconcile` checkpoint and totals methods with mutation tests; (b) done: TD profile, `detect` and `parse` with a synthetic TD-style PDF generator built from the dump geometry, and a golden test through `extractPdf`, `normalize`, `parse`, `reconcile`; (c) UI accepts PDFs (show `firstBadSource` for a checkpoints mismatch in `describeStatus`, `src/ui/Importer.tsx`). Also pin the `normalize` overdraw threshold (0.25) with a test: same text and x at y distance 9.5 is kept, and just under and over 0.25 of the text height is dropped and kept.
 3. When the owner pastes more of a reviewed dump (pages 2 to 4, the second statement, the CIBC statement): record the quirks in this file and check the ADR-020 rules against them. Claude never reads a real statement; only the masked dump.
 4. M2 (recurring-charge detection) needs the owner's hand-written subscription list first (see "Waiting on the owner"), and now follows M7.
 
@@ -46,17 +46,17 @@ Living document. Update it at the end of every working session. Never record sta
 
 ## Milestones
 
-| #   | Milestone                                             | Status      | Started    | Finished   | Notes                                                     |
-| --- | ----------------------------------------------------- | ----------- | ---------- | ---------- | --------------------------------------------------------- |
-| —   | Discovery, research, architecture, planning           | Done        | 2026-11-10 | 2026-11-10 | Seven planning documents written                          |
-| M0  | Validation gate and bootstrap                         | Done        | 2026-11-10 | 2026-11-10 | Gate: GO; A1 confirmed (TD + CIBC)                        |
-| M1  | CSV import, ledger, fixture tooling, walking skeleton | Code done   | 2026-11-11 | 2026-11-13 | Tasks 1 to 11 merged; real-CSV fixtures dropped (ADR-019) |
-| M5  | PDF extraction, line model, PDF fixture tooling       | Next        |            |            | Now first (ADR-019)                                       |
-| M6  | First PDF format (TD chequing) with reconciliation    | Not started |            |            | After M5                                                  |
-| M7  | Second PDF format (CIBC credit card)                  | Not started |            |            | After M6                                                  |
-| M2  | Recurring-charge detection                            | Not started |            |            | Now after M7                                              |
-| M3  | Product UI, demo mode, exports, trust features        | Not started |            |            |                                                           |
-| M4  | Hardening, deployment, small launch, validation       | Not started |            |            | Ends with the launch and testers                          |
+| #   | Milestone                                             | Status      | Started    | Finished   | Notes                                                              |
+| --- | ----------------------------------------------------- | ----------- | ---------- | ---------- | ------------------------------------------------------------------ |
+| —   | Discovery, research, architecture, planning           | Done        | 2026-11-10 | 2026-11-10 | Seven planning documents written                                   |
+| M0  | Validation gate and bootstrap                         | Done        | 2026-11-10 | 2026-11-10 | Gate: GO; A1 confirmed (TD + CIBC)                                 |
+| M1  | CSV import, ledger, fixture tooling, walking skeleton | Code done   | 2026-11-11 | 2026-11-13 | Tasks 1 to 11 merged; real-CSV fixtures dropped (ADR-019)          |
+| M5  | PDF extraction, line model, PDF fixture tooling       | Next        |            |            | Now first (ADR-019)                                                |
+| M6  | First PDF format (TD chequing) with reconciliation    | In progress | 2026-11-14 |            | Reconcile, profile, detect, parse built on synthetic data; UI next |
+| M7  | Second PDF format (CIBC credit card)                  | Not started |            |            | After M6                                                           |
+| M2  | Recurring-charge detection                            | Not started |            |            | Now after M7                                                       |
+| M3  | Product UI, demo mode, exports, trust features        | Not started |            |            |                                                                    |
+| M4  | Hardening, deployment, small launch, validation       | Not started |            |            | Ends with the launch and testers                                   |
 
 ## What the planning phase established
 
@@ -129,6 +129,18 @@ Queued by the autonomous workflow. Claude does not attempt these.
 ## Session log
 
 Newest first. One entry per session: date, what changed, what was verified, what is next.
+
+### 2026-11-17 — M6 task 4: TD profile, detect, parse, synthetic generator
+
+- Added `src/core/profiles/` (`BankProfile` type, `tdChequing`, registry), `src/core/detect.ts` (the first profile whose markers all match a line; no match is `null`, the unsupported-format path), `src/core/parse/parse.ts` and `tools/makeTdStatement.ts` (a synthetic statement with the dump's geometry: right edges 306.4, 405.5 and 534.4, centred header labels, `SEP02`-style dates, a balance on the last row of each day, a total row drawn twice, a fees block, a repeated header on page 2, a description continuation line). `hash53` is now exported from `toStatement.ts` and reused for the statement id.
+- `parse` follows ADR-020: spans from each amount label's left edge, each amount assigned by its right edge, items left of the first amount label are description, a page fails closed with a warning when the right edges of one column differ by more than 1 point, a dated page with no header warns, a second total row warns and drops the printed totals, the body ends at the total row (or the last line with an amount), the opening balance is the first balance-only row, the year comes from the period (December to January handled).
+- Tests (`src/pdf/tdStatement.test.ts`, 18, invented data, through `extractPdf`, `normalize`, `detect`, `parse`, `reconcile`): exact golden transactions and `verified` by checkpoints; every row removed and every amount altered by a cent gives `mismatch`; an altered printed total gives `mismatch`; a lost last page or total row gives `unverifiable`; the fees block is not read; an unknown PDF is not detected. Mutation check of the code: a 1000-point tolerance fails the alignment test, removing the several-totals guard fails its test.
+- Detection is by structure (the five labels, a period, a starting balance), not by a bank name, because the dump masks names. It is the first thing to check against a second real statement.
+- Limits: a description continuation line at the very bottom of a page with no total row, after the last amount, is cut by the body rule (description only; amounts and reconciliation are unaffected). Dates must be English month names. Not yet done: the property test (random ledger to statement to parse), three or more fixtures of this format (needs the owner's reviewed dumps), and anything on a real statement.
+- Review round 1 of PR #25 (opus, REQUEST_CHANGES, fixed): the description was the items whose right edge was left of the first amount label, so a description wider than about 193 points was dropped with no warning and the row still verified (centred labels sit about 44 points left of the amounts); it is now the non-amount items that start left of that label. Also: text in the amount area that is not a placed amount or a row date (for example a trailing-minus amount) and a dated row with no amount now add warnings; tests added for those, for an unreadable total row, a date outside the period, no period and no transactions. Known deviation from ADR-020, left as is: a page with no table header warns only when it holds a date-shaped item, because a real statement may end with a fees or summary page that is not a table page.
+- Review nits from PR #24 folded in: the running-balance JSDoc moved onto `reconcileRunningBalance`; ADR-020 now says the date-order check applies only when some row has a balance.
+- Verified: `npm run typecheck`, `npx biome check src tools docs e2e`, `npm test` (431 passed), `npm run fixtures:check`, `npm run build`. Not verified: behaviour on a real statement. `npx biome check` over the whole tree also reports the owner's untracked `.agents/` and `.codex/` files (formatting), which are not in the repository.
+- Next: M6 task 6, the UI accepts PDFs.
 
 ### 2026-11-14 — M6 task 3: reconcile checkpoints and totals (ADR-020)
 
