@@ -161,6 +161,11 @@ Queued by the autonomous workflow. Claude does not attempt these.
 
 Newest first. One entry per session: date, what changed, what was verified, what is next.
 
+### 2026-11-20 — Prose rules become checks (ADR-022)
+
+- Added Biome rules for skipped tests, network and browser-storage globals, `Date` in `src/core/` (not tests), `useEffect`/`useLayoutEffect`, timers, and `profiles/` imports in `reconcile.ts`; a 90% line-coverage gate on `src/core/**` inside `npm test`. Fixed `ship-task` step 10 to merge with `--match-head-commit`. No existing violations. Core coverage today: 100% lines, 99.49% statements, 93.18% branches.
+- Gap: `parse/parse.ts` type-imports `BankProfile` from `profiles/`, and Biome cannot exempt type imports, so the NFR-6 rule covers `reconcile.ts` only. Open for the owner.
+
 ### 2026-11-20 — Status sync, issues and model routing
 
 - Re-checked the state against `git log origin/main` (PRs #24 to #26 merged, #27 open) and the issue list, rewrote "State on 2026-11-20", the next-steps list, the M5 and M6 table rows, the AC-1 and AC-2 evidence, the risk rows and the `gh` tooling note, and added "Issues and model routing". The memory file and the cross-project ledger were updated outside the repository.

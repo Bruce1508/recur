@@ -22,7 +22,8 @@
     "rules": {
       "preset": "recommended",
       "suspicious": {
-        "noExplicitAny": "error"
+        "noExplicitAny": "error",
+        "noSkippedTests": "error"
       },
       "style": {
         "noNonNullAssertion": "error"
@@ -43,7 +44,13 @@
                     "group": ["pdfjs-dist", "pdfjs-dist/**"],
                     "message": "Only src/pdf/extract.ts may import pdfjs-dist"
                   }
-                ]
+                ],
+                "paths": {
+                  "react": {
+                    "importNames": ["useEffect", "useLayoutEffect"],
+                    "message": "useEffect/useLayoutEffect are banned: derive values during render, handle events in event handlers, or add a designated helper (ADR-022)"
+                  }
+                }
               }
             }
           }
@@ -73,6 +80,94 @@
                       "**/pdf/**"
                     ],
                     "message": "src/core/ is pure TypeScript: no imports from src/ui/, src/pdf/, pdfjs-dist, react or react-dom (ARCHITECTURE section 3)"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["src/**"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedGlobals": {
+              "level": "error",
+              "options": {
+                "deniedGlobals": {
+                  "fetch": "Statement data never leaves the browser (ADR-001, ADR-010): no network calls from src/",
+                  "XMLHttpRequest": "Statement data never leaves the browser (ADR-001, ADR-010): no network calls from src/",
+                  "WebSocket": "Statement data never leaves the browser (ADR-001, ADR-010): no network calls from src/",
+                  "localStorage": "Statement data stays in memory (ADR-001, ADR-010): no browser storage in src/",
+                  "sessionStorage": "Statement data stays in memory (ADR-001, ADR-010): no browser storage in src/",
+                  "indexedDB": "Statement data stays in memory (ADR-001, ADR-010): no browser storage in src/",
+                  "setTimeout": "Timers and frame callbacks are banned (ADR-022): fix the ordering or ownership bug, derive during render, or use an event handler",
+                  "setInterval": "Timers and frame callbacks are banned (ADR-022): fix the ordering or ownership bug, derive during render, or use an event handler",
+                  "requestAnimationFrame": "Timers and frame callbacks are banned (ADR-022): fix the ordering or ownership bug, derive during render, or use an event handler",
+                  "requestIdleCallback": "Timers and frame callbacks are banned (ADR-022): fix the ordering or ownership bug, derive during render, or use an event handler"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["src/core/**", "!src/**/*.test.ts", "!src/**/*.test.tsx"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedGlobals": {
+              "level": "error",
+              "options": {
+                "deniedGlobals": {
+                  "fetch": "Statement data never leaves the browser (ADR-001, ADR-010): no network calls from src/",
+                  "XMLHttpRequest": "Statement data never leaves the browser (ADR-001, ADR-010): no network calls from src/",
+                  "WebSocket": "Statement data never leaves the browser (ADR-001, ADR-010): no network calls from src/",
+                  "localStorage": "Statement data stays in memory (ADR-001, ADR-010): no browser storage in src/",
+                  "sessionStorage": "Statement data stays in memory (ADR-001, ADR-010): no browser storage in src/",
+                  "indexedDB": "Statement data stays in memory (ADR-001, ADR-010): no browser storage in src/",
+                  "setTimeout": "Timers and frame callbacks are banned (ADR-022): fix the ordering or ownership bug, derive during render, or use an event handler",
+                  "setInterval": "Timers and frame callbacks are banned (ADR-022): fix the ordering or ownership bug, derive during render, or use an event handler",
+                  "requestAnimationFrame": "Timers and frame callbacks are banned (ADR-022): fix the ordering or ownership bug, derive during render, or use an event handler",
+                  "requestIdleCallback": "Timers and frame callbacks are banned (ADR-022): fix the ordering or ownership bug, derive during render, or use an event handler",
+                  "Date": "Use src/core/plainDate.ts for transaction dates, never Date (ADR-011)"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["src/core/reconcile.ts"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": [
+                      "pdfjs-dist",
+                      "pdfjs-dist/**",
+                      "react",
+                      "react/**",
+                      "react-dom",
+                      "react-dom/**",
+                      "**/ui",
+                      "**/ui/**",
+                      "**/pdf",
+                      "**/pdf/**"
+                    ],
+                    "message": "src/core/ is pure TypeScript: no imports from src/ui/, src/pdf/, pdfjs-dist, react or react-dom (ARCHITECTURE section 3)"
+                  },
+                  {
+                    "group": ["**/profiles", "**/profiles/**"],
+                    "message": "parse/ and reconcile.ts must not depend on a bank profile: adding a bank must not change them (NFR-6). Take the profile as a parameter"
                   }
                 ]
               }

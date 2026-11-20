@@ -65,7 +65,7 @@ Rules:
 
 A change is finished only when all of these pass: `npm run typecheck`, `npm run lint`, `npm test`, `npm run build`.
 
-- New logic in `src/core/` needs tests in the same change. Keep core line coverage at or above 90%.
+- New logic in `src/core/` needs tests in the same change.
 - A new or changed bank profile needs golden fixtures (exact expected transactions, reconciliation `verified`) and a mutation test proving a removed row yields `mismatch`.
 - Changes to recurring detection must report precision and recall on the labelled suite. Do not lower the thresholds in `docs/PRD.md` (AC-6) to make a test pass.
 - UI changes that touch file handling must keep the Playwright network assertions passing: no cross-origin requests, no request bodies.
