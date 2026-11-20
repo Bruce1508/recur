@@ -450,4 +450,4 @@ Two facts constrain the answer.
 
 **Why not more prose.** No lint can see whether a skill was invoked, so the next best thing is a field the author must fill and the `reviewer` can check. The steps are procedure, not new absolute rules.
 
-**Consequences.** `fast-check` is approved in `.claude/hooks/approved-deps.json` but not yet in `package.json`; the first property test adds it. The change is under `.claude/`, so it goes through a PR with the `reviewer` on `opus`.
+**Consequences.** The `reviewer` checklist checks the new PR fields. `ship-task` was renumbered: ADR-017's "steps 7 and 10" are now steps 10 and 13. `fast-check` is approved in `.claude/hooks/approved-deps.json` but not yet in `package.json`; the first property test adds it. The change is under `.claude/`, so it goes through a PR with the `reviewer` on `opus`.

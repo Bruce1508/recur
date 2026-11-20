@@ -29,6 +29,7 @@ Blocking when violated:
 - Dependencies: exact versions matching `docs/RESEARCH.md` §5, lockfile updated, research note present for anything new.
 - No code copied from AGPL, GPL or unlicensed projects.
 - `docs/PROGRESS.md` updated; ADR added when a decision changed.
+- PR body has "Skills used": the routed skill is named for `src/ui/`, file handling, CSP, pdf.js and CSV export changes (ADR-024), or a skip reason is given for another routed row. A `src/ui/` change has a committed screenshot path under `docs/evidence/`.
 
 Non-blocking: naming, duplication with existing helpers, simpler stdlib alternatives, missing edge-case tests.
 
