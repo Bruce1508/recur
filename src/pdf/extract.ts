@@ -1,13 +1,20 @@
 // The only file that imports pdfjs-dist (enforced by the import-boundary lint rule).
-// Uses the legacy build, which runs in Node as well as the browser. The browser build, the
-// self-hosted worker and the CSP check are M5 work that comes with the UI.
+// Uses the legacy build, which runs in Node as well as the browser.
 
-import { getDocument } from "pdfjs-dist/legacy/build/pdf.mjs";
+import {
+  GlobalWorkerOptions,
+  getDocument,
+} from "pdfjs-dist/legacy/build/pdf.mjs";
+import workerUrl from "pdfjs-dist/legacy/build/pdf.worker.min.mjs?url";
 import type { RawDocument, RawItem, RawPage } from "../core/types";
 
 export type ExtractResult =
   | { ok: true; doc: RawDocument }
   | { ok: false; reason: string };
+
+// Node presets its own in-process worker; a browser loads the worker file Vite serves from our own
+// origin (CSP worker-src 'self').
+GlobalWorkerOptions.workerSrc ||= workerUrl;
 
 const round = (n: number) => Math.round(n * 100) / 100;
 const text = (v: unknown) =>

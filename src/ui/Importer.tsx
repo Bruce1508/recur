@@ -6,12 +6,23 @@ import type {
   AccountKind,
   ColumnMapping,
   DateFormat,
+  ParsedStatement,
   Reconciliation,
 } from "../core/types";
 import { type ImportedFile, summarize } from "./accounts";
 import { analyzeCsv, applyChoices, columnRoles } from "./analyze";
+import { readPdf } from "./readPdf";
 
-interface Entry {
+interface PdfEntry {
+  readonly input: "pdf";
+  readonly id: number;
+  readonly name: string;
+  readonly account: string;
+  readonly statement: ParsedStatement;
+}
+
+interface CsvEntry {
+  readonly input: "csv";
   readonly id: number;
   readonly name: string;
   readonly rows: string[][];
@@ -26,7 +37,10 @@ interface Entry {
   readonly dateFormat: DateFormat;
 }
 
-// A bank CSV is kilobytes; this stops a wrong file from freezing the tab.
+type Entry = CsvEntry | PdfEntry;
+type Update = (id: number, patch: Partial<Omit<CsvEntry, "input">>) => void;
+
+// A bank CSV or statement PDF is well under this; it stops a wrong file from freezing the tab.
 const MAX_BYTES = 10 * 1024 * 1024;
 const ACCOUNTS = ["A", "B", "C", "D"] as const;
 const DATE_FORMATS: readonly DateFormat[] = [
@@ -35,33 +49,38 @@ const DATE_FORMATS: readonly DateFormat[] = [
   "DD/MM/YYYY",
 ];
 
+const VERIFIED = {
+  "running-balance": "Verified: every balance matches the rows around it",
+  checkpoints:
+    "Verified: every printed balance and the statement totals follow from the amounts",
+  totals: "Verified: the amounts add up to the printed totals",
+} as const;
+
+const isReady = (e: Entry) => e.input === "pdf" || e.confirmed;
+
 export function describeStatus(r: Reconciliation): string {
   switch (r.status) {
     case "verified":
-      return "Verified: every balance matches the rows around it";
+      return VERIFIED[r.method];
     case "mismatch":
+      if (r.firstBadSource?.input === "pdf")
+        return `Mismatch on page ${r.firstBadSource.page}, line ${r.firstBadSource.lineIndex + 1}: the printed balance does not follow from the amounts`;
       return r.firstBadRow === undefined
-        ? "Mismatch: balances do not add up"
+        ? "Mismatch: the amounts do not add up to what the file prints"
         : `Mismatch at row ${r.firstBadRow}: the balance does not follow from the amounts`;
     case "unverifiable":
       return `Cannot verify: ${r.reason}`;
   }
 }
 
-function convert(e: Entry) {
+function convert(e: CsvEntry) {
   return toStatement(e.rows, applyChoices(e.mapping, e), {
     kind: e.kind,
     negateSigned: e.negateSigned,
   });
 }
 
-function Controls({
-  e,
-  update,
-}: {
-  e: Entry;
-  update: (id: number, patch: Partial<Entry>) => void;
-}) {
+function Controls({ e, update }: { e: CsvEntry; update: Update }) {
   return (
     <div className="space-x-4">
       <label>
@@ -130,12 +149,33 @@ export function Importer() {
         failed.push(`${file.name}: cannot read this file (over 10 MB)`);
         continue;
       }
+      if (file.type === "application/pdf" || /\.pdf$/i.test(file.name)) {
+        const read = await readPdf(
+          new Uint8Array(await file.arrayBuffer()),
+        ).catch(() => ({
+          ok: false as const,
+          reason: "the PDF reader stopped with an error",
+        }));
+        if (!read.ok) {
+          failed.push(`${file.name}: cannot read this file (${read.reason})`);
+          continue;
+        }
+        added.push({
+          input: "pdf",
+          id: nextId.current++,
+          name: file.name,
+          account: "A",
+          statement: read.statement,
+        });
+        continue;
+      }
       const analysis = analyzeCsv(await file.text());
       if (analysis.status === "error") {
         failed.push(`${file.name}: cannot read this file (${analysis.reason})`);
         continue;
       }
       added.push({
+        input: "csv",
         id: nextId.current++,
         name: file.name,
         rows: analysis.rows,
@@ -153,15 +193,26 @@ export function Importer() {
     setErrors([...new Set(failed)]);
   }
 
-  const update = (id: number, patch: Partial<Entry>) =>
+  const update: Update = (id, patch) =>
     setEntries((prev) =>
-      prev.map((e) => (e.id === id ? { ...e, ...patch } : e)),
+      prev.map((e) =>
+        e.id === id && e.input === "csv" ? { ...e, ...patch } : e,
+      ),
     );
+  const setAccount = (id: number, account: string) =>
+    setEntries((prev) =>
+      prev.map((e) => (e.id === id ? { ...e, account } : e)),
+    );
+  const remove = (id: number) =>
+    setEntries((prev) => prev.filter((x) => x.id !== id));
 
   const converted = useMemo(
     () =>
       entries.map((e) => {
-        const result = convert(e);
+        const result =
+          e.input === "csv"
+            ? convert(e)
+            : { ok: true as const, statement: e.statement };
         return {
           entry: e,
           result,
@@ -173,7 +224,7 @@ export function Importer() {
   const summary = useMemo(() => {
     const files: ImportedFile[] = [];
     for (const { entry, result } of converted) {
-      if (entry.confirmed && result.ok)
+      if (isReady(entry) && result.ok)
         files.push({
           name: entry.name,
           account: entry.account,
@@ -183,7 +234,9 @@ export function Importer() {
     return summarize(files);
   }, [converted]);
 
-  const pending = entries.filter((e) => !e.confirmed);
+  const pending = entries.filter(
+    (e): e is CsvEntry => e.input === "csv" && !e.confirmed,
+  );
 
   return (
     <div className="mt-6 space-y-6">
@@ -196,11 +249,11 @@ export function Importer() {
         }}
       >
         <span className="block">
-          Choose one or more CSV files (or drop them here)
+          Choose one or more PDF statements or CSV files (or drop them here)
         </span>
         <input
           type="file"
-          accept=".csv,text/csv"
+          accept=".pdf,application/pdf,.csv,text/csv"
           multiple
           data-testid="file-input"
           onChange={(ev) => {
@@ -262,16 +315,14 @@ export function Importer() {
           <button
             type="button"
             className="rounded border px-3"
-            onClick={() =>
-              setEntries((prev) => prev.filter((x) => x.id !== e.id))
-            }
+            onClick={() => remove(e.id)}
           >
             Remove file
           </button>
         </section>
       ))}
 
-      {entries.some((e) => e.confirmed) && (
+      {entries.some(isReady) && (
         <>
           <section>
             <h2 className="font-semibold">Files</h2>
@@ -287,7 +338,7 @@ export function Importer() {
               </thead>
               <tbody>
                 {converted
-                  .filter(({ entry }) => entry.confirmed)
+                  .filter(({ entry }) => isReady(entry))
                   .map(({ entry, result, status }) => (
                     <tr key={entry.id}>
                       <td className="pr-4">{entry.name}</td>
@@ -296,7 +347,7 @@ export function Importer() {
                           aria-label={`Account for ${entry.name}`}
                           value={entry.account}
                           onChange={(ev) =>
-                            update(entry.id, { account: ev.target.value })
+                            setAccount(entry.id, ev.target.value)
                           }
                         >
                           {ACCOUNTS.map((a) => (
@@ -324,15 +375,13 @@ export function Importer() {
                         </td>
                       )}
                       <td>
-                        <Controls e={entry} update={update} />
+                        {entry.input === "csv" && (
+                          <Controls e={entry} update={update} />
+                        )}
                         <button
                           type="button"
                           className="rounded border px-3"
-                          onClick={() =>
-                            setEntries((prev) =>
-                              prev.filter((x) => x.id !== entry.id),
-                            )
-                          }
+                          onClick={() => remove(entry.id)}
                         >
                           Remove file
                         </button>

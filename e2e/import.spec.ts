@@ -1,4 +1,6 @@
-import { expect, test } from "@playwright/test";
+import { expect, type Page, test } from "@playwright/test";
+import { makeTextPdf } from "../tools/makePdf";
+import { makeTdStatement } from "../tools/makeTdStatement";
 
 const withBalance = [
   "Date,Description,Debit,Credit,Balance",
@@ -80,4 +82,79 @@ test("a signed amount with a balance still asks, and shows the column roles", as
   await expect(
     page.getByRole("columnheader", { name: "Balance" }),
   ).toBeVisible();
+});
+
+// Invented data, generated in memory (ADR-016).
+const tdPdf = makeTextPdf(
+  makeTdStatement({
+    period: "SEP 01/25 - OCT 01/25",
+    opening: 100000,
+    days: [
+      { date: "SEP02", rows: [{ desc: "FAKE COFFEE", cents: -450 }] },
+      { date: "SEP03", rows: [{ desc: "ACME PAYROLL", cents: 250000 }] },
+    ],
+  }).pdf,
+);
+
+function pdf(name: string, bytes: Uint8Array) {
+  return { name, mimeType: "application/pdf", buffer: Buffer.from(bytes) };
+}
+
+function watchRequests(page: Page) {
+  const origin = "http://localhost:4173";
+  const offenders: string[] = [];
+  page.on("request", (req) => {
+    const url = new URL(req.url());
+    if (url.protocol === "data:") return;
+    if (url.origin !== origin || req.postData() !== null)
+      offenders.push(req.url());
+  });
+  return offenders;
+}
+
+test("a TD chequing PDF verifies under the CSP and sends nothing", async ({
+  page,
+}) => {
+  const offenders = watchRequests(page);
+  await page.goto("/");
+  await page.getByTestId("file-input").setInputFiles(pdf("td.pdf", tdPdf));
+  await expect(
+    page.getByText(
+      "Verified: every printed balance and the statement totals follow from the amounts",
+    ),
+  ).toBeVisible();
+  await expect(page.getByText("Transactions (2)")).toBeVisible();
+  expect(offenders).toEqual([]);
+});
+
+test("a PDF of an unknown format shows the unsupported-format message", async ({
+  page,
+}) => {
+  const other = makeTextPdf({
+    pages: [
+      { width: 612, height: 792, items: [{ str: "Hello", x: 72, y: 72 }] },
+    ],
+  });
+  await page.goto("/");
+  await page.getByTestId("file-input").setInputFiles(pdf("other.pdf", other));
+  await expect(page.getByRole("alert")).toContainText("unsupported format");
+});
+
+test("a CSV and a verified PDF of one account are not double-counted", async ({
+  page,
+}) => {
+  const overlap = [
+    "Date,Description,Debit,Credit",
+    "2025-09-02,COFFEE (CSV TEXT),4.50,",
+    "2025-09-03,PAYROLL (CSV TEXT),,2500.00",
+    "2025-10-05,AFTER THE STATEMENT,9.99,",
+  ].join("\n");
+  await page.goto("/");
+  await page
+    .getByTestId("file-input")
+    .setInputFiles([pdf("td.pdf", tdPdf), csv("export.csv", overlap)]);
+  await expect(page.getByText("Transactions (3)")).toBeVisible();
+  await expect(page.getByTestId("ledger-notes")).toContainText(
+    "2 duplicate row(s) removed",
+  );
 });
