@@ -161,6 +161,11 @@ Queued by the autonomous workflow. Claude does not attempt these.
 
 Newest first. One entry per session: date, what changed, what was verified, what is next.
 
+### 2026-11-20 — Skill routing page (ADR-023)
+
+- Added `.claude/rules/skill-selection.md` (task to skill table, manual-only, not-used with reasons, review agents) and ADR-023; `CLAUDE.md` points to it. Every skill name was checked as a `SKILL.md` on disk under the cached plugin directories (`agent-skills` 0.6.13, `ecc` 2.0.0-rc.1) on 2026-11-20.
+- Not verified: that a session actually follows the page; `ecc:e2e-testing` was read, not run.
+
 ### 2026-11-20 — Prose rules become checks (ADR-022)
 
 - Added Biome rules for skipped tests, network and browser-storage globals, `Date` in `src/core/` (not tests), `useEffect`/`useLayoutEffect`, timers, and `profiles/` imports in `reconcile.ts`; a 90% line-coverage gate on `src/core/**` inside `npm test`. Fixed `ship-task` step 10 to merge with `--match-head-commit`. No existing violations. Core coverage today: 100% lines, 99.49% statements, 93.18% branches.
