@@ -31,5 +31,13 @@ export default defineConfig({
       ],
     },
   ],
-  test: { include: ["src/**/*.test.{ts,tsx}", "tools/**/*.test.ts"] },
+  test: {
+    include: ["src/**/*.test.{ts,tsx}", "tools/**/*.test.ts"],
+    coverage: {
+      provider: "v8",
+      include: ["src/core/**/*.ts"],
+      exclude: ["src/**/*.test.ts"],
+      thresholds: { lines: 90 },
+    },
+  },
 });

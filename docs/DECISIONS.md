@@ -27,6 +27,7 @@ A record is changed only by adding a new record that supersedes it. Statuses: Pr
 | 019 | PDF first for the owner's banks; no further CSV work                            | Accepted (owner's decision, 2026-11-14)                                |
 | 020 | Checkpoint and totals reconciliation; amount columns found from the amounts     | Accepted (owner delegated the design, 2026-11-14)                      |
 | 021 | Reframe: help the user read their transactions; verified numbers stay on device | Proposed (owner's direction, 2026-11-20; details after the census)     |
+| 022 | Prose rules become lint and coverage checks                                     | Accepted (2026-11-20)                                                  |
 
 All records become Accepted when Bruce signs off on the PRD.
 
@@ -398,3 +399,26 @@ Two facts constrain the answer.
 **Consequences.** M2 grows from "recurring detection" to "decoder plus recurring detection plus where the money went"; the `merchant/` stage in ARCHITECTURE §6.7 becomes the decoder. M3's main screen becomes the readout, with the recurring list as one section. M5 to M7 (PDF parsing and verification) are unchanged and still come first: the decoder needs correctly read transactions. ADR-013 and ADR-001 are unchanged.
 
 **Revisit when** the census shows that nearly all descriptions are opaque and no behaviour hint or label route is usable, or a licence-compatible brand list cannot be found, or a measurement shows the rules decode too few lines to be useful.
+
+---
+
+## ADR-022 — Prose rules become lint and coverage checks
+
+**Status.** Accepted (2026-11-20).
+
+**Context.** An audit found rules that lived only in prose (CLAUDE.md, ADR-001, ADR-010, ADR-011, ADR-015) with nothing checking them. ADR-015 said `noSkippedTests` was on; it is not in Biome's recommended preset. A rule an agent can break without a red build is a suggestion.
+
+**Decision.** Enforce them in `biome.json` and `vite.config.ts`, so `npm run verify` fails on a violation. Each message names the fix.
+
+| Was prose                                                                                    | Now                                                                                                                                                                                                                                                                                                                                                                                       |
+| -------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Never skip a test (ADR-015)                                                                  | `suspicious/noSkippedTests`                                                                                                                                                                                                                                                                                                                                                               |
+| No network calls, no browser storage; statement data stays in the browser (ADR-001, ADR-010) | `style/noRestrictedGlobals` in `src/**`: `fetch`, `XMLHttpRequest`, `WebSocket`, `localStorage`, `sessionStorage`, `indexedDB`                                                                                                                                                                                                                                                            |
+| No `Date` for transaction dates (ADR-011)                                                    | `noRestrictedGlobals` adds `Date` in `src/core/**`, tests excepted (they use `Date.UTC` as an oracle)                                                                                                                                                                                                                                                                                     |
+| No effects or timers in product code                                                         | `noRestrictedImports` bans `useEffect` and `useLayoutEffect` from `react` outside `src/core/`; `noRestrictedGlobals` bans `setTimeout`, `setInterval`, `requestAnimationFrame`, `requestIdleCallback`. A deferral hides an ordering bug: fix the ordering, derive during render, or use an event handler. If a helper layer is ever needed, add it as a narrow override through a new ADR |
+| `reconcile.ts` must not know a bank (NFR-6)                                                  | `noRestrictedImports` on `src/core/reconcile.ts` for `profiles/`                                                                                                                                                                                                                                                                                                                          |
+| Core line coverage at least 90%                                                              | `test.coverage.thresholds.lines: 90` for `src/core/**`; `npm test` runs with coverage, so `verify` enforces it                                                                                                                                                                                                                                                                            |
+
+**Not enforced yet.** `src/core/parse/parse.ts` imports the `BankProfile` type from `profiles/types`. Biome cannot allow type-only imports in a pattern, so a rule on `parse/**` would fail today. Whether that type should move to `src/core/types.ts` is a separate decision.
+
+**Consequences.** A real need for one of the banned APIs means changing `biome.json` through a PR, which is the point. Branch coverage (93%) is reported but not gated.

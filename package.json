@@ -11,7 +11,7 @@
     "dev": "vite",
     "typecheck": "tsc --noEmit",
     "lint": "biome check .",
-    "test": "vitest run",
+    "test": "vitest run --coverage",
     "e2e": "playwright test",
     "build": "vite build",
     "verify": "npm run typecheck && npm run lint && npm test && npm run fixtures:check && npm run build",
