@@ -43,6 +43,7 @@ describe("buildLedger: merge and sort", () => {
       transactions: [],
       duplicatesRemoved: 0,
       missingMonths: [],
+      chain: { boundaries: [], ends: {} },
     });
   });
 

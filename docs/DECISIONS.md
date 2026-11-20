@@ -29,6 +29,8 @@ A record is changed only by adding a new record that supersedes it. Statuses: Pr
 | 021 | Reframe: help the user read their transactions; verified numbers stay on device | Proposed (owner's direction, 2026-11-20; details after the census)     |
 | 022 | Prose rules become lint and coverage checks                                     | Accepted (2026-11-20)                                                  |
 | 023 | One routing page for installed skill packs                                      | Accepted (2026-11-20)                                                  |
+| 024 | Close the skill-routing loophole with a required step and a template            | Accepted (2026-11-20)                                                  |
+| 025 | Statement chaining: closing balance against the next opening balance            | Accepted (2026-11-20)                                                  |
 
 All records become Accepted when Bruce signs off on the PRD.
 
@@ -451,3 +453,73 @@ Two facts constrain the answer.
 **Why not more prose.** No lint can see whether a skill was invoked, so the next best thing is a field the author must fill and the `reviewer` can check. The steps are procedure, not new absolute rules.
 
 **Consequences.** The `reviewer` checklist checks the new PR fields. `ship-task` was renumbered: ADR-017's "steps 7 and 10" are now steps 10 and 13. `fast-check` is approved in `.claude/hooks/approved-deps.json` but not yet in `package.json`; the first property test adds it. The change is under `.claude/`, so it goes through a PR with the `reviewer` on `opus`.
+
+---
+
+## ADR-025 — Statement chaining: each statement's closing balance against the next one's opening balance
+
+**Status.** Accepted (2026-11-20).
+
+**Context.** One CSV file has no opening balance, so `running-balance` cannot check the first row's amount or see a row removed from either end of the file (pinned in `reconcile.test.ts`). AC-2 therefore holds for CSV only for middle rows. A verified PDF covers its own ends (opening balance, printed totals; ADR-020), but nothing notices a missing statement between two PDFs whose periods do not leave a whole empty month. `ledger.ts` and `reconcile.ts` both point to a chain check that does not exist yet.
+
+| Option                                                                                  | Covers CSV ends    | Missing statement       | Cost                                                     |
+| --------------------------------------------------------------------------------------- | ------------------ | ----------------------- | -------------------------------------------------------- |
+| A. Do nothing; reword AC-2 to "middle rows"                                             | No                 | Only whole empty months | None                                                     |
+| **B. Chain adjacent statements of one account, in core, from verified statements only** | Yes, between files | Yes, by balance         | One pure function and its tests                          |
+| C. Re-run `running-balance` over the merged, de-duplicated ledger                       | Yes                | Yes for CSV             | Breaks with PDFs (checkpoints) and depends on dedup luck |
+
+**Decision.** B.
+
+- **What the balance fields mean.** `ParsedStatement.openingBalance` and `closingBalance` hold only figures printed on the statement (PDF). They are never derived and a CSV never sets them; that keeps ADR-020's "anchors are not read from the rows" true. The chain uses each statement's **ends**, computed inside the chain module and only from a statement whose `reconcile` is `verified` (any other status: no ends, fail closed):
+  - PDF: opening = `openingBalance`; closing = opening + step × (sum of amounts), step −1 for credit as in `reconcile`. For a verified statement this equals the printed closing balance when one was read, and the last printed balance when the last row carries one.
+  - CSV: rows in time order (the date direction `running-balance` already uses; reversed for a newest-first file). Opening = first row's `balanceAfter` − step × its amount; closing = last row's `balanceAfter`. Every date the same: no ends ("the order of the rows, and so the file's first and last row, is unknown").
+  - The derived CSV opening is not trusted on its own. Agreement with the previous statement's closing is the evidence, and it is exactly the check that covers the first row.
+- **Accounts.** The chain runs on the statements of one account; grouping is the caller's job and the key is the account the user chose in the UI (`ImportedFile.account`, as `summarize` does today). Core does not infer, merge or split accounts, and never reads an account number. A balance that chains is not evidence that two files are one account, and a break never moves a file. Inside a group, a pair whose `kind` differs, or whose `bankId`s are both known and differ, is `unchainable`. Statements with the same `id` count once.
+- **Order and pairs.** Sort by `period.start`, then `period.end`, then `id`. Walk in order, keeping `prev` = the statement with the latest end so far (as `missingMonths` does), and judge each next statement against `prev`. Set `prev = next` when `next.end >= prev.end`. Each pair gets one outcome:
+  1. `unchainable` when the pair is mixed (above), when either side has no ends (reason names which and why), or when they overlap. Overlap: `next.start < prev.end`, or the two share their boundary day and either is a CSV. A PDF period is printed and banks share the boundary day (SEP 01 to OCT 01, then OCT 01 to NOV 01), so for two PDFs a shared day is adjacency. A CSV period is its first and last row date, so a shared day may mean the same rows are in both files.
+  2. `chained` when `prev` closing equals `next` opening, exactly in cents.
+  3. `gap` when they differ and `daysBetween(prev.end, next.start) > 1`: money moved that neither file shows, probably a missing statement.
+  4. `mismatch` when they differ and the periods touch: a row at the end of one or the start of the other is missing or wrong.
+- **Effect on verified rows.** `reconcile` and `Reconciliation` do not change; a boundary never changes a statement's own status. Each statement gets `ends: { start, end }`, true when that end is checked. A verified PDF: both true (its own anchors). A verified CSV: `start` is true when a boundary with it as `after` is `chained`, and `end` is true when a boundary with it as `before` is `chained`. Anything not verified: both false. The UI shows "Verified" for a CSV only when both are true, and otherwise "Verified, except the start (or end) of the file: no adjacent statement of this account to check it against". Each non-`chained` boundary is listed under its account with both file names. For `gap` and `mismatch` it also shows `expected` (prev closing) and `actual` (next opening), and for `unchainable` the reason. Statement text goes through React only.
+- **Code.** A new file `src/core/chain.ts`, pure, importing only `./reconcile`, `./plainDate` and `./types` (no `profiles/`, `parse/`, `pdf/`, `ui/`). `buildLedger` adds `chain: chainStatements(statements)` to `Ledger`; `summarize` passes it through per account. `ledger.ts` stays the merge, `chain.ts` the balance check, and `missingMonths` is unchanged.
+
+```ts
+export type BoundaryOutcome =
+  | { readonly status: "chained" }
+  | {
+      readonly status: "gap" | "mismatch";
+      readonly expected: Cents;
+      readonly actual: Cents;
+    }
+  | { readonly status: "unchainable"; readonly reason: string };
+
+export interface Boundary {
+  /** Statement ids; `before` is the earlier period. */
+  readonly before: string;
+  readonly after: string;
+  readonly outcome: BoundaryOutcome;
+}
+
+export interface AccountChain {
+  /** In period order. */
+  readonly boundaries: readonly Boundary[];
+  /** Per statement id: whether its start and end are covered, by its own anchors or a chained neighbour. */
+  readonly ends: Readonly<
+    Record<string, { readonly start: boolean; readonly end: boolean }>
+  >;
+}
+
+/** One account's statements, any order. Pure; the caller groups by account. */
+export function chainStatements(
+  statements: readonly ParsedStatement[],
+): AccountChain;
+```
+
+- **Tests** (`src/core/chain.test.ts`, invented data only, ParsedStatements built in the test, no real statement):
+  - Examples: two adjacent CSVs chain. Each mutation below gives `mismatch` at that boundary while each file's own `reconcile` stays `verified` (which pins that the chain is what catches it): the first row of the later file removed, the last row of the earlier file removed, the first row's amount of the later file altered by one cent. The earliest file's first row removed: still verified, `ends.start` false (the stated limit). A newest-first CSV uses its time-order ends. Every date the same: `unchainable`. Two PDFs sharing the boundary day chain, and with the middle one dropped give `gap`. A CSV pair sharing a day, or overlapping: `unchainable`. A contained statement is judged against the containing one, and the next statement against the latest end. An unverified middle statement makes both of its boundaries `unchainable`. Mixed kind, or two known banks, gives `unchainable`. The same id twice counts once. The credit sign works.
+  - fast-check properties (generator: a random account history of signed cents, split into 2 to 6 contiguous statements, each built as a CSV with balances or a PDF with opening balance and printed totals): (1) unmutated: every boundary `chained`, and every `ends` true except the earliest CSV's start and the latest CSV's end; (2) the result does not depend on input order; (3) removing any single row, or altering its amount or balance by one cent, leaves some statement not `verified` or some boundary not `chained`. The only exceptions are the earliest CSV's first row (removed, or its amount altered) and the latest CSV's last row (removed), and the property asserts that those exact cases stay undetected, so a later change to them is seen. Each statement has at least three rows, so one removal never leaves a file too short to check; (4) dropping a middle statement with non-zero net movement never leaves its replacement boundary `chained`.
+- **Stated limits.** A missing stretch whose net movement is zero (a charge and its refund) chains. The outer ends of an account (the earliest CSV's start, the latest CSV's end) cannot be checked, and they are labelled. Overlapping CSV exports are de-duplicated by the ledger but not chained. If a CSV user hits this, the fix is to export non-overlapping ranges, not to guess.
+
+**Consequences.** AC-2 holds for every CSV row that has a verified, adjacent statement of the same account on that side, and the rest is labelled. Missing PDF statements surface as `gap` even when no whole month is empty. The UI change (status wording and boundary list) is part of #31 and needs the routed `frontend-ui-engineering` skill. `doubt-driven-development` applies because the chain extends reconciliation (`.claude/rules/skill-selection.md`). The comments in `ledger.ts` and `reconcile.ts` that call the chain future work are updated in the same PR.
+
+**Revisit when** a real export or statement shows ends this rule cannot use: overlapping monthly CSVs that are common in practice, or a bank whose next opening balance is not the previous closing.
