@@ -84,7 +84,7 @@ export function describeEnds(ends: { start: boolean; end: boolean }): string {
   );
   return open.length === 0
     ? ""
-    : `Not checked: the ${open.join(" and the ")} of the file (no neighbouring statement of this account matches it; see the notes under Transactions)`;
+    : `Not checked: the ${open.join(" and the ")} of the file`;
 }
 
 export function describeBoundary(
