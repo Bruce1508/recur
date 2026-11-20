@@ -437,3 +437,17 @@ Two facts constrain the answer.
 **What it replaces.** Nothing in the repo: no check enforces skill choice, so this stays prose by design (judgment, not a lint rule). It does not weaken ADR-022: where a skill's example would break a lint rule, the page says to drop that part. A skill that misleads twice is removed from the page or fixed by a check, not annotated.
 
 **Consequences.** Adding or upgrading a pack means re-checking the names and the date. The file is under `.claude/`, so changes go through a PR with the `reviewer` on `opus`.
+
+---
+
+## ADR-024 — Close the skill-routing loophole with a required step and a template
+
+**Status.** Accepted (2026-11-20).
+
+**Context.** A fresh session answered that for the PDF-upload UI (#28) it would not invoke the routed `frontend-ui-engineering` and `security-and-hardening` skills, citing ADR-023 policy 2 ("only if it would materially change the work"). The policy was a judgment call, so skipping always looked defensible. The same audit found `ship-task` lacked a statement of intended behaviour, property tests for invariants, UI run evidence, a doubt pass on parse and reconcile, and any outcome tracking.
+
+**Decision.** Policy 2 now makes the two routed skills required for file handling, CSP, pdf.js, CSV export and `src/ui/`. `ship-task` gains five steps: state intended behaviour first; a fast-check property test for logic with invariants; a Playwright screenshot of each affected UI state (synthetic data only); `agent-skills:doubt-driven-development` for `reconcile.ts` and `parse/`; and a session-log line per PR with review rounds and first-run CI result. The PR template gains "Skills used" and "Evidence" sections, so a skipped skill or missing screenshot is visible to the reviewer. Tasks stay sequential until about five consecutive PRs merge after one review round.
+
+**Why not more prose.** No lint can see whether a skill was invoked, so the next best thing is a field the author must fill and the `reviewer` can check. The steps are procedure, not new absolute rules.
+
+**Consequences.** The `reviewer` checklist checks the new PR fields. `ship-task` was renumbered: ADR-017's "steps 7 and 10" are now steps 10 and 13. `fast-check` is approved in `.claude/hooks/approved-deps.json` but not yet in `package.json`; the first property test adds it. The change is under `.claude/`, so it goes through a PR with the `reviewer` on `opus`.

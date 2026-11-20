@@ -161,6 +161,11 @@ Queued by the autonomous workflow. Claude does not attempt these.
 
 Newest first. One entry per session: date, what changed, what was verified, what is next.
 
+### 2026-11-20 — Strengthen the ship-task workflow (ADR-024)
+
+- `ship-task` gained: intended-behaviour list, fast-check property tests for invariants, UI screenshot evidence, doubt pass for `reconcile.ts` and `parse/`, per-PR outcome tracking and a sequential-until-five-clean-PRs line. `skill-selection.md` policy 2 requires the routed security and UI skills; the PR template has "Skills used" and "Evidence". Docs and config only.
+- Verified: `npm run verify`, see the PR. Skill names confirmed on disk. Not verified: the new steps on a real task (first use is the next PR).
+
 ### 2026-11-20 — UI accepts PDF statements (#28)
 
 - The importer takes PDFs and CSVs. A PDF goes `extractPdf → normalize → detect → parse → reconcile` (`src/ui/readPdf.ts`); pdf.js and its worker load on the first PDF only, from our own origin (`GlobalWorkerOptions.workerSrc` set from a Vite `?url` import). An unknown PDF shows "unsupported format" as an alert. Status text names the method when verified and the page and line for a PDF mismatch. Ledger (owner's choice): a verified PDF replaces the CSV rows of the same account kind dated inside its period; an unverified PDF replaces nothing.

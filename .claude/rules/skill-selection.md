@@ -4,7 +4,7 @@ Two skill packs are installed at user scope: Addy Osmani's agent-skills (`agent-
 
 ## Policy
 1. Understand the task, then read the doc it touches (`docs/PROGRESS.md`, the milestone in `docs/ROADMAP.md`, the ADR).
-2. Use a skill only if it would materially change the work. One per task, at most two. Never run skills by default or in bulk.
+2. Use a skill only if it would materially change the work. One per task, at most two. Never run skills by default or in bulk. Exception: for file handling, CSP, pdf.js and CSV export (`agent-skills:security-and-hardening`) and for UI in `src/ui/` (`agent-skills:frontend-ui-engineering`), invoking the routed skill is required, not judged, and the PR names it. Required skills do not count toward the cap of two.
 3. Read the skill before following it. Neither pack knows Biome, Vitest coverage gates or this repo's lint rules: keep the principles, use the repo's tools.
 4. Repo checks and `CLAUDE.md` beat skill examples (`useEffect`, timers, sleeps, skipped tests, unsolicited `.md` files, TODO or justifying comments, new dependencies, per-slice commits). Drop that part of the skill.
 5. If a skill misleads twice, remove its row or encode the fix as a lint or test check (ADR-022). Do not add a caveat here.
@@ -41,7 +41,7 @@ Two skill packs are installed at user scope: Addy Osmani's agent-skills (`agent-
 
 ## Review agents (only when a review is due)
 - `reviewer` (this repo, `.claude/agents/reviewer.md`): the merge gate. Model `opus` for `src/core/parse/`, `src/core/reconcile.ts`, CSP, file handling and `.claude/`.
-- `ecc:security-reviewer`: additionally for CSP, `src/pdf/`, CSV export and file handling (`ship-task` step 8). Reviewers are read-only (ADR-015): tell it to report findings and not edit files.
+- `ecc:security-reviewer`: additionally for CSP, `src/pdf/`, CSV export and file handling (`ship-task` step 11). Reviewers are read-only (ADR-015): tell it to report findings and not edit files.
 
 Dispatch one at a time.
 
