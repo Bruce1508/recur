@@ -1,4 +1,5 @@
 import { useMemo, useRef, useState } from "react";
+import type { Boundary } from "../core/chain";
 import { toStatement } from "../core/csv/toStatement";
 import { formatCents } from "../core/money";
 import { reconcile } from "../core/reconcile";
@@ -74,6 +75,33 @@ export function describeStatus(r: Reconciliation): string {
         : `Mismatch at row ${r.firstBadRow}: the balance does not follow from the amounts`;
     case "unverifiable":
       return `Cannot verify: ${r.reason}`;
+  }
+}
+
+export function describeEnds(ends: { start: boolean; end: boolean }): string {
+  const open = [ends.start ? "" : "start", ends.end ? "" : "end"].filter(
+    Boolean,
+  );
+  return open.length === 0
+    ? ""
+    : `Not checked: the ${open.join(" and the ")} of the file (no adjacent statement of this account to check it against)`;
+}
+
+export function describeBoundary(
+  b: Boundary,
+  name: (id: string) => string,
+): string {
+  const files = `${name(b.before)} then ${name(b.after)}`;
+  const o = b.outcome;
+  switch (o.status) {
+    case "chained":
+      return "";
+    case "gap":
+      return `${files}: closing balance ${formatCents(o.expected)}, next opening ${formatCents(o.actual)}; a statement may be missing between them`;
+    case "mismatch":
+      return `${files}: closing balance ${formatCents(o.expected)}, next opening ${formatCents(o.actual)}; a row at the end of one file or the start of the other is missing or wrong`;
+    case "unchainable":
+      return `${files}: cannot be checked against each other (${o.reason})`;
   }
 }
 
@@ -246,6 +274,10 @@ export function Importer() {
     return summarize(files);
   }, [converted]);
 
+  const nameOf = (id: string) =>
+    converted.find(({ result }) => result.ok && result.statement.id === id)
+      ?.entry.name ?? id;
+
   const pending = entries.filter(
     (e): e is CsvEntry => e.input === "csv" && !e.confirmed,
   );
@@ -374,6 +406,19 @@ export function Importer() {
                           </td>
                           <td className="pr-4">
                             {status && describeStatus(status)}
+                            {entry.input === "csv" &&
+                              status?.status === "verified" && (
+                                <div className="text-amber-700">
+                                  {describeEnds(
+                                    summary.accounts.find(
+                                      (a) => a.id === entry.account,
+                                    )?.chain.ends[result.statement.id] ?? {
+                                      start: false,
+                                      end: false,
+                                    },
+                                  )}
+                                </div>
+                              )}
                             {result.statement.warnings.map((w) => (
                               <div key={w} className="text-amber-700">
                                 {w}
@@ -424,6 +469,17 @@ export function Importer() {
                 )
                 .join("")}
             </p>
+            <ul className="text-sm" data-testid="chain-notes">
+              {summary.accounts.flatMap((a) =>
+                a.chain.boundaries
+                  .filter((b) => b.outcome.status !== "chained")
+                  .map((b) => (
+                    <li key={`${a.id}-${b.before}-${b.after}`}>
+                      Account {a.id}: {describeBoundary(b, nameOf)}
+                    </li>
+                  )),
+              )}
+            </ul>
             <table className="text-sm">
               <thead>
                 <tr>

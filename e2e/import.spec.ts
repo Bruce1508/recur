@@ -165,3 +165,42 @@ test("a CSV joins a verified PDF only when the user puts it in that account, the
     "2 duplicate row(s) removed",
   );
 });
+
+test("two CSVs of one account chain; a missing first row of the second is reported", async ({
+  page,
+}) => {
+  const second = [
+    "Date,Description,Debit,Credit,Balance",
+    "2025-01-04,RENT,100.00,,875.50",
+    "2025-01-05,PAY,,50.00,925.50",
+    "2025-01-06,FOOD,10.00,,915.50",
+  ].join("\n");
+  const cut = second
+    .split("\n")
+    .filter((_, i) => i !== 1)
+    .join("\n");
+  await page.goto("/");
+  await page
+    .getByTestId("file-input")
+    .setInputFiles([csv("a.csv", withBalance), csv("b.csv", second)]);
+  await expect(page.getByText("Transactions (6)")).toBeVisible();
+  await expect(page.getByTestId("chain-notes")).toHaveText("");
+  await expect(
+    page.getByText("Not checked: the start of the file"),
+  ).toHaveCount(1);
+  await expect(page.getByText("Not checked: the end of the file")).toHaveCount(
+    1,
+  );
+
+  await page.goto("/");
+  await page
+    .getByTestId("file-input")
+    .setInputFiles([csv("a.csv", withBalance), csv("c.csv", cut)]);
+  await expect(page.getByTestId("chain-notes")).toContainText(
+    "a.csv then c.csv",
+  );
+  await page.screenshot({
+    path: "docs/evidence/chain-boundary.png",
+    fullPage: true,
+  });
+});

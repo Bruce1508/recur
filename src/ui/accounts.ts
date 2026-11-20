@@ -1,3 +1,4 @@
+import type { AccountChain } from "../core/chain";
 import { buildLedger } from "../core/ledger";
 import type { ParsedStatement, Transaction } from "../core/types";
 
@@ -12,6 +13,7 @@ export interface Summary {
   readonly accounts: readonly {
     readonly id: string;
     readonly missingMonths: readonly string[];
+    readonly chain: AccountChain;
   }[];
   /** All accounts, sorted by date. */
   readonly transactions: readonly Transaction[];
@@ -31,14 +33,22 @@ export function summarize(files: readonly ImportedFile[]): Summary {
       f.statement,
     ]);
   }
-  const accounts: { id: string; missingMonths: readonly string[] }[] = [];
+  const accounts: {
+    id: string;
+    missingMonths: readonly string[];
+    chain: AccountChain;
+  }[] = [];
   const transactions: Transaction[] = [];
   let duplicatesRemoved = 0;
   for (const [id, statements] of [...byAccount].sort(([a], [b]) =>
     a.localeCompare(b),
   )) {
     const ledger = buildLedger(statements);
-    accounts.push({ id, missingMonths: ledger.missingMonths });
+    accounts.push({
+      id,
+      missingMonths: ledger.missingMonths,
+      chain: ledger.chain,
+    });
     transactions.push(...ledger.transactions);
     duplicatesRemoved += ledger.duplicatesRemoved;
   }
