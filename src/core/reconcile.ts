@@ -138,7 +138,7 @@ function reconcileAnchored(statement: ParsedStatement): Reconciliation {
  *
  * Limit, by construction: a single file has no opening balance, so the first row's own amount
  * and a row removed from either end of the file are not covered by any step. Chaining files in
- * `ledger` (the closing balance of one against the next) is what covers the ends.
+ * `chain.ts` (ADR-025: the closing balance of one against the next) is what covers the ends.
  */
 function reconcileRunningBalance(statement: ParsedStatement): Reconciliation {
   const points: Point[] = [];

@@ -1,3 +1,4 @@
+import { type AccountChain, chainStatements } from "./chain";
 import { reconcile } from "./reconcile";
 import type { ParsedStatement, PlainDate, Transaction } from "./types";
 
@@ -7,6 +8,8 @@ export interface Ledger {
   readonly duplicatesRemoved: number;
   /** Calendar months ("YYYY-MM") that fall entirely between two covered stretches. */
   readonly missingMonths: readonly string[];
+  /** ADR-025: closing balance against the next opening balance, for these statements as one account. */
+  readonly chain: AccountChain;
 }
 
 const nextMonth = (ym: string): string => {
@@ -41,8 +44,8 @@ const nextMonth = (ym: string): string => {
  * UI must group files by account, and call this once per account, before this is safe for such
  * files. Months are counted over all statements together, so a gap in one account can hide
  * behind another account's coverage.
- * Checking each file's closing balance against the next file's opening balance (which would
- * also cover the first and last rows of a file) is not done here yet.
+ * `chain` checks each file's closing balance against the next file's opening balance (ADR-025),
+ * which covers the first and last rows of a file.
  */
 export function buildLedger(statements: readonly ParsedStatement[]): Ledger {
   // row identity -> statement index -> that statement's copies, in input order
@@ -97,6 +100,7 @@ export function buildLedger(statements: readonly ParsedStatement[]): Ledger {
     transactions: kept.map((k) => k.t),
     duplicatesRemoved: pos - kept.length,
     missingMonths: missingMonths(statements),
+    chain: chainStatements(statements),
   };
 }
 
