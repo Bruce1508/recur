@@ -43,6 +43,10 @@ type Update = (id: number, patch: Partial<Omit<CsvEntry, "input">>) => void;
 // A bank CSV or statement PDF is well under this; it stops a wrong file from freezing the tab.
 const MAX_BYTES = 10 * 1024 * 1024;
 const ACCOUNTS = ["A", "B", "C", "D"] as const;
+// A verified PDF replaces the CSV rows of its account inside its period, so a CSV joins a PDF's
+// account only when the user puts it there.
+const PDF_ACCOUNT = "A";
+const CSV_ACCOUNT = "B";
 const DATE_FORMATS: readonly DateFormat[] = [
   "YYYY-MM-DD",
   "MM/DD/YYYY",
@@ -150,12 +154,13 @@ export function Importer() {
         continue;
       }
       if (file.type === "application/pdf" || /\.pdf$/i.test(file.name)) {
-        const read = await readPdf(
-          new Uint8Array(await file.arrayBuffer()),
-        ).catch(() => ({
-          ok: false as const,
-          reason: "the PDF reader stopped with an error",
-        }));
+        const read = await file
+          .arrayBuffer()
+          .then((b) => readPdf(new Uint8Array(b)))
+          .catch(() => ({
+            ok: false as const,
+            reason: "the PDF reader stopped with an error",
+          }));
         if (!read.ok) {
           failed.push(`${file.name}: cannot read this file (${read.reason})`);
           continue;
@@ -164,12 +169,19 @@ export function Importer() {
           input: "pdf",
           id: nextId.current++,
           name: file.name,
-          account: "A",
+          account: PDF_ACCOUNT,
           statement: read.statement,
         });
         continue;
       }
-      const analysis = analyzeCsv(await file.text());
+      const text = await file.text().catch(() => null);
+      if (text === null) {
+        failed.push(
+          `${file.name}: cannot read this file (it could not be opened)`,
+        );
+        continue;
+      }
+      const analysis = analyzeCsv(text);
       if (analysis.status === "error") {
         failed.push(`${file.name}: cannot read this file (${analysis.reason})`);
         continue;
@@ -183,7 +195,7 @@ export function Importer() {
         sample: analysis.status === "confirm" ? analysis.sample : [],
         confirmed: analysis.status === "ready",
         kind: "deposit",
-        account: "A",
+        account: CSV_ACCOUNT,
         negateSigned: false,
         swapDebitCredit: false,
         dateFormat: analysis.mapping.dateFormat,
@@ -391,8 +403,10 @@ export function Importer() {
               </tbody>
             </table>
             <p className="mt-2 text-sm">
-              Files from the same account are merged and de-duplicated. Put each
-              account's files under its own letter.
+              Files under one letter are merged as one account and
+              de-duplicated: a Verified PDF replaces the CSV rows inside its
+              period. PDFs start under A and CSV files under B; move a CSV to
+              its PDF's letter only if both are the same account.
             </p>
           </section>
 
