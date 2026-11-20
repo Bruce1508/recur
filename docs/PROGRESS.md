@@ -2,7 +2,7 @@
 
 Living document. Update it at the end of every working session. Never record statement contents, merchant names from real statements, or account details here; counts and pass/fail only.
 
-**Last updated:** 2026-11-17
+**Last updated:** 2026-11-20
 
 ## Current status
 
@@ -88,6 +88,7 @@ Queued by the autonomous workflow. Claude does not attempt these.
 - [ ] `sudo chown -R 501:20 ~/.npm`: the npm cache has root-owned files, so `npm` fails in the sandbox (worked around with a temp cache).
 - [x] ~~M1: download CSVs from TD and CIBC~~ Dropped by ADR-019: both banks offer PDF only (owner checked 2026-11-14). Open question 7 is moot.
 - [ ] M5: keep at least three statement PDFs per account (TD chequing, CIBC credit card) in `~/Statements/`. Run `npm run pdf:dump -- /abs/path/statement.pdf` on one PDF per account (add `--deny-list /abs/path/deny.txt` with your own names and numbers). It writes `<name>.layout.json` next to the PDF, outside the repository, and refuses a PDF with no text layer. Read the output; if it holds no real names, numbers or merchants, paste it to Claude. Dates and amounts are kept as they are (the parser needs them), so look at those too.
+- [ ] Description census (ADR-021, pending): run `npm run census -- /abs/path/a.pdf /abs/path/b.pdf ...` on your real TD statements, outside the repository. It prints counts and percentages only, never a description (readable text, payment-processor prefix, opaque code; bank-code suffixes; digit runs). Paste the output to Claude. It needs PR #25 merged (it uses `parse`).
 - [ ] Optional, only if you ever get a CSV: `npm run fixture:dump` still works (`--description <n>` for an extra text column, `--deny-list /abs/path/deny.txt` for your own names and numbers). Its merchant map holds real merchant names: keep it outside the repository.
 - [ ] M2: before looking at any detector output, write down the subscriptions you believe you have (ground truth for AC-7). Keep the list out of the repository.
 - [ ] Open question 5: try one of your own statements in Digital ToolPad (and StatementSensei if convenient) and write down what each got right and wrong. Do not paste statement contents into any AI tool. Positioning only; matters for stage 2.
@@ -129,6 +130,13 @@ Queued by the autonomous workflow. Claude does not attempt these.
 ## Session log
 
 Newest first. One entry per session: date, what changed, what was verified, what is next.
+
+### 2026-11-20 — Description census tool
+
+- Context: the owner wants the app to help read transaction descriptions he does not recognise. Discussed, not decided: a rule-based decoder (processor prefixes, bank-code suffixes, fuzzy match to a public brand list, behaviour hints, labels the user sets once), no model trained from scratch, because there is no labelled data and ADR-013 forbids a runtime LLM. Chatbots can read a statement too, so the claim to keep is verified numbers that never leave the device. No ADR or PRD change yet; ADR-021 waits for the census numbers.
+- Added `tools/descriptionCensus.ts` (`classify`, `census`, `formatCensus`: counts by class, never a description), its test, and `tools/description-census.ts` with `npm run census`. Stacked on `m6/03-td-profile` (PR #25, not merged: `gh` fails with the TLS error even with the sandbox off), because it uses `parse` and `detect`.
+- Verified: unit tests (9); the CLI on a generated statement in a temp folder (counts printed, no text); it refuses an input inside the repository. Not verified: anything on a real statement. The processor-prefix list is hand-written and unverified.
+- Next: the owner runs the census; then ADR-021 and the PRD change; PR #25 merge; M6 task 6 (UI accepts PDFs).
 
 ### 2026-11-17 — M6 task 4: TD profile, detect, parse, synthetic generator
 
