@@ -34,9 +34,10 @@ const decimal = (c: Cents): string => {
 /**
  * Merged ledger -> CSV text: Date, Description, Amount (signed, negative = money out), Balance
  * (blank when the statement printed none), Account. Text fields are neutralised; PapaParse quotes.
+ * Starts with a UTF-8 byte order mark so Excel reads accented descriptions correctly; `readCsv` strips it.
  */
 export function exportLedgerCsv(rows: readonly ExportRow[]): string {
-  return Papa.unparse({
+  return `\uFEFF${Papa.unparse({
     fields: ["Date", "Description", "Amount", "Balance", "Account"],
     data: rows.map(({ account, transaction: t }) => [
       t.date,
@@ -45,5 +46,5 @@ export function exportLedgerCsv(rows: readonly ExportRow[]): string {
       t.balanceAfter === undefined ? "" : decimal(t.balanceAfter),
       neutralise(account),
     ]),
-  });
+  })}`;
 }
