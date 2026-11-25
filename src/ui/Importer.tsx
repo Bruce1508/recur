@@ -304,6 +304,7 @@ export function Importer() {
         </span>
         <input
           type="file"
+          className="mt-2 block w-full"
           accept=".pdf,application/pdf,.csv,text/csv"
           multiple
           data-testid="file-input"
@@ -377,83 +378,85 @@ export function Importer() {
         <>
           <section>
             <h2 className="font-semibold">Files</h2>
-            <table className="text-sm">
-              <thead>
-                <tr>
-                  <th className="pr-4 text-left">File</th>
-                  <th className="pr-4 text-left">Account</th>
-                  <th className="pr-4 text-left">Rows</th>
-                  <th className="pr-4 text-left">Status</th>
-                  <th className="text-left">Adjust</th>
-                </tr>
-              </thead>
-              <tbody>
-                {converted
-                  .filter(({ entry }) => isReady(entry))
-                  .map(({ entry, result, status }) => (
-                    <tr key={entry.id}>
-                      <td className="pr-4">{entry.name}</td>
-                      <td className="pr-4">
-                        <select
-                          aria-label={`Account for ${entry.name}`}
-                          value={entry.account}
-                          onChange={(ev) =>
-                            setAccount(entry.id, ev.target.value)
-                          }
-                        >
-                          {ACCOUNTS.map((a) => (
-                            <option key={a}>{a}</option>
-                          ))}
-                        </select>
-                      </td>
-                      {result.ok ? (
-                        <>
-                          <td className="pr-4">
-                            {result.statement.transactions.length}
-                          </td>
-                          <td className="pr-4">
-                            {status && describeStatus(status)}
-                            {entry.input === "csv" &&
-                              status?.status === "verified" && (
-                                <div className="text-amber-700">
-                                  {describeEnds(
-                                    summary.accounts.find(
-                                      (a) => a.id === entry.account,
-                                    )?.chain.ends[result.statement.id] ?? {
-                                      start: false,
-                                      end: false,
-                                    },
-                                  )}
-                                </div>
-                              )}
-                            {result.statement.warnings.map((w) => (
-                              <div key={w} className="text-amber-700">
-                                {w}
-                              </div>
+            <div className="overflow-x-auto">
+              <table className="text-sm">
+                <thead>
+                  <tr>
+                    <th className="pr-4 text-left">File</th>
+                    <th className="pr-4 text-left">Account</th>
+                    <th className="pr-4 text-left">Rows</th>
+                    <th className="pr-4 text-left">Status</th>
+                    <th className="text-left">Adjust</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {converted
+                    .filter(({ entry }) => isReady(entry))
+                    .map(({ entry, result, status }) => (
+                      <tr key={entry.id}>
+                        <td className="pr-4">{entry.name}</td>
+                        <td className="pr-4">
+                          <select
+                            aria-label={`Account for ${entry.name}`}
+                            value={entry.account}
+                            onChange={(ev) =>
+                              setAccount(entry.id, ev.target.value)
+                            }
+                          >
+                            {ACCOUNTS.map((a) => (
+                              <option key={a}>{a}</option>
                             ))}
-                          </td>
-                        </>
-                      ) : (
-                        <td colSpan={2} className="pr-4 text-red-700">
-                          Cannot read this file: {result.reason}
+                          </select>
                         </td>
-                      )}
-                      <td>
-                        {entry.input === "csv" && (
-                          <Controls e={entry} update={update} />
+                        {result.ok ? (
+                          <>
+                            <td className="pr-4">
+                              {result.statement.transactions.length}
+                            </td>
+                            <td className="pr-4">
+                              {status && describeStatus(status)}
+                              {entry.input === "csv" &&
+                                status?.status === "verified" && (
+                                  <div className="text-amber-700">
+                                    {describeEnds(
+                                      summary.accounts.find(
+                                        (a) => a.id === entry.account,
+                                      )?.chain.ends[result.statement.id] ?? {
+                                        start: false,
+                                        end: false,
+                                      },
+                                    )}
+                                  </div>
+                                )}
+                              {result.statement.warnings.map((w) => (
+                                <div key={w} className="text-amber-700">
+                                  {w}
+                                </div>
+                              ))}
+                            </td>
+                          </>
+                        ) : (
+                          <td colSpan={2} className="pr-4 text-red-700">
+                            Cannot read this file: {result.reason}
+                          </td>
                         )}
-                        <button
-                          type="button"
-                          className="rounded border px-3"
-                          onClick={() => remove(entry.id)}
-                        >
-                          Remove file
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-              </tbody>
-            </table>
+                        <td>
+                          {entry.input === "csv" && (
+                            <Controls e={entry} update={update} />
+                          )}
+                          <button
+                            type="button"
+                            className="rounded border px-3"
+                            onClick={() => remove(entry.id)}
+                          >
+                            Remove file
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                </tbody>
+              </table>
+            </div>
             <p className="mt-2 text-sm">
               Files under one letter are merged as one account and
               de-duplicated: a Verified PDF replaces the CSV rows inside its
@@ -500,24 +503,26 @@ export function Importer() {
                   )),
               )}
             </ul>
-            <table className="text-sm">
-              <thead>
-                <tr>
-                  <th className="pr-4 text-left">Date</th>
-                  <th className="pr-4 text-left">Description</th>
-                  <th className="text-right">Amount</th>
-                </tr>
-              </thead>
-              <tbody>
-                {summary.rows.map(({ transaction: t }) => (
-                  <tr key={t.id}>
-                    <td className="pr-4">{t.date}</td>
-                    <td className="pr-4">{t.description}</td>
-                    <td className="text-right">{formatCents(t.amount)}</td>
+            <div className="overflow-x-auto">
+              <table className="text-sm">
+                <thead>
+                  <tr>
+                    <th className="pr-4 text-left">Date</th>
+                    <th className="pr-4 text-left">Description</th>
+                    <th className="text-right">Amount</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {summary.rows.map(({ transaction: t }) => (
+                    <tr key={t.id}>
+                      <td className="pr-4">{t.date}</td>
+                      <td className="pr-4">{t.description}</td>
+                      <td className="text-right">{formatCents(t.amount)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </section>
         </>
       )}

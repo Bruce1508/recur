@@ -65,7 +65,7 @@ test("writes a header and plain numbers, leaving negative amounts numeric", () =
     { account: "A", transaction: tx("2026-01-06", "PAYROLL", 200000) },
   ]);
   expect(csv.split("\r\n")).toEqual([
-    "Date,Description,Amount,Balance,Account",
+    "\uFEFFDate,Description,Amount,Balance,Account",
     "2026-01-05,COFFEE,-12.50,987.50,A",
     "2026-01-06,PAYROLL,2000.00,,A",
   ]);

@@ -73,3 +73,23 @@ test("the scan itself catches a violation (control)", async ({ page }) => {
   const { violations } = await new AxeBuilder({ page }).analyze();
   expect(violations.map((v) => v.id)).toContain("image-alt");
 });
+
+test("results state does not scroll sideways at phone width (320 px)", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 320, height: 640 });
+  await page.goto("/");
+  await page.getByTestId("file-input").setInputFiles([
+    { name: "a.csv", mimeType: "text/csv", buffer: Buffer.from(withBalance) },
+    { name: "td.pdf", mimeType: "application/pdf", buffer: Buffer.from(tdPdf) },
+  ]);
+  await expect(page.getByText(/^Verified:/).first()).toBeVisible();
+  const overflow = await page.evaluate(
+    () => document.documentElement.scrollWidth - window.innerWidth,
+  );
+  expect(overflow).toBeLessThanOrEqual(0);
+  await page.screenshot({
+    path: "docs/evidence/phone-width.png",
+    fullPage: true,
+  });
+});
