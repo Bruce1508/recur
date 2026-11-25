@@ -2,9 +2,11 @@
 
 Living document. Update it at the end of every working session. Never record statement contents, merchant names from real statements, or account details here; counts and pass/fail only.
 
-**Last updated:** 2026-11-20
+**Last updated:** 2026-11-25
 
 ## Current status
+
+**Order change (owner, 2026-11-25):** while the census numbers and the dumps (#38) are pending, the M3 tasks that do not need M2 run first: CSV export (task 6, AC-8), network, offline and timing tests (task 12; AC-4, AC-5, AC-9), verification badges and the "nothing is uploaded" panel (tasks 5 and 9), accessibility (task 11). Tasks that need recurring series (the Subscriptions view, the summary download, the calendar file, demo recurring charges; AC-10, AC-14) wait for M2. Issues #28 to #31 are closed (merged in PRs #41, #42, #44, #45 and #46).
 
 **State on 2026-11-20 (verified against `git log origin/main` and the GitHub issue list):** `main` is at `3c808b9` (PR #26), 440 tests, CI green. Open pull request: #27 (ADR-021 proposed, docs only). Built and merged:
 
@@ -84,7 +86,7 @@ Created 2026-11-20 as GitHub issues, each with a "Model routing" section from `/
 | M6  | First PDF format (TD chequing) with reconciliation    | In progress | 2026-11-14 |            | Reconcile, profile, detect, parse built on synthetic data; UI (#28), property test (#29), chaining (#31) merged; real-statement checks wait on the owner |
 | M7  | Second PDF format (CIBC credit card)                  | Not started |            |            | After M6                                                                                                                                                 |
 | M2  | Recurring-charge detection                            | Not started |            |            | Now after M7                                                                                                                                             |
-| M3  | Product UI, demo mode, exports, trust features        | Not started |            |            |                                                                                                                                                          |
+| M3  | Product UI, demo mode, exports, trust features        | In progress | 2026-11-25 |            |                                                                                                                                                          |
 | M4  | Hardening, deployment, small launch, validation       | Not started |            |            | Ends with the launch and testers                                                                                                                         |
 
 ## What the planning phase established
@@ -126,23 +128,23 @@ Queued by the autonomous workflow. Claude does not attempt these.
 
 ## Acceptance criteria tracker
 
-| ID    | Criterion (short)                             | Status  | Evidence                                                                                                                                                                                                 |
-| ----- | --------------------------------------------- | ------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| AC-1  | Fixtures match golden output and reconcile    | Partial | 11 synthetic CSV layouts and one synthetic TD PDF format (PR #25) parse to exact golden output and verify; no real fixture yet                                                                           |
-| AC-2  | Mutations produce a mismatch                  | Partial | CSV: middle rows by the file's own check, first and last rows by the chain with a neighbour (ADR-025, #31); outer ends labelled. Synthetic TD PDF: every row removed or altered by a cent gives mismatch |
-| AC-3  | Synthetic CSV layouts (real CSV dropped)      | Met     | 11 synthetic layouts (task 7); real TD and CIBC CSV dropped by ADR-019                                                                                                                                   |
-| AC-4  | No cross-origin requests, no request bodies   | —       |                                                                                                                                                                                                          |
-| AC-5  | Works offline after load                      | —       |                                                                                                                                                                                                          |
-| AC-6  | Detection precision ≥ 0.90, recall ≥ 0.80     | —       |                                                                                                                                                                                                          |
-| AC-7  | ≥ 80% of hand-listed subscriptions found      | —       |                                                                                                                                                                                                          |
-| AC-8  | CSV round-trip and injection safety           | —       |                                                                                                                                                                                                          |
-| AC-9  | 12 files in under 5 s                         | —       |                                                                                                                                                                                                          |
-| AC-10 | Demo works with no user file                  | —       |                                                                                                                                                                                                          |
-| AC-11 | CSP header on the deployed site               | —       |                                                                                                                                                                                                          |
-| AC-12 | README complete                               | —       |                                                                                                                                                                                                          |
-| AC-13 | Stage 2: two PDF formats, three fixtures each | —       |                                                                                                                                                                                                          |
-| AC-14 | Calendar file and list download are correct   | —       |                                                                                                                                                                                                          |
-| AC-15 | Five outside testers, findings recorded       | —       |                                                                                                                                                                                                          |
+| ID    | Criterion (short)                             | Status  | Evidence                                                                                                                                                                                                                         |
+| ----- | --------------------------------------------- | ------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| AC-1  | Fixtures match golden output and reconcile    | Partial | 11 synthetic CSV layouts and one synthetic TD PDF format (PR #25) parse to exact golden output and verify; no real fixture yet                                                                                                   |
+| AC-2  | Mutations produce a mismatch                  | Partial | CSV: middle rows by the file's own check, first and last rows by the chain with a neighbour (ADR-025, #31); outer ends labelled. Synthetic TD PDF: every row removed or altered by a cent gives mismatch                         |
+| AC-3  | Synthetic CSV layouts (real CSV dropped)      | Met     | 11 synthetic layouts (task 7); real TD and CIBC CSV dropped by ADR-019                                                                                                                                                           |
+| AC-4  | No cross-origin requests, no request bodies   | —       |                                                                                                                                                                                                                                  |
+| AC-5  | Works offline after load                      | —       |                                                                                                                                                                                                                                  |
+| AC-6  | Detection precision ≥ 0.90, recall ≥ 0.80     | —       |                                                                                                                                                                                                                                  |
+| AC-7  | ≥ 80% of hand-listed subscriptions found      | —       |                                                                                                                                                                                                                                  |
+| AC-8  | CSV round-trip and injection safety           | Met     | `src/core/exportCsv.test.ts`: fast-check round trip through `readCsv` and `toStatement`; one account re-imports through `mapColumns` to an identical, verified ledger; formula cells prefixed, amounts plain numbers (M3 task 6) |
+| AC-9  | 12 files in under 5 s                         | —       |                                                                                                                                                                                                                                  |
+| AC-10 | Demo works with no user file                  | —       |                                                                                                                                                                                                                                  |
+| AC-11 | CSP header on the deployed site               | —       |                                                                                                                                                                                                                                  |
+| AC-12 | README complete                               | —       |                                                                                                                                                                                                                                  |
+| AC-13 | Stage 2: two PDF formats, three fixtures each | —       |                                                                                                                                                                                                                                  |
+| AC-14 | Calendar file and list download are correct   | —       |                                                                                                                                                                                                                                  |
+| AC-15 | Five outside testers, findings recorded       | —       |                                                                                                                                                                                                                                  |
 
 ## Risk watch
 
@@ -159,6 +161,13 @@ Queued by the autonomous workflow. Claude does not attempt these.
 ## Session log
 
 Newest first. One entry per session: date, what changed, what was verified, what is next.
+
+### 2026-11-25 — M3 task 6: CSV export (AC-8)
+
+- `src/core/exportCsv.ts`: merged ledger to CSV (Date, Description, Amount, Balance, Account). Text cells starting with `=`, `+`, `-`, `@`, tab or carriage return get a `'` prefix; numbers are plain decimals and are never prefixed (RESEARCH §8.1). `toStatement` undoes the prefix, so an exported file re-imports to the same descriptions. `summarize` now carries the account on each merged row. The UI shows a "Download transactions (CSV)" link (a `data:` URL, so there is no object URL to revoke).
+- Owner approved running the M3 tasks that do not need M2 before M7 and M2 (see Current status). Closed issues #28 to #31.
+- Previous PR (#46): merged; its review rounds and first CI run were not recorded in this session.
+- Verified: typecheck, Biome on tracked files, `npm test` (494 passed), `fixtures:check`, build, `npm run e2e` (10 passed, outside the sandbox: local port binding is blocked inside it). Screenshot `docs/evidence/export-csv.png`. Not verified: any real statement. The untracked `.agents/` and `.codex/` folders fail Biome locally; they are not in the repository.
 
 ### 2026-11-20 — Review notes from PR #45
 

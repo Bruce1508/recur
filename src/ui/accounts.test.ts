@@ -36,7 +36,7 @@ test("two accounts with an identical same-day charge keep both rows", () => {
     { name: "a.csv", account: "A", statement: a },
     { name: "b.csv", account: "B", statement: b },
   ]);
-  expect(s.transactions).toHaveLength(2);
+  expect(s.rows).toHaveLength(2);
   expect(s.duplicatesRemoved).toBe(0);
 });
 
@@ -53,7 +53,7 @@ test("overlapping files in the same account are de-duplicated", () => {
     { name: "a.csv", account: "A", statement: a },
     { name: "b.csv", account: "A", statement: b },
   ]);
-  expect(s.transactions).toHaveLength(3);
+  expect(s.rows).toHaveLength(3);
   expect(s.duplicatesRemoved).toBe(1);
 });
 
@@ -78,8 +78,8 @@ test("merged transactions are sorted by date across accounts", () => {
     { name: "a.csv", account: "A", statement: a },
     { name: "b.csv", account: "B", statement: b },
   ]);
-  expect(s.transactions.map((t) => t.date)).toEqual([
-    "2025-01-05",
-    "2025-03-05",
+  expect(s.rows.map((r) => [r.account, r.transaction.date])).toEqual([
+    ["B", "2025-01-05"],
+    ["A", "2025-03-05"],
   ]);
 });
