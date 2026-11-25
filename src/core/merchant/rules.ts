@@ -56,8 +56,25 @@ export function normalise(description: string): string {
   );
 }
 
-/** The cleaning rules of ADR-021, in its fixed order. Pure and deterministic. */
+/**
+ * The cleaning rules of ADR-021, in its fixed order, repeated on the key until it stops changing
+ * (a cut can expose text another rule would cut, for example a reference behind a stray "_").
+ * Each pass only shortens the key, so this ends. Pure and deterministic.
+ */
 export function clean(description: string): Cleaned {
+  let c = cleanOnce(description);
+  for (;;) {
+    const next = cleanOnce(c.merchantKey);
+    if (next.merchantKey === c.merchantKey) return c;
+    c = {
+      ...c,
+      merchantKey: next.merchantKey,
+      removed: [...c.removed, ...next.removed],
+    };
+  }
+}
+
+function cleanOnce(description: string): Cleaned {
   let text = normalise(description);
   const removed: string[] = [];
   const cut = (rule: string, re: RegExp): void => {
@@ -72,6 +89,7 @@ export function clean(description: string): Cleaned {
   };
 
   let bankCode: string | undefined;
+  text = text.replace(/[^A-Z0-9_]+$/, "");
   const tail = /_([A-Z])$/.exec(text);
   if (tail) {
     bankCode = tail[1];
