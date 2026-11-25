@@ -262,7 +262,12 @@ export function parse(doc: LineDocument, profile: BankProfile): ParseResult {
         continue;
       }
       if (!moved) {
-        if (balance !== null && draft.length === 0 && opening === undefined) {
+        if (
+          balance !== null &&
+          draft.length === 0 &&
+          opening === undefined &&
+          profile.openingLabel.test(description)
+        ) {
           opening = balance;
         } else if (balance === null && description !== "" && !dateText) {
           const prev = draft[draft.length - 1];
@@ -326,7 +331,7 @@ export function parse(doc: LineDocument, profile: BankProfile): ParseResult {
     const endMarked =
       last?.repeated === true &&
       headerPages.slice(0, -1).every((p) => !p.repeated);
-    if (!endMarked) {
+    if (profile.lastPageRepeatsTotal && !endMarked) {
       warnings.push("the last page of the statement was not found");
       totalsBad = true;
     }

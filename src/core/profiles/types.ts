@@ -21,6 +21,8 @@ export interface BankProfile {
   readonly period: RegExp;
   /** Matches a row date as one item: month name and day, no year. */
   readonly rowDate: RegExp;
+  /** Matches the description of the row that carries the opening balance; no other row may set it. */
+  readonly openingLabel: RegExp;
   /** Matches the first item of the total row. */
   readonly totalLabel: RegExp;
   /** Every table page ends with its own `Total` row (ADR-026); `printedTotals` is their sum. */

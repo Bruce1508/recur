@@ -220,6 +220,39 @@ describe("TD chequing, synthetic PDF through the whole path", () => {
     expect(result?.status).toBe("unverifiable");
   });
 
+  test("the opening balance is read only from the STARTING BALANCE row", async () => {
+    const pdf = clone(made.pdf);
+    for (const i of pdf.pages[0]?.items ?? [])
+      if (i.str === "STARTING BALANCE") i.str = "BALANCE FORWARD";
+    const r = await extractPdf(makeTextPdf(pdf));
+    if (!r.ok) throw new Error(r.reason);
+    const parsed = parse(normalize(r.doc), tdChequing);
+    if (!parsed.ok) throw new Error(parsed.reason);
+    expect(parsed.statement.openingBalance).toBeUndefined();
+    expect(reconcile(parsed.statement).status).toBe("unverifiable");
+  });
+
+  test("the end-marker rule applies only when the profile asks for it", async () => {
+    const pdf = clone(made.pdf);
+    const lastTotal = made.totals[made.totals.length - 1];
+    const last = pdf.pages[pdf.pages.length - 1];
+    if (!lastTotal || !last) throw new Error("no last page");
+    const y = lastTotal.ys[0];
+    last.items = last.items.filter((i) => Math.abs(i.y - (y ?? -1)) > 0.01);
+    const r = await extractPdf(makeTextPdf(pdf));
+    if (!r.ok) throw new Error(r.reason);
+    const doc = normalize(r.doc);
+    const strict = parse(doc, tdChequing);
+    const lax = parse(doc, { ...tdChequing, lastPageRepeatsTotal: false });
+    if (!strict.ok || !lax.ok) throw new Error("parse failed");
+    expect(strict.statement.warnings).toContain(
+      "the last page of the statement was not found",
+    );
+    expect(lax.statement.warnings).not.toContain(
+      "the last page of the statement was not found",
+    );
+  });
+
   test("a last page that is missing gives unverifiable, never verified", async () => {
     const pdf = clone(made.pdf);
     pdf.pages.pop();
