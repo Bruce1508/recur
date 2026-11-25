@@ -232,3 +232,11 @@ Checked for ADR-021. Licences were read from the files and registry entries name
 Not verified: the size of NSI's full brand data after filtering to Canada (the CDN was not reachable from the research machine); measure it when the build script exists and cut categories if it adds noticeably to the bundle (AC-9). ODbL would matter only for data taken from the OpenStreetMap database itself; NSI's own licence file states BSD-3 for its files. NSI's candidates come partly from a scan of OpenStreetMap, so the owner should confirm that this is enough before the first copy is committed.
 
 **TD description codes.** No public TD source found that explains the one-letter tails such as `_V`, or words such as `TFR-FR`. Checked: a web search for TD statement codes and suffixes; TD's "Guide to Canadian Banking Terms" booklet ([PDF](https://www.td.com/ca/en/personal-banking/documents/pdf/F21_N2C_Banking_Terms_Booklet_English.pdf), read in full: general terms, no statement codes); TD's correspondent-banking posting codes ([page](https://correspondentweb.td.com/postingCode.html), interbank codes, not retail statement tails). A one-letter field in a TD bank-to-bank file format is not evidence for a consumer statement. **The meanings are unverified**, so TD's `bankCodes` table stays empty until the owner finds a TD source (a statement legend, a help page or an answer from TD in writing) and records it here.
+
+## 14. Fonts (2026-11-25)
+
+Three fonts for the UI restyle, all SIL OFL-1.1: Nunito Sans (headings, weights 800 and 900), DM Sans (body, 400, 500 and 700) and Shantell Sans (one handwritten line, 400). Source: the `@fontsource` packages at v5.3.0; `npm view` confirmed the OFL-1.1 licence on 2026-11-25. Only the latin `woff2` files were copied into `src/assets/fonts/` with the licence texts beside them. The packages are not installed, so there is no new dependency.
+
+Why these: the display and text faces of the reference style (Really Sans, Moniker) are not verified as free to use, so they are unverified and not used. Nunito Sans, DM Sans and Shantell Sans are the substitutes with a known licence.
+
+CSP: the fonts are bundled by Vite and served from our own origin, so `font-src 'self'` (already in `vite.config.ts` and `docs/ARCHITECTURE.md`) covers them. No change to the policy.
