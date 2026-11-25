@@ -36,7 +36,14 @@ export function cadenceOfGaps(gaps: readonly number[]): Cadence | undefined {
 export function amountsStable(cents: readonly number[]): boolean {
   if (cents.length < 2) return false;
   const sorted = cents.map(Math.abs).sort((a, b) => a - b);
-  const median = sorted[Math.floor((sorted.length - 1) / 2)] ?? 0;
-  const tolerance = Math.max(100_000, median * 75);
-  return sorted.every((c) => Math.abs(c - median) * 1000 <= tolerance);
+  const median = lowerMedian(sorted);
+  return sorted.every((c) => withinTolerance(c, median));
 }
+
+/** The lower middle value of an ascending list; 0 for an empty one. */
+export const lowerMedian = (sorted: readonly number[]): number =>
+  sorted[Math.floor((sorted.length - 1) / 2)] ?? 0;
+
+/** Within 7.5% or 1.00 (whichever is larger) of `median`, in integer cents. */
+export const withinTolerance = (cents: number, median: number): boolean =>
+  Math.abs(cents - median) * 1000 <= Math.max(100_000, median * 75);

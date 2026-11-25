@@ -123,6 +123,18 @@ describe("properties", () => {
     );
   });
 
+  test("trailing punctuation after a bank code does not hide it (key stays stable)", () => {
+    const d = decodeDescription("0_A!", ctx);
+    expect(d.bankCode?.code).toBe("A");
+    expect(decodeDescription(d.merchantKey, ctx).merchantKey).toBe(
+      d.merchantKey,
+    );
+  });
+
+  test("a cut that exposes a reference code is cleaned again", () => {
+    expect(decodeDescription("_00A0", ctx).merchantKey).toBe("");
+  });
+
   test("the key is stable under repeated decode and after cleaning", () => {
     fc.assert(
       fc.property(
