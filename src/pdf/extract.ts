@@ -4,6 +4,7 @@
 import {
   GlobalWorkerOptions,
   getDocument,
+  PDFWorker,
 } from "pdfjs-dist/legacy/build/pdf.mjs";
 import workerUrl from "pdfjs-dist/legacy/build/pdf.worker.min.mjs?url";
 import type { RawDocument, RawItem, RawPage } from "../core/types";
@@ -12,9 +13,15 @@ export type ExtractResult =
   | { ok: true; doc: RawDocument }
   | { ok: false; reason: string };
 
-// Node presets its own in-process worker; a browser loads the worker file Vite serves from our own
-// origin (CSP worker-src 'self').
+// Node presets its own in-process worker. A browser starts the worker from our own origin (CSP
+// worker-src 'self') when this module loads, so PDFs still open after the network drops (AC-5).
+// The worker is passed to getDocument rather than set as workerPort: a task destroys only a worker
+// it created, so one PDF finishing cannot tear down another that is still being read.
 GlobalWorkerOptions.workerSrc ||= workerUrl;
+const worker =
+  typeof Worker === "undefined"
+    ? undefined
+    : PDFWorker.create({ port: new Worker(workerUrl, { type: "module" }) });
 
 const round = (n: number) => Math.round(n * 100) / 100;
 const text = (v: unknown) =>
@@ -30,6 +37,7 @@ export async function extractPdf(data: Uint8Array): Promise<ExtractResult> {
     data: data.slice(),
     disableFontFace: true,
     verbosity: 0,
+    ...(worker === undefined ? {} : { worker }),
   });
   try {
     const pdf = await task.promise;

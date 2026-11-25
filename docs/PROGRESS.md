@@ -48,6 +48,8 @@ Living document. Update it at the end of every working session. Never record sta
 
 **Backlog (not scheduled):**
 
+- PDF reader recovery (review of PR #48): if the worker script fails to load, every PDF waits forever instead of failing with a reason (pdf.js listens for no `error` event on a port); if the module-load `import()` of pdf.js rejects, the rejection is unhandled and cached until reload. Rare (the network drops between the HTML and the worker); fix with an `error` listener raced against `task.promise`, and a retry of the import.
+- CSV export has no UTF-8 BOM, so Excel may garble accented merchant names (security review of PR #47). `readCsv` already strips a BOM, so adding one keeps AC-8. Do it with the summary download (M3 task 7).
 - A card export with labelled Debit/Credit columns and a balance is "ready" without asking, and the account type defaults to chequing, so it can show a false "Mismatch" until the user switches the type. Default the type from the balance direction, or ask (found in the task 11 re-review).
 - `mapColumns` returns low confidence for any extra text column (a card number, a memo) and in one probe picked the card column as the description. `fixture:dump --description` works around it for fixtures; the UI has no way to pick the description column yet. See what the real CIBC export looks like first.
 - `reconcile` reports `mismatch` rather than `unverifiable` when an export lists same-day rows against its overall date direction; check against the real TD and CIBC fixtures.
@@ -133,12 +135,12 @@ Queued by the autonomous workflow. Claude does not attempt these.
 | AC-1  | Fixtures match golden output and reconcile    | Partial | 11 synthetic CSV layouts and one synthetic TD PDF format (PR #25) parse to exact golden output and verify; no real fixture yet                                                                                                   |
 | AC-2  | Mutations produce a mismatch                  | Partial | CSV: middle rows by the file's own check, first and last rows by the chain with a neighbour (ADR-025, #31); outer ends labelled. Synthetic TD PDF: every row removed or altered by a cent gives mismatch                         |
 | AC-3  | Synthetic CSV layouts (real CSV dropped)      | Met     | 11 synthetic layouts (task 7); real TD and CIBC CSV dropped by ADR-019                                                                                                                                                           |
-| AC-4  | No cross-origin requests, no request bodies   | —       |                                                                                                                                                                                                                                  |
-| AC-5  | Works offline after load                      | —       |                                                                                                                                                                                                                                  |
+| AC-4  | No cross-origin requests, no request bodies   | Met     | Every e2e flow (page load, CSV, PDF, CSV download) asserts no cross-origin request and no request body: `e2e/network.spec.ts`, `import.spec.ts`, `export.spec.ts`                                                                |
+| AC-5  | Works offline after load                      | Met     | `e2e/offline-timing.spec.ts`: page loaded, network off, a CSV and a TD PDF both verify (pdf.js and its worker now start at load)                                                                                                 |
 | AC-6  | Detection precision ≥ 0.90, recall ≥ 0.80     | —       |                                                                                                                                                                                                                                  |
 | AC-7  | ≥ 80% of hand-listed subscriptions found      | —       |                                                                                                                                                                                                                                  |
 | AC-8  | CSV round-trip and injection safety           | Met     | `src/core/exportCsv.test.ts`: fast-check round trip through `readCsv` and `toStatement`; one account re-imports through `mapColumns` to an identical, verified ledger; formula cells prefixed, amounts plain numbers (M3 task 6) |
-| AC-9  | 12 files in under 5 s                         | —       |                                                                                                                                                                                                                                  |
+| AC-9  | 12 files in under 5 s                         | Met     | `e2e/offline-timing.spec.ts`: 12 one-year CSVs and 12 monthly PDFs each under 5 s (local: 81 ms and 98 ms)                                                                                                                       |
 | AC-10 | Demo works with no user file                  | —       |                                                                                                                                                                                                                                  |
 | AC-11 | CSP header on the deployed site               | —       |                                                                                                                                                                                                                                  |
 | AC-12 | README complete                               | —       |                                                                                                                                                                                                                                  |
@@ -161,6 +163,14 @@ Queued by the autonomous workflow. Claude does not attempt these.
 ## Session log
 
 Newest first. One entry per session: date, what changed, what was verified, what is next.
+
+### 2026-11-25 — M3 task 12 (part): offline and timing (AC-4, AC-5, AC-9)
+
+- Found and fixed: a PDF dropped after the network went down failed ("the PDF reader stopped with an error"), because pdf.js and its worker were fetched on the first PDF. `readPdf` now starts the dynamic import when the app loads, and `extract.ts` starts the worker as a `workerPort` when it loads. Cost: every visitor downloads pdf.js (about 153 kB gzip) and its worker after first paint, CSV users included.
+- Review fix: the worker is one `PDFWorker` passed to `getDocument`, not `GlobalWorkerOptions.workerPort`, because a finished task destroyed the shared worker under a PDF still being read. A same-tick double drop test was added; it passed before the fix too (the race window is narrow), so the fix rests on reading pdf.js `PDFDocumentLoadingTask.destroy`.
+- `e2e/offline-timing.spec.ts`: offline import of a CSV and a PDF; 12 one-year CSVs and 12 monthly TD PDFs (cut from one synthetic year, each opening where the last closed) each verify in under 5 s.
+- Previous PR (#47): one review round (APPROVE, two non-blocking notes, one fixed); security review found nothing blocking. CI failed on the first run (Biome formatting of the progress table, edited after lint ran); fixed in the branch.
+- Verified: typecheck, Biome, `npm test` (494 passed), `fixtures:check`, build, `npx playwright test` (12 passed, outside the sandbox). Not verified: any real statement.
 
 ### 2026-11-25 — M3 task 6: CSV export (AC-8)
 
