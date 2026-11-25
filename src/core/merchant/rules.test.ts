@@ -57,6 +57,25 @@ describe("clean", () => {
     expect(clean("TORONTO").merchantKey).toBe("TORONTO");
   });
 
+  test("drops a trailing standalone number of 4+ digits only", () => {
+    expect(clean("SILVERLINE TAXI 4412").merchantKey).toBe("SILVERLINE TAXI");
+    expect(clean("TIDEWATER CAR WASH 1180 ON").merchantKey).toBe(
+      "TIDEWATER CAR WASH",
+    );
+    expect(clean("CLUB 2024 GYM").merchantKey).toBe("CLUB 2024 GYM");
+    expect(clean("ROUTE 66").merchantKey).toBe("ROUTE 66");
+    expect(clean("4412").merchantKey).toBe("4412");
+  });
+
+  test("drops a trailing company suffix but never the last word", () => {
+    expect(clean("HARBOUR FISH MARKET LTD_V").merchantKey).toBe(
+      "HARBOUR FISH MARKET",
+    );
+    expect(clean("ACME CO").merchantKey).toBe("ACME");
+    expect(clean("INC").merchantKey).toBe("INC");
+    expect(clean("LTD CAFE").merchantKey).toBe("LTD CAFE");
+  });
+
   test("applies the rules in the fixed order", () => {
     const c = clean("sq *Acme Coffee #0042 Toronto ON_V");
     expect(c.removed).toEqual([

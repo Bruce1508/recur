@@ -34,6 +34,16 @@ const PROVINCES = new Set([
   "PE",
 ]);
 
+const COMPANY_SUFFIXES = new Set([
+  "LTD",
+  "LTEE",
+  "INC",
+  "CORP",
+  "LLC",
+  "LP",
+  "CO",
+]);
+
 const tidy = (s: string): string => s.replace(/\s+/g, " ").trim();
 
 /** Upper-case, drop apostrophes, turn a dot that is not inside a number into a space. */
@@ -86,14 +96,20 @@ export function clean(description: string): Cleaned {
     /\b\d{5,}\b|\b(?=[A-Z0-9]*[A-Z])(?=(?:[A-Z]*\d){2})[A-Z0-9]{4,}\b/g,
   );
 
-  for (const set of [PROVINCES, CITIES]) {
+  const dropLast = (rule: string, test: (word: string) => boolean): void => {
     const words = text.split(" ");
     const last = words[words.length - 1] ?? "";
-    if (words.length > 1 && set.has(last)) {
-      removed.push(`place: ${last}`);
+    if (words.length > 1 && test(last)) {
+      removed.push(`${rule}: ${last}`);
       text = words.slice(0, -1).join(" ");
     }
-  }
+  };
+  dropLast("place", (w) => PROVINCES.has(w));
+  dropLast("place", (w) => CITIES.has(w));
+
+  // A trailing 4+ digit token is a store or reference number; a year-like number mid-name stays.
+  dropLast("store number", (w) => /^\d{4,}$/.test(w));
+  dropLast("company suffix", (w) => COMPANY_SUFFIXES.has(w));
 
   const merchantKey = text.replace(/^[^A-Z0-9]+|[^A-Z0-9]+$/g, "");
   return { merchantKey, processor, bankCode, removed };
