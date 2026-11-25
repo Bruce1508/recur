@@ -551,4 +551,6 @@ Other facts from the same structure: every table page repeats the column header 
 
 **Consequences.** The two real statements should verify, or fail on a named, smaller problem; the owner re-checks them on his machine (statements never reach Claude). `parse` gains two profile switches; `reconcile` and the types do not change. A future profile that prints one total at the end leaves `pageTotals` off and keeps ADR-020's single-total rule.
 
-**Revisit when** a TD statement fails on the end marker or the suffix, or when a page needs to be named in a totals mismatch (option C).
+**Stated limit (found in review).** A page missing from the middle of the extracted document is caught only through the balances: its rows' net change breaks the next checkpoint. A missing middle page whose rows net to exactly zero still verifies, because the page totals cover only the pages that were read and the end marker proves only that the end is there. The real dumps show no page-number line to check `1..n` against. A single end-of-statement total would have caught it; TD does not print one. The opening balance is read only from the row the profile labels (`openingLabel`, TD: `STARTING BALANCE`), so a lost first page cannot pass a balance brought forward off as the opening.
+
+**Revisit when** a TD statement fails on the end marker or the suffix, when a page-number or statement-total line is found in a dump, or when a page needs to be named in a totals mismatch (option C).
