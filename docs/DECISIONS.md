@@ -433,14 +433,19 @@ What the numbers say:
 ```ts
 type ReadingSource = "user" | "brand" | "rule";
 type Reading =
-  | { kind: "name"; name: string; source: ReadingSource; confidence: "user" | "high" | "medium" }
+  | {
+      kind: "name";
+      name: string;
+      source: ReadingSource;
+      confidence: "user" | "high" | "medium";
+    }
   | { kind: "unknown" };
 interface Decoded {
-  merchantKey: string;            // cleaned key; grouping and label key
+  merchantKey: string; // cleaned key; grouping and label key
   reading: Reading;
-  processor?: string;             // from the prefix rule; FR-14
+  processor?: string; // from the prefix rule; FR-14
   bankCode?: { code: string; meaning?: string }; // meaning only from a sourced table entry
-  removed: string[];              // what the cleaning rules cut, in order
+  removed: string[]; // what the cleaning rules cut, in order
 }
 interface BehaviourHint {
   merchantKey: string;
@@ -449,10 +454,16 @@ interface BehaviourHint {
   amountStable: boolean;
   first: PlainDate;
   last: PlainDate;
-  verified: boolean;              // every occurrence came from a verified statement
+  verified: boolean; // every occurrence came from a verified statement
 }
-interface Brand { name: string; match: string[] } // generated brands.ts
-interface LabelFile { version: 1; labels: { key: string; name: string }[] }
+interface Brand {
+  name: string;
+  match: string[];
+} // generated brands.ts
+interface LabelFile {
+  version: 1;
+  labels: { key: string; name: string }[];
+}
 ```
 
 The bank-code table is a field of the bank profile (`bankCodes: Record<string, { meaning: string; source: string }>`, empty for TD), so adding a bank still needs no change to `merchant/`. `src/ui/` holds the label state and does the file download and the file picker; `src/core/merchant/labels.ts` only parses and serialises.
