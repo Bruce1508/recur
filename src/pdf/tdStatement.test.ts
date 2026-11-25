@@ -67,6 +67,15 @@ async function run(pdf: PdfSpec) {
 
 const made = makeTdStatement(SPEC);
 
+const totalItems = (p: PdfSpec, page: number, str: string) => {
+  const ys = made.totals[page]?.ys ?? [];
+  return (
+    p.pages[page]?.items.filter(
+      (i) => i.str === str && ys.some((y) => Math.abs(i.y - y) < 1),
+    ) ?? []
+  );
+};
+
 describe("TD chequing, synthetic PDF through the whole path", () => {
   test("golden: exact transactions, anchors, and Verified by checkpoints", async () => {
     const { profile, parsed, result } = await run(made.pdf);
@@ -76,6 +85,10 @@ describe("TD chequing, synthetic PDF through the whole path", () => {
     expect(s.period).toEqual({ start: "2025-09-01", end: "2025-10-01" });
     expect(s.openingBalance).toBe(100000);
     expect(s.printedTotals).toEqual({ withdrawals: 165245, deposits: 500000 });
+    expect(made.totals.map((t) => [t.withdrawals, t.deposits])).toEqual([
+      [164795, 250000],
+      [450, 250000],
+    ]);
     expect(s.requiredAnchors).toEqual(["printedTotals"]);
     expect(s.warnings).toEqual([]);
     expect(
@@ -158,15 +171,53 @@ describe("TD chequing, synthetic PDF through the whole path", () => {
     }
   });
 
-  test("a printed total that disagrees with the rows gives a mismatch", async () => {
+  test.each([0, 1])(
+    "page %i's printed total off by one cent gives a mismatch",
+    async (p) => {
+      const pdf = clone(made.pdf);
+      const t = made.totals[p];
+      if (!t) throw new Error("no totals");
+      // Every drawn copy, or normalize would drop an altered one as a duplicate or the page would disagree.
+      const copies = totalItems(pdf, p, formatAmount(t.deposits));
+      if (!copies.length) throw new Error("no total");
+      for (const c of copies) c.str = formatAmount(t.deposits + 1);
+      const { result } = await run(pdf);
+      expect(result?.status).toBe("mismatch");
+    },
+  );
+
+  test("the two total lines of the last page disagreeing gives unverifiable", async () => {
     const pdf = clone(made.pdf);
-    const last = pdf.pages[pdf.pages.length - 1];
-    // Both drawn copies of the total, or normalize would drop the altered one as a duplicate.
-    const copies = last?.items.filter((i) => i.str === formatAmount(165245));
-    if (!copies?.length) throw new Error("no total");
-    for (const c of copies) c.str = formatAmount(165246);
-    const { result } = await run(pdf);
-    expect(result?.status).toBe("mismatch");
+    const t = made.totals[1];
+    const y = t?.ys[0];
+    if (!t || y === undefined) throw new Error("no totals");
+    const item = pdf.pages[1]?.items.find(
+      (i) => Math.abs(i.y - y) < 0.01 && i.str === formatAmount(t.deposits),
+    );
+    if (!item) throw new Error("no total");
+    item.str = formatAmount(t.deposits + 1);
+    const { parsed, result } = await run(pdf);
+    if (!parsed?.ok) throw new Error("parse failed");
+    expect(parsed.statement.warnings).toContain(
+      "page 2: the total rows disagree",
+    );
+    expect(result?.status).toBe("unverifiable");
+  });
+
+  test("a page with rows whose total was removed gives unverifiable", async () => {
+    const pdf = clone(made.pdf);
+    const page = pdf.pages[0];
+    const t = made.totals[0];
+    if (!page || !t) throw new Error("no page");
+    page.items = page.items.filter(
+      (i) => !t.ys.some((y) => Math.abs(i.y - y) < 1),
+    );
+    const { parsed, result } = await run(pdf);
+    if (!parsed?.ok) throw new Error("parse failed");
+    expect(parsed.statement.warnings).toContain(
+      "page 1 has rows but no total row",
+    );
+    expect(result?.status).toBe("unverifiable");
   });
 
   test("a last page that is missing gives unverifiable, never verified", async () => {
@@ -301,7 +352,8 @@ describe("TD chequing, synthetic PDF through the whole path", () => {
     const pdf = clone(made.pdf);
     const last = pdf.pages[pdf.pages.length - 1];
     if (!last) throw new Error("no page");
-    last.items = last.items.filter((i) => i.str !== formatAmount(500000));
+    const gone = new Set(totalItems(pdf, 1, formatAmount(250000)));
+    last.items = last.items.filter((i) => !gone.has(i));
     const { parsed, result } = await run(pdf);
     if (!parsed?.ok) throw new Error("parse failed");
     expect(parsed.statement.warnings.length).toBeGreaterThan(0);
@@ -372,5 +424,125 @@ describe("TD chequing, synthetic PDF through the whole path", () => {
     if (!parsed?.ok) throw new Error("parse failed");
     expect(parsed.statement.warnings.length).toBeGreaterThan(0);
     expect(result?.status).toBe("unverifiable");
+  });
+
+  describe("overdrawn balances and the page-total switches", () => {
+    const od = (opening: number) =>
+      makeTdStatement({
+        period: "SEP 01/25 - OCT 01/25",
+        opening,
+        slotsPerPage: 4,
+        days: [
+          { date: "SEP02", rows: [{ desc: "FAKE RENT", cents: -20000 }] },
+          { date: "SEP03", rows: [{ desc: "ACME PAYROLL", cents: 30000 }] },
+          { date: "SEP04", rows: [{ desc: "FAKE SHOP", cents: -123456 }] },
+          { date: "SEP05", rows: [{ desc: "SAMPLE REFUND", cents: 200000 }] },
+        ],
+      });
+
+    test.each([
+      ["a balance that goes negative", 5000, [-15000, 15000, -108456, 91544]],
+      [
+        "an opening balance that is overdrawn",
+        -5000,
+        [-25000, 5000, -118456, 81544],
+      ],
+    ])(
+      "%s is printed with OD, read as negative, and verifies",
+      async (_n, opening, balances) => {
+        const m = od(opening);
+        const printed = m.pdf.pages.flatMap((p) => p.items.map((i) => i.str));
+        expect(printed.some((x) => x.endsWith("OD"))).toBe(true);
+        const { parsed, result } = await run(m.pdf);
+        if (!parsed?.ok) throw new Error("parse failed");
+        expect(parsed.statement.warnings).toEqual([]);
+        expect(parsed.statement.openingBalance).toBe(opening);
+        expect(
+          parsed.statement.transactions.map((t) => t.balanceAfter),
+        ).toEqual(balances);
+        expect(result).toEqual({ status: "verified", method: "checkpoints" });
+      },
+    );
+
+    const addBalance = (
+      m: ReturnType<typeof od>,
+      str: string,
+      rowIndex: number,
+      x: number,
+    ) => {
+      const pdf = clone(m.pdf);
+      const row = m.rows[rowIndex] as Row;
+      pdf.pages[row.page]?.items.push({ str, x, y: row.y });
+      return pdf;
+    };
+
+    test("an OD token in the withdrawals column gives unverifiable", async () => {
+      const { parsed, result } = await run(
+        addBalance(od(5000), "450.00OD", 0, 240),
+      );
+      if (!parsed?.ok) throw new Error("parse failed");
+      expect(parsed.statement.warnings.length).toBeGreaterThan(0);
+      expect(result?.status).toBe("unverifiable");
+    });
+
+    test("a balance with an unknown suffix gives unverifiable", async () => {
+      const m = od(5000);
+      const pdf = clone(m.pdf);
+      for (const p of pdf.pages)
+        for (const i of p.items)
+          if (i.str.endsWith("OD")) i.str = i.str.replace("OD", "XY");
+      const { parsed, result } = await run(pdf);
+      if (!parsed?.ok) throw new Error("parse failed");
+      expect(parsed.statement.warnings.length).toBeGreaterThan(0);
+      expect(result?.status).toBe("unverifiable");
+    });
+
+    test("an OD balance that is really positive breaks the checkpoint", async () => {
+      const m = od(5000);
+      const pdf = clone(m.pdf);
+      for (const p of pdf.pages)
+        for (const i of p.items) i.str = i.str.replace(/OD$/, "");
+      const { result } = await run(pdf);
+      expect(result?.status).toBe("mismatch");
+    });
+
+    test("with pageTotals off the old single total row is kept, and a second one warns", async () => {
+      const profile = {
+        ...tdChequing,
+        pageTotals: false,
+        lastPageRepeatsTotal: false,
+      };
+      const m = makeTdStatement({
+        period: "SEP 01/25 - OCT 01/25",
+        opening: 100000,
+        days: [{ date: "SEP02", rows: [{ desc: "FAKE SHOP", cents: -1000 }] }],
+      });
+      const read = async (pdf: PdfSpec) => {
+        const r = await extractPdf(makeTextPdf(pdf));
+        if (!r.ok) throw new Error(r.reason);
+        const parsed = parse(normalize(r.doc), profile);
+        if (!parsed.ok) throw new Error("parse failed");
+        return { parsed, result: reconcile(parsed.statement) };
+      };
+      const two = await read(m.pdf);
+      expect(two.parsed.statement.warnings).toContain(
+        "the statement has more than one total row",
+      );
+      expect(two.result.status).toBe("unverifiable");
+
+      const one = clone(m.pdf);
+      const extra = m.totals[0]?.ys[0];
+      if (extra === undefined) throw new Error("no total");
+      const page = one.pages[0];
+      if (!page) throw new Error("no page");
+      page.items = page.items.filter((i) => Math.abs(i.y - extra) >= 1);
+      const ok = await read(one);
+      expect(ok.parsed.statement.warnings).toEqual([]);
+      expect(ok.parsed.statement.printedTotals).toEqual({
+        withdrawals: 1000,
+        deposits: 0,
+      });
+      expect(ok.result).toEqual({ status: "verified", method: "checkpoints" });
+    });
   });
 });
