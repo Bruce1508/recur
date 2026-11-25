@@ -37,7 +37,7 @@ Living document. Update it at the end of every working session. Never record sta
 1. Run `git log origin/main` and `gh pr list` to confirm what is merged. State at the end of 2026-11-25: `main` is at PR #55, no open PRs, 576 tests, the two real TD statements Verify, CIBC dropped (ADR-028). Never `--admin`; never force-push.
 2. Work in this order, one PR each, through `ship-task` (model tier in "Issues and model routing"; Sonnet implements, Opus designs and reviews parse, reconcile, pdf and CSP):
    1. ~~**#33, rest:** the NSI brand table~~ done (this PR); was: the NSI brand table (`tools/` script filtering name-suggestion-index to Canada and a few shop kinds, writes `src/core/merchant/brands.ts` with the BSD notice; README credit; measure the bundle size; RESEARCH §13 says it is not yet measured). A real alias table only with a named public source per entry.
-   2. **UI restyle PR 2:** dark mode (own PR: choose colours, measure contrast, `prefers-color-scheme` plus a manual switch if wanted). Style source: `UI/DESIGN.md`, vibe only (see the 2026-11-25 theme entry); that folder is untracked on the owner's machine until he decides to commit it, so a fresh clone lacks it: the theme tokens already in `src/index.css` and RESEARCH §14 are the source in that case. `agent-skills:frontend-ui-engineering` is required. The owner allowed taste-skill and impeccable for the 2026-11-25 restyle only; `.claude/rules/skill-selection.md` does not route them, so using them again needs his say-so recorded here and a routing-page change through a PR.
+   2. ~~**UI restyle PR 2:** dark mode~~ done (this PR); was: dark mode (own PR: choose colours, measure contrast, `prefers-color-scheme` plus a manual switch if wanted). Style source: `UI/DESIGN.md`, vibe only (see the 2026-11-25 theme entry); that folder is untracked on the owner's machine until he decides to commit it, so a fresh clone lacks it: the theme tokens already in `src/index.css` and RESEARCH §14 are the source in that case. `agent-skills:frontend-ui-engineering` is required. The owner allowed taste-skill and impeccable for the 2026-11-25 restyle only; `.claude/rules/skill-selection.md` does not route them, so using them again needs his say-so recorded here and a routing-page change through a PR.
    3. **#36, the readout screen** in this style: totals by reading (AC-17, an aggregation function in core first), label UI with file download and load (AC-18), then demo mode (AC-10), the summary download and the calendar file (AC-14).
    4. **#34, recurring detection** (AC-6, AC-7): starts only after the owner writes the subscription list.
    5. **#37, M4:** deploy, README (TD chequing only, ADR-028), launch; each needs the owner's approval.
@@ -170,6 +170,10 @@ Queued by the autonomous workflow. Claude does not attempt these.
 ## Session log
 
 Newest first. One entry per session: date, what changed, what was verified, what is next.
+
+### 2026-11-25 — Dark mode (UI restyle 2)
+
+- Theme tokens are now `light-dark()` pairs in `src/index.css` (`color-scheme: light dark`, so the OS decides); a "Theme: Match system / Light / Dark" button (`src/ui/ThemeToggle.tsx`, `src/ui/theme.ts`) sets `data-theme` on `<html>` for the visit. The choice is not saved: `localStorage` and cookies are banned in `src/` (ADR-010), so a reload follows the OS again; saving it would need a new ADR. Dark text contrast measured: ink 16:1 on paper, quiet-gray 7.6:1, blurple 8.3:1 on paper and 5.6:1 on the mint pill. Evidence: `e2e/dark-mode.spec.ts` (OS follow, button cycle and override, axe on empty and results states), screenshots `docs/evidence/dark-empty.png` and `dark-results.png`. Previous PR (#58) took three review rounds (generic-word brand forms); its CI passed first time. Skill used: `agent-skills:frontend-ui-engineering`.
 
 ### 2026-11-25 — Brand table from name-suggestion-index (#33)
 

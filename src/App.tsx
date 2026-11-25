@@ -1,8 +1,12 @@
 import { Importer } from "./ui/Importer";
+import { ThemeToggle } from "./ui/ThemeToggle";
 
 export function App() {
   return (
     <main className="mx-auto max-w-4xl px-4 py-8 sm:px-8 sm:py-12">
+      <div className="flex justify-end">
+        <ThemeToggle />
+      </div>
       <h1 className="font-display text-5xl font-black tracking-tight">
         <span className="bg-linear-135 from-blurple to-rose-deep bg-clip-text text-transparent">
           Recur
