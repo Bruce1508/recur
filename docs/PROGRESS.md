@@ -164,6 +164,15 @@ Queued by the autonomous workflow. Claude does not attempt these.
 
 Newest first. One entry per session: date, what changed, what was verified, what is next.
 
+### 2026-11-25 — First real-statement run; ADR-026 (TD page totals, OD balances)
+
+- The owner ran `npm run census` on two real TD chequing statements (one account, consecutive periods) and dropped one into the dev build. Counts only: 2 statements, 148 transactions, 104 distinct descriptions; processor-prefix 6 (4%), code-like 11 (7%), readable-looking 131 (89%, upper bound); 91 with a one-letter bank-code suffix; 10 with a digit run of 6 or more; 40 transactions in descriptions seen 3 or more times. These feed #32 (ADR-021).
+- Both statements parsed but were `unverifiable`: "a required figure was not read (printedTotals)", with "the statement has more than one total row" and "a row has amounts that could not be placed". The owner's masked line structure (no contents) showed a `Total` row on every page and a two-letter suffix on overdrawn balances. ADR-026 records the facts and the fix; a Sonnet agent implemented it test-first; the lead reviewed the parse diff (doubt pass) before the PR.
+- Parse change beyond the ADR: a token in the amount area that cannot be placed now adds its warning without dropping the row, so such statements give `unverifiable` rather than `mismatch`.
+- Waiting on the owner (optional): drop the two statements into `npm run dev` again and report the status lines only.
+- Previous PR (#50): one review round (APPROVE), security review clean, CI green on the first run.
+- Verified: typecheck, Biome, `npm test` (503 passed), `fixtures:check`, build, `npx playwright test` (18 passed, outside the sandbox). Not verified: the fix on the real statements.
+
 ### 2026-11-25 — M3: phone width and a BOM on the CSV export
 
 - At 320 px the results state scrolled sideways by 138 px, then 71 px: the two tables and the native file input were wider than the screen. The tables now scroll inside their own container and the input is `w-full`. `e2e/a11y.spec.ts` asserts no page-level horizontal scroll at 320 px.
