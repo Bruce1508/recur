@@ -164,6 +164,13 @@ Queued by the autonomous workflow. Claude does not attempt these.
 
 Newest first. One entry per session: date, what changed, what was verified, what is next.
 
+### 2026-11-25 — M3 task 11 (part): axe scan
+
+- Added `@axe-core/playwright` 4.14.1 (exact pin; npm view: MPL-2.0, peer `playwright-core >= 1.0.0`; in `approved-deps.json`; RESEARCH §5 updated from 4.14.0). `e2e/a11y.spec.ts` scans the empty, confirm-columns and results (CSV, PDF, status, error) states against WCAG 2.0/2.1 A and AA: no violations. A control test injects an image with no alt text and expects `image-alt`, so a pass is not a scanner that finds nothing.
+- Not covered by axe: keyboard order, focus states, colour as the only cue (status text is always written out), phone-width layout. Still open for M3 task 11.
+- Previous PR (#48): two review rounds (REQUEST_CHANGES on a shared pdf.js worker, then APPROVE); CI green on every run.
+- Verified: typecheck, Biome, `npm test` (494 passed), build, `npx playwright test` (17 passed, outside the sandbox). Not verified: any real statement.
+
 ### 2026-11-25 — M3 task 12 (part): offline and timing (AC-4, AC-5, AC-9)
 
 - Found and fixed: a PDF dropped after the network went down failed ("the PDF reader stopped with an error"), because pdf.js and its worker were fetched on the first PDF. `readPdf` now starts the dynamic import when the app loads, and `extract.ts` starts the worker as a `workerPort` when it loads. Cost: every visitor downloads pdf.js (about 153 kB gzip) and its worker after first paint, CSV users included.
