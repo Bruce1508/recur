@@ -510,17 +510,19 @@ export function Importer() {
           <section className={SHEET}>
             <h2 className={H2}>Transactions ({summary.rows.length})</h2>
             {summary.rows.length > 0 && (
-              <p className={FINE}>
+              <div className="my-3 flex flex-wrap items-center gap-3">
                 <a
                   href={csvHref}
                   download="recur-transactions.csv"
                   className={BTN}
                 >
                   Download transactions (CSV)
-                </a>{" "}
-                Amounts are plain numbers. A description that a spreadsheet
-                would run as a formula starts with an apostrophe.
-              </p>
+                </a>
+                <p className={`${FINE} max-w-prose`}>
+                  Amounts are plain numbers. A description that a spreadsheet
+                  would run as a formula starts with an apostrophe.
+                </p>
+              </div>
             )}
             <p className={`mt-2 ${FINE}`} data-testid="ledger-notes">
               {summary.duplicatesRemoved} duplicate row(s) removed.

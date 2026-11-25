@@ -22,6 +22,9 @@ const tdPdf = makeTextPdf(
   }).pdf,
 );
 
+const shot = (page: Page, name: string) =>
+  page.screenshot({ path: `docs/evidence/theme-${name}.png`, fullPage: true });
+
 const scan = async (page: Page) => {
   const { violations } = await new AxeBuilder({ page })
     .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"])
@@ -37,6 +40,7 @@ test("empty state has no serious accessibility violations", async ({
   page,
 }) => {
   await page.goto("/");
+  await shot(page, "empty");
   await scan(page);
 });
 
@@ -48,6 +52,7 @@ test("confirm-columns state has none", async ({ page }) => {
     buffer: Buffer.from(noBalance),
   });
   await expect(page.getByText("Confirm columns: b.csv")).toBeVisible();
+  await shot(page, "confirm");
   await scan(page);
 });
 
@@ -62,6 +67,7 @@ test("results state (CSV and PDF, status, error) has none", async ({
   ]);
   await expect(page.getByText(/^Verified:/).first()).toBeVisible();
   await expect(page.getByRole("alert")).toBeVisible();
+  await shot(page, "results");
   await scan(page);
 });
 
