@@ -26,7 +26,7 @@ A record is changed only by adding a new record that supersedes it. Statuses: Pr
 | 018 | CSV import first, PDF parsing second; usefulness is the first goal              | Accepted (owner's decision, 2026-11-10); stage order superseded by 019 |
 | 019 | PDF first for the owner's banks; no further CSV work                            | Accepted (owner's decision, 2026-11-14)                                |
 | 020 | Checkpoint and totals reconciliation; amount columns found from the amounts     | Accepted (owner delegated the design, 2026-11-14)                      |
-| 021 | Reframe: help the user read their transactions; verified numbers stay on device | Proposed (owner's direction, 2026-11-20; details after the census)     |
+| 021 | Reframe: help the user read their transactions; verified numbers stay on device | Accepted (owner delegated the details, 2026-11-25)                     |
 | 022 | Prose rules become lint and coverage checks                                     | Accepted (2026-11-20)                                                  |
 | 023 | One routing page for installed skill packs                                      | Accepted (2026-11-20)                                                  |
 | 024 | Close the skill-routing loophole with a required step and a template            | Accepted (2026-11-20)                                                  |
@@ -370,7 +370,7 @@ All records become Accepted when Bruce signs off on the PRD.
 
 ## ADR-021 — Reframe: help the user read their transactions; verified numbers that stay on the device
 
-**Status.** Proposed. The direction is the owner's (2026-11-20); the design details wait for the description census (below).
+**Status.** Accepted (2026-11-25; the owner delegated the design details). The direction is the owner's (2026-11-20). Proposed on 2026-11-20 with the details left until the description census; the census numbers and the details are below, under "Census result" and "Decoder design".
 
 **Context.** The owner described a second persona who matters as much as the privacy-minded one: someone who spends freely, loses track of the total, and will not keep books because opening a statement shows lines they cannot read ("what is this charge?"). For this person, a recurring-charge list and a verified CSV answer questions they are not asking. Their question is "where did my money go, and what is this line?".
 
@@ -386,7 +386,7 @@ Two facts constrain the answer.
 | C. Train a model from scratch on transaction descriptions                                     | In theory         | Depends                | No labelled data exists to train on; synthetic data teaches only its rules |
 | D. Call an LLM at runtime                                                                     | Yes               | **No**                 | Breaks ADR-013 and the privacy claim                                       |
 
-**Decision (proposed).** B. The product gains a readout: drop in statements, see where the money went and what each line probably is.
+**Decision.** B. The product gains a readout: drop in statements, see where the money went and what each line probably is.
 
 - **What the decoder does.** (1) Rules strip payment-processor prefixes, store numbers, cities and reference codes. (2) A bank-code table explains the bank's own suffixes (the first TD dump shows one-letter suffixes such as `_V`); each meaning must be verified from the bank's public documentation before it is written down. (3) Fuzzy matching against a public brand list, only if a list with a suitable licence is found and recorded in `docs/RESEARCH.md`. (4) Behaviour hints from the verified ledger: how often a description repeats, its cadence, whether the amount is stable ("seen 6 times, monthly, always the same amount"). (5) Labels the user sets once ("this is my gym"), applied to every matching line in the session.
 - **Unknown stays unknown.** A description with no match gets no guessed name. Each result carries its source (rule, bank code, brand list, behaviour, user label) and a confidence. Nothing is presented as fact that is a guess.
@@ -398,6 +398,68 @@ Two facts constrain the answer.
 **Measurement before design.** The owner runs `npm run census` (PR #26) on his real statements and shares the counts only: the share of descriptions that are readable text, carry a processor prefix, or are opaque codes, and how many repeat. The census heuristics are rough (a word with a vowel counts as readable, so the readable share is an upper bound). If most descriptions are opaque codes, behaviour hints, bank-code meanings and labels carry the feature and the brand list matters less; if most are readable names, the brand list and cleaning rules matter most. This ADR moves to Accepted, with the details filled in, after those numbers.
 
 **Evaluation.** A hand-written descriptor suite with expected readings (invented strings shaped like real ones, never copied from a statement) and a printed report of how many each method decodes correctly, wrongly, or leaves unknown. A wrong decode counts worse than an unknown one.
+
+**Census result (2026-11-25).** The owner ran the census on two consecutive real TD chequing statements of one account and shared counts only: 148 transactions, 104 distinct descriptions.
+
+| Class (census heuristic)         | Transactions | Distinct | In descriptions seen 3+ times |
+| -------------------------------- | ------------ | -------- | ----------------------------- |
+| Readable-looking (upper bound)   | 131 (89%)    | 90       | 40                            |
+| Code-like                        | 11 (7%)      | 11       | 0                             |
+| Processor prefix                 | 6 (4%)       | 3        | 0                             |
+| With a one-letter bank-code tail | 91 (61%)     |          |                               |
+| With a run of 6+ digits          | 10           |          |                               |
+
+ADR-026 later recovered two overdrawn-balance rows the parser had dropped (150 transactions); the census ran before that fix, and two rows do not change any conclusion. The shapes the owner described, given here only as invented stand-ins: a brand followed by an asterisk, an amount and a `_V` tail (`NAME* 31.64_V`); a transfer with a reference (`WO232 TFR-FR 6988562`); a processor prefix (`SP NAME ... _V`); a leading asterisk (`*PARKING ...`).
+
+What the numbers say:
+
+1. Most lines are readable text with noise around it. Cleaning rules decide most of the result; a brand list adds a canonical name on top of the cleaned text.
+2. The one-letter tail is on 61% of lines. It must be stripped before grouping, or one merchant splits into several keys. Its meaning is a separate question (below).
+3. Code-like lines are few (7%) and none repeats in two months, so behaviour hints rarely rescue them in a short window. They stay unknown, with the hints shown when there are any.
+4. Only 27% of transactions belong to a description seen 3+ times. Behaviour hints and recurring detection need more months; two statements are a small sample.
+
+**Decoder design.** All of it lives in `src/core/merchant/`: pure TypeScript, no DOM, no I/O, no randomness, no dependency on time. The same descriptions, bank-code table, brand table and labels always give the same readings.
+
+1. **Normalise.** Upper-case, collapse whitespace, drop punctuation that does not separate words (`'`, `.`). The printed description stays untouched on the transaction; the decoder works on a copy.
+2. **Bank-code tail.** A trailing `_X` (underscore and one letter, at the end) is cut off and kept as `bankCode`. Its meaning comes only from the bank profile's `bankCodes` table, and an entry may be added only with a public source from the bank recorded in `docs/RESEARCH.md` §13. No such source was found for TD (§13), so TD's table is empty and the readout shows the raw letter with "meaning not known". Cutting it off changes grouping only, never the reading.
+3. **Cleaning rules, in this order.** Each rule records what it removed, so the UI can show why a reading looks the way it does. (a) Processor prefix (`SQ *`, `TST*`, `PAYPAL *`, `SP ` and the like, a hand-written list): removed and kept as `processor`, which also drives FR-14's ambiguous flag. (b) A leading `*`. (c) An amount glued to the name after an asterisk (`NAME* 31.64`). (d) Store numbers (`#1234`, `STORE 1234`). (e) Runs of 5 or more digits and mixed letter-digit reference codes (`WO232`, `6988562`). (f) A trailing Canadian city or province word from a short list. What is left is the `merchantKey`, which recurring detection groups by and labels match on. Bank words such as `TFR-FR` stay in the key: they are not decoded, because their meaning is not verified either, but removing the reference after them lets repeated transfers group.
+4. **Reading, by fixed precedence, not by weights.** User label, then brand table, then cleaned text, then unknown. The first one that applies is the reading, and it names its one source. There is no blended score: a weighted sum of rule scores has no meaning a user can check, and it invites tuning the weights to the evaluation suite. Confidence follows the source: `user` (the user said so), `high` (exact brand-table match), `medium` (cleaned text that still looks like a name: a word of four or more letters with a vowel, the census test). Cleaned text that fails that test is `unknown`.
+5. **Brand table.** Exact match only, on whole words: the key equals a brand's match form, or starts with it followed by a space. No edit-distance fuzzy matching in the first version; a near miss stays medium-confidence cleaned text, which is a smaller error than a wrong brand. Fuzzy matching may be added only when the evaluation shows misses it would fix and the wrong count does not rise. Source: the OpenStreetMap name-suggestion-index (BSD-3-Clause, `docs/RESEARCH.md` §13), filtered at build time by a script in `tools/` to entries whose location set includes Canada, and to shop, restaurant, café, fuel and pharmacy kinds. The output is a generated, committed `src/core/merchant/brands.ts` that carries the BSD notice; the README credits it. It is data, not an npm dependency. Online services (streaming, app stores, software) are not in that index; a hand-written alias table covers them, and each alias needs a public source that shows the descriptor (the merchant's own billing help page), never the owner's statements.
+6. **Behaviour hints.** Computed from the verified ledger per `merchantKey`: how many times it appears, its cadence (the same buckets as `recurring/`), whether the amount is stable (7.5% or $1, as ADR-014), first and last date. A hint is shown next to the reading ("seen 6 times, monthly, same amount") and is never turned into a name, including for unknown lines. Hints from a statement that is not `verified` say so.
+7. **User labels.** A label maps one `merchantKey` to a name the user typed and applies to every line with that key in the session. Labels live in memory (ADR-010). The user can download them as a JSON file and load the file next time; loading validates the whole file and applies nothing if any part is malformed. A label file holds only keys and names, no amounts or dates.
+
+**Data shapes.** In `src/core/merchant/types.ts`:
+
+```ts
+type ReadingSource = "user" | "brand" | "rule";
+type Reading =
+  | { kind: "name"; name: string; source: ReadingSource; confidence: "user" | "high" | "medium" }
+  | { kind: "unknown" };
+interface Decoded {
+  merchantKey: string;            // cleaned key; grouping and label key
+  reading: Reading;
+  processor?: string;             // from the prefix rule; FR-14
+  bankCode?: { code: string; meaning?: string }; // meaning only from a sourced table entry
+  removed: string[];              // what the cleaning rules cut, in order
+}
+interface BehaviourHint {
+  merchantKey: string;
+  count: number;
+  cadence?: "weekly" | "biweekly" | "monthly" | "quarterly";
+  amountStable: boolean;
+  first: PlainDate;
+  last: PlainDate;
+  verified: boolean;              // every occurrence came from a verified statement
+}
+interface Brand { name: string; match: string[] } // generated brands.ts
+interface LabelFile { version: 1; labels: { key: string; name: string }[] }
+```
+
+The bank-code table is a field of the bank profile (`bankCodes: Record<string, { meaning: string; source: string }>`, empty for TD), so adding a bank still needs no change to `merchant/`. `src/ui/` holds the label state and does the file download and the file picker; `src/core/merchant/labels.ts` only parses and serialises.
+
+**Evaluation (details).** The descriptor suite is a committed list of at least 100 invented descriptions in the census mix (about 85 readable, 10 code-like, 5 processor-prefixed; most with a one-letter tail), each with its expected reading or `unknown`. The test prints, per source, how many are correct, wrong and unknown. A wrong reading is a shown name that differs from the expected one, or any name on a line expected to stay unknown. The thresholds are in `docs/PRD.md` AC-16.
+
+**No embedded model by default.** The answer to "a small embedded model" is no. The census shows the problem is mostly cleaning readable text, which rules do deterministically; the 7% of code-like lines carry no name for a model to recover either. A model would add download size, a dependency and output that cannot be explained per line. Reconsider only through a new ADR, and only if AC-16 cannot be met by rules.
 
 **Consequences.** M2 grows from "recurring detection" to "decoder plus recurring detection plus where the money went"; the `merchant/` stage in ARCHITECTURE §6.7 becomes the decoder. M3's main screen becomes the readout, with the recurring list as one section. M5 to M7 (PDF parsing and verification) are unchanged and still come first: the decoder needs correctly read transactions. ADR-013 and ADR-001 are unchanged.
 
