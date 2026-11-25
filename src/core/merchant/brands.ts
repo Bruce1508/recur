@@ -15,14 +15,6 @@ import type { Brand } from "./types";
 
 export const BRANDS: readonly Brand[] = [
   {
-    name: "% Arabica",
-    match: ["% ARABICA"],
-  },
-  {
-    name: "& Other Stories",
-    match: ["& OTHER STORIES"],
-  },
-  {
     name: "241 Pizza",
     match: ["241 PIZZA"],
   },
@@ -31,25 +23,16 @@ export const BRANDS: readonly Brand[] = [
     match: ["49TH PARALLEL COFFEE ROASTERS"],
   },
   {
-    name: "5.11 Tactical",
-    match: ["5.11 TACTICAL"],
-  },
-  {
     name: "585 Gold",
     match: ["585 GOLD"],
   },
   {
-    name: "5àsec",
-    match: ["5ÀSEC"],
-  },
-  {
     name: "7 For All Mankind",
-    match: ["7 FOR ALL MANKIND", "7FAM"],
+    match: ["7 FOR ALL MANKIND"],
   },
   {
     name: "7-Eleven",
     match: [
-      "7-11",
       "7-ELEVEN",
       "7-ELEVEN AUSTRALIA",
       "7-ELEVEN CANADA",
@@ -59,11 +42,7 @@ export const BRANDS: readonly Brand[] = [
   },
   {
     name: "A&W (Canada)",
-    match: ["A&W (CANADA)", "A&W CANADA"],
-  },
-  {
-    name: "A. Lange & Söhne",
-    match: ["A LANGE & SÖHNE"],
+    match: ["A&W CANADA"],
   },
   {
     name: "A.P.C.",
@@ -135,7 +114,7 @@ export const BRANDS: readonly Brand[] = [
   },
   {
     name: "Adidas Originals",
-    match: ["ADIDAS", "ADIDAS ORIGINAL", "ADIDAS ORIGINALS"],
+    match: ["ADIDAS ORIGINAL", "ADIDAS ORIGINALS"],
   },
   {
     name: "Advance Auto Parts",
@@ -167,7 +146,7 @@ export const BRANDS: readonly Brand[] = [
   },
   {
     name: "Agip Eni",
-    match: ["AGIP", "AGIP ENI"],
+    match: ["AGIP ENI"],
   },
   {
     name: "Aigner",
@@ -214,19 +193,12 @@ export const BRANDS: readonly Brand[] = [
     match: ["ALPINE"],
   },
   {
-    name: "Altınbaş",
-    match: ["ALTINBAŞ"],
-  },
-  {
     name: "Amazon Fresh",
     match: ["AMAZON FRESH"],
   },
   {
     name: "American Eagle Outfitters",
-    match: [
-      "AMERICAN EAGLE OUTFITTERS",
-      "AMERICAN EAGLE OUTFITTERS / AEO CANADA CO",
-    ],
+    match: ["AMERICAN EAGLE OUTFITTERS"],
   },
   {
     name: "American Vintage",
@@ -330,10 +302,6 @@ export const BRANDS: readonly Brand[] = [
     match: ["AVON"],
   },
   {
-    name: "Açaí Concept",
-    match: ["AÇAÍ CONCEPT"],
-  },
-  {
     name: "BMW Motorrad",
     match: ["BMW MOTORRAD"],
   },
@@ -356,10 +324,6 @@ export const BRANDS: readonly Brand[] = [
   {
     name: "Ba&sh",
     match: ["BA&SH"],
-  },
-  {
-    name: "Babies R Us (Canada)",
-    match: ["BABIES R US (CANADA)"],
   },
   {
     name: "Bag O' Crab",
@@ -395,11 +359,7 @@ export const BRANDS: readonly Brand[] = [
   },
   {
     name: "Banter by Piercing Pagoda",
-    match: ["BANTER", "BANTER BY PIERCING PAGODA", "PIERCING PAGODA"],
-  },
-  {
-    name: "BarBurrito (Canada)",
-    match: ["BARBURRITO (CANADA)"],
+    match: ["BANTER BY PIERCING PAGODA", "PIERCING PAGODA"],
   },
   {
     name: "Barbour",
@@ -664,10 +624,6 @@ export const BRANDS: readonly Brand[] = [
     match: ["BRIDGESTONE", "BRIDGESTONE INDIA"],
   },
   {
-    name: "Brioche Dorée",
-    match: ["BRIOCHE DORÉE"],
-  },
-  {
     name: "Brooks Brothers",
     match: ["BROOKS BROTHERS"],
   },
@@ -700,10 +656,6 @@ export const BRANDS: readonly Brand[] = [
     match: ["BUCCELLATI"],
   },
   {
-    name: "Bugatti",
-    match: ["BUGATTI"],
-  },
-  {
     name: "Buick",
     match: ["BUICK"],
   },
@@ -721,12 +673,7 @@ export const BRANDS: readonly Brand[] = [
   },
   {
     name: "Burger King",
-    match: [
-      "BURGER KING",
-      "BURGER KING BRASIL",
-      "BURGER KING ESPAÑA",
-      "BURGUER KING",
-    ],
+    match: ["BURGER KING", "BURGER KING BRASIL", "BURGUER KING"],
   },
   {
     name: "Buy Buy Baby",
@@ -755,22 +702,6 @@ export const BRANDS: readonly Brand[] = [
   {
     name: "Cafe Coffee Day",
     match: ["CAFE COFFEE DAY"],
-  },
-  {
-    name: "Caffè Pascucci",
-    match: ["CAFFÈ PASCUCCI"],
-  },
-  {
-    name: "Café Amazon",
-    match: ["CAFÉ AMAZON"],
-  },
-  {
-    name: "Café Coton",
-    match: ["CAFÉ COTON"],
-  },
-  {
-    name: "Café Dépôt",
-    match: ["CAFÉ DÉPÔT"],
   },
   {
     name: "Calendar Club",
@@ -818,11 +749,7 @@ export const BRANDS: readonly Brand[] = [
   },
   {
     name: "Canadian Tire Gas+",
-    match: [
-      "CANADIAN TIRE GAS +",
-      "CANADIAN TIRE GAS BAR",
-      "CANADIAN TIRE GAS+",
-    ],
+    match: ["CANADIAN TIRE GAS BAR"],
   },
   {
     name: "Canali",
@@ -846,7 +773,7 @@ export const BRANDS: readonly Brand[] = [
   },
   {
     name: "Carlton Cards",
-    match: ["CARLTON", "CARLTON CARDS"],
+    match: ["CARLTON CARDS"],
   },
   {
     name: "Carpet One Floor & Home",
@@ -854,7 +781,7 @@ export const BRANDS: readonly Brand[] = [
   },
   {
     name: "Carquest",
-    match: ["BAXTER", "BAXTER AUTO PARTS", "CARQUEST"],
+    match: ["BAXTER AUTO PARTS", "CARQUEST"],
   },
   {
     name: "Carrefour",
@@ -895,10 +822,6 @@ export const BRANDS: readonly Brand[] = [
   {
     name: "Cashco Financial",
     match: ["CASHCO FINANCIAL"],
-  },
-  {
-    name: "Casino",
-    match: ["CASINO"],
   },
   {
     name: "Casper",
@@ -974,7 +897,7 @@ export const BRANDS: readonly Brand[] = [
   },
   {
     name: "Checkers",
-    match: ["CHECKERS", "CHECKERS DRIVE-IN RESTAURANTS, INC"],
+    match: ["CHECKERS"],
   },
   {
     name: "Cheeburger Cheeburger",
@@ -1021,10 +944,6 @@ export const BRANDS: readonly Brand[] = [
     match: ["CHIPOTLE"],
   },
   {
-    name: "Chloé",
-    match: ["CHLOÉ"],
-  },
-  {
     name: "Chopard",
     match: ["CHOPARD"],
   },
@@ -1042,11 +961,7 @@ export const BRANDS: readonly Brand[] = [
   },
   {
     name: "Church's Chicken",
-    match: [
-      "CHURCHS CHICKEN",
-      "CHURCHS TEXAS CHICKEN",
-      "CHURCHS TEXAS CHICKEN®",
-    ],
+    match: ["CHURCHS CHICKEN", "CHURCHS TEXAS CHICKEN"],
   },
   {
     name: "Cinnabon",
@@ -1054,15 +969,11 @@ export const BRANDS: readonly Brand[] = [
   },
   {
     name: "Circle K",
-    match: ["CIRCLE K", "CIRCLE K CANADA", "MACS", "MACS CONVENIENCE STORES"],
+    match: ["CIRCLE K", "CIRCLE K CANADA", "MACS CONVENIENCE STORES"],
   },
   {
     name: "Citgo",
     match: ["CITGO"],
-  },
-  {
-    name: "Citroën",
-    match: ["CITROËN"],
   },
   {
     name: "City Electric Supply",
@@ -1081,16 +992,8 @@ export const BRANDS: readonly Brand[] = [
     match: ["CLEO"],
   },
   {
-    name: "Cloré Beauty Supply",
-    match: ["CLORE", "CLORÉ BEAUTY SUPPLY"],
-  },
-  {
     name: "Club Monaco",
     match: ["CLUB MONACO"],
-  },
-  {
-    name: "Co-op (Canada)",
-    match: ["CO-OP (CANADA)"],
   },
   {
     name: "Coach",
@@ -1106,7 +1009,7 @@ export const BRANDS: readonly Brand[] = [
   },
   {
     name: "Coffeeshop Company",
-    match: ["COFFEESHOP COMPANY", "ВЕНСКАЯ КОФЕЙНЯ"],
+    match: ["COFFEESHOP COMPANY"],
   },
   {
     name: "Cold Stone Creamery",
@@ -1137,16 +1040,12 @@ export const BRANDS: readonly Brand[] = [
     match: ["CONVERSE"],
   },
   {
-    name: "Cora (non-Quebec)",
-    match: ["CORA (NON-QUEBEC)"],
-  },
-  {
     name: "CosmoProf",
     match: ["COSMOPROF"],
   },
   {
     name: "Costco",
-    match: ["COSTCO", "COSTCO WHOLESALE"],
+    match: ["COSTCO"],
   },
   {
     name: "Costco Business Centre",
@@ -1158,7 +1057,7 @@ export const BRANDS: readonly Brand[] = [
   },
   {
     name: "Costco Gasoline",
-    match: ["COSTCO GAS", "COSTCO GASOLINE", "COSTCO WHOLESALE"],
+    match: ["COSTCO GAS", "COSTCO GASOLINE"],
   },
   {
     name: "Costco Hearing Aid Center",
@@ -1187,10 +1086,6 @@ export const BRANDS: readonly Brand[] = [
   {
     name: "Cotton On Kids",
     match: ["COTTON ON KIDS"],
-  },
-  {
-    name: "Cotélac",
-    match: ["COTÉLAC"],
   },
   {
     name: "Couche-Tard",
@@ -1420,7 +1315,6 @@ export const BRANDS: readonly Brand[] = [
       "DOMINOS",
       "DOMINOS AUSTRALIA",
       "DOMINOS PIZZA",
-      "DOMINOS PIZZA (NSR)",
       "DOMINOS PIZZA INDIA",
     ],
   },
@@ -1436,7 +1330,6 @@ export const BRANDS: readonly Brand[] = [
       "DOCTOR MARTEN",
       "DOCTOR MARTENS",
       "DR MARTENS",
-      "MARTENS",
     ],
   },
   {
@@ -1448,10 +1341,6 @@ export const BRANDS: readonly Brand[] = [
     match: ["DRYBAR"],
   },
   {
-    name: "Du Pareil au Même",
-    match: ["DU PAREIL AU MÊME"],
-  },
-  {
     name: "Ducati",
     match: ["DUCATI"],
   },
@@ -1461,7 +1350,7 @@ export const BRANDS: readonly Brand[] = [
   },
   {
     name: "Dulux Paints",
-    match: ["DULUX", "DULUX PAINTS"],
+    match: ["DULUX PAINTS"],
   },
   {
     name: "Dunkin'",
@@ -1478,18 +1367,6 @@ export const BRANDS: readonly Brand[] = [
   {
     name: "Dyson",
     match: ["DYSON"],
-  },
-  {
-    name: "Délifrance",
-    match: ["DÉLIFRANCE"],
-  },
-  {
-    name: "EB Games (Canada)",
-    match: ["EB GAMES (CANADA)", "ELECTRONICS BOUTIQUE / EB GAMES", "GAMESTOP"],
-  },
-  {
-    name: "EKO (Canada)",
-    match: ["EKO (CANADA)"],
   },
   {
     name: "EL&N",
@@ -1548,10 +1425,6 @@ export const BRANDS: readonly Brand[] = [
     match: ["ELEMENTS MASSAGE"],
   },
   {
-    name: "Elena Mirò",
-    match: ["ELENA MIRÒ"],
-  },
-  {
     name: "Elisabetta Franchi",
     match: ["ELISABETTA FRANCHI"],
   },
@@ -1584,10 +1457,6 @@ export const BRANDS: readonly Brand[] = [
     match: ["ESCADA"],
   },
   {
-    name: "Espaço Casa",
-    match: ["ESPAÇO CASA"],
-  },
-  {
     name: "Esprit",
     match: ["ESPRIT"],
   },
@@ -1612,10 +1481,6 @@ export const BRANDS: readonly Brand[] = [
     match: ["EU YAN SANG"],
   },
   {
-    name: "Euro Café",
-    match: ["EURO CAFÉ"],
-  },
-  {
     name: "Euronics",
     match: ["EURONICS", "EURONICS CENTRE"],
   },
@@ -1630,10 +1495,6 @@ export const BRANDS: readonly Brand[] = [
       "EXPEDIA CRUISES",
       "EXPEDIA CRUISESHIPCENTERS",
     ],
-  },
-  {
-    name: "Expert",
-    match: ["EXPERT"],
   },
   {
     name: "Extreme Pita",
@@ -1661,7 +1522,7 @@ export const BRANDS: readonly Brand[] = [
   },
   {
     name: "Fairstone Financial",
-    match: ["CITIFINANCIAL", "FAIRSTONE", "FAIRSTONE FINANCIAL"],
+    match: ["FAIRSTONE FINANCIAL"],
   },
   {
     name: "Fairweather",
@@ -1765,10 +1626,6 @@ export const BRANDS: readonly Brand[] = [
     match: ["FIVE GUYS"],
   },
   {
-    name: "Fjällräven",
-    match: ["FJÄLLRÄVEN"],
-  },
-  {
     name: "Flight Centre",
     match: ["FLIGHT CENTRE"],
   },
@@ -1777,16 +1634,8 @@ export const BRANDS: readonly Brand[] = [
     match: ["FLYING J", "FLYING J DEALER", "FLYING J TRAVEL PLAZA"],
   },
   {
-    name: "Fogo de Chão",
-    match: ["FOGO DE CHÃO"],
-  },
-  {
     name: "Food Basics",
     match: ["FOOD BASICS"],
-  },
-  {
-    name: "Foodland (Canada)",
-    match: ["FOODLAND (CANADA)"],
   },
   {
     name: "Foot Locker",
@@ -1826,7 +1675,7 @@ export const BRANDS: readonly Brand[] = [
   },
   {
     name: "Freedom Mobile",
-    match: ["FREEDOM", "FREEDOM MOBILE", "WIND MOBILE"],
+    match: ["FREEDOM MOBILE", "WIND MOBILE"],
   },
   {
     name: "Freightliner",
@@ -1850,23 +1699,15 @@ export const BRANDS: readonly Brand[] = [
   },
   {
     name: "Freshslice Pizza",
-    match: ["FRESHSLICE", "FRESHSLICE PIZZA"],
-  },
-  {
-    name: "Frite Alors!",
-    match: ["FRITE ALORS!"],
+    match: ["FRESHSLICE PIZZA"],
   },
   {
     name: "Fusalp",
     match: ["FUSALP"],
   },
   {
-    name: "Fuso (Canada/USA)",
-    match: ["FUSO (CANADA/USA)"],
-  },
-  {
     name: "G-Star Raw",
-    match: ["G-STAR", "G-STAR RAW"],
+    match: ["G-STAR RAW"],
   },
   {
     name: "GANT",
@@ -1903,10 +1744,6 @@ export const BRANDS: readonly Brand[] = [
   {
     name: "Gap Kids",
     match: ["GAP KIDS"],
-  },
-  {
-    name: "Garage",
-    match: ["GARAGE"],
   },
   {
     name: "Gas Plus",
@@ -1947,10 +1784,6 @@ export const BRANDS: readonly Brand[] = [
   {
     name: "Giant Tiger",
     match: ["GIANT TIGER", "TIGRE GEANT"],
-  },
-  {
-    name: "Gino's Pizza (Canada)",
-    match: ["GINOS PIZZA (CANADA)"],
   },
   {
     name: "Giordano",
@@ -2006,7 +1839,7 @@ export const BRANDS: readonly Brand[] = [
   },
   {
     name: "Grainger",
-    match: ["GRAINGER", "GRANGER", "W W GRAINGER"],
+    match: ["GRAINGER", "W W GRAINGER"],
   },
   {
     name: "Grand Line",
@@ -2014,7 +1847,7 @@ export const BRANDS: readonly Brand[] = [
   },
   {
     name: "Graybar",
-    match: ["GRAYBAR", "GREYBAR"],
+    match: ["GRAYBAR"],
   },
   {
     name: "Great Canadian Dollar Store",
@@ -2022,7 +1855,7 @@ export const BRANDS: readonly Brand[] = [
   },
   {
     name: "Great Canadian Oil Change",
-    match: ["GCOC", "GREAT CANADIAN OIL CHANGE", "OIL CHANGERS"],
+    match: ["GREAT CANADIAN OIL CHANGE", "OIL CHANGERS"],
   },
   {
     name: "Great Clips",
@@ -2033,16 +1866,8 @@ export const BRANDS: readonly Brand[] = [
     match: ["GUAC MEXI GRILL"],
   },
   {
-    name: "Guardian (Canada)",
-    match: ["GUARDIAN (CANADA)"],
-  },
-  {
     name: "Gucci",
     match: ["GUCCI"],
-  },
-  {
-    name: "Gudrun Sjödén",
-    match: ["GUDRUN SJÖDÉN"],
   },
   {
     name: "Guess",
@@ -2082,7 +1907,7 @@ export const BRANDS: readonly Brand[] = [
   },
   {
     name: "Hackett London",
-    match: ["HACKETT", "HACKETT LONDON"],
+    match: ["HACKETT LONDON"],
   },
   {
     name: "Haidilao Hot Pot",
@@ -2134,7 +1959,7 @@ export const BRANDS: readonly Brand[] = [
   },
   {
     name: "Harnois",
-    match: ["HARNOIS", "HARNOIS ÉNERGIES"],
+    match: ["HARNOIS"],
   },
   {
     name: "Harry Rosen",
@@ -2185,10 +2010,6 @@ export const BRANDS: readonly Brand[] = [
     match: ["HERMAN MILLER"],
   },
   {
-    name: "Hermès",
-    match: ["HERMÈS"],
-  },
-  {
     name: "Hero Certified Burgers",
     match: ["HERO CERTIFIED BURGERS"],
   },
@@ -2221,16 +2042,8 @@ export const BRANDS: readonly Brand[] = [
     match: ["HOLLISTER"],
   },
   {
-    name: "Home Building Centre (Canada)",
-    match: ["HOME BUILDING CENTRE (CANADA)"],
-  },
-  {
     name: "Home Hardware",
     match: ["HOME HARDWARE"],
-  },
-  {
-    name: "Home Hardware Building Centre (Canada)",
-    match: ["HOME HARDWARE BUILDING CENTRE (CANADA)"],
   },
   {
     name: "HomeSense",
@@ -2278,7 +2091,7 @@ export const BRANDS: readonly Brand[] = [
   },
   {
     name: "Hudson News",
-    match: ["HUDSON", "HUDSON NEWS"],
+    match: ["HUDSON NEWS"],
   },
   {
     name: "Hudson's Bay",
@@ -2318,11 +2131,7 @@ export const BRANDS: readonly Brand[] = [
   },
   {
     name: "Hyundai",
-    match: ["HYEONDAEGIA", "HYUNDAI", "HYUNDAI INDIA"],
-  },
-  {
-    name: "Häagen-Dazs",
-    match: ["HÄAGEN-DAZS"],
+    match: ["HYUNDAI", "HYUNDAI INDIA"],
   },
   {
     name: "I.D.A.",
@@ -2345,10 +2154,6 @@ export const BRANDS: readonly Brand[] = [
     match: ["IKEA BISTRO"],
   },
   {
-    name: "IKEA Café",
-    match: ["IKEA CAFÉ"],
-  },
-  {
     name: "IKEA Restaurant",
     match: ["IKEA RESTAURANT"],
   },
@@ -2359,10 +2164,6 @@ export const BRANDS: readonly Brand[] = [
   {
     name: "INS Market",
     match: ["INS MARKET", "INTERNATIONAL NEWS"],
-  },
-  {
-    name: "IP",
-    match: ["API/IP", "TOTALERG"],
   },
   {
     name: "IQOS",
@@ -2399,10 +2200,6 @@ export const BRANDS: readonly Brand[] = [
   {
     name: "Insomnia Cookies",
     match: ["INSOMNIA COOKIES"],
-  },
-  {
-    name: "Intermarché",
-    match: ["INTERMARCHÉ", "INTERMARCHÉ CONTACT", "INTERMARCHÉ SUPER"],
   },
   {
     name: "International",
@@ -2462,7 +2259,7 @@ export const BRANDS: readonly Brand[] = [
   },
   {
     name: "JYSK",
-    match: ["DÄNISCHES BETTENLAGER", "JYSK", "JYSK ROMANIA"],
+    match: ["JYSK", "JYSK ROMANIA"],
   },
   {
     name: "Jacadi",
@@ -2581,10 +2378,6 @@ export const BRANDS: readonly Brand[] = [
     match: ["JOURNEYS KIDZ"],
   },
   {
-    name: "Juan Valdez Café",
-    match: ["JUAN VALDEZ CAFÉ"],
-  },
-  {
     name: "Jugo Juice",
     match: ["JUGO JUICE"],
   },
@@ -2601,16 +2394,12 @@ export const BRANDS: readonly Brand[] = [
     match: ["JUSTICE"],
   },
   {
-    name: "K&U Bäckerei",
-    match: ["K&U BÄCKEREI"],
-  },
-  {
     name: "KBTR",
     match: ["KBTR"],
   },
   {
     name: "KIKO Milano",
-    match: ["KIKO", "KIKO MILANO"],
+    match: ["KIKO MILANO"],
   },
   {
     name: "Kal Tire",
@@ -2669,12 +2458,8 @@ export const BRANDS: readonly Brand[] = [
     match: ["KING OF DONAIR"],
   },
   {
-    name: "Kiğılı",
-    match: ["KIĞILI"],
-  },
-  {
     name: "Kodak Express",
-    match: ["KODAK", "KODAK EXPRESS"],
+    match: ["KODAK EXPRESS"],
   },
   {
     name: "Koenigsegg",
@@ -2687,10 +2472,6 @@ export const BRANDS: readonly Brand[] = [
   {
     name: "Koodo",
     match: ["KOODO", "KOODO MOBILE"],
-  },
-  {
-    name: "Kookaï",
-    match: ["KOOKAÏ"],
   },
   {
     name: "Koton",
@@ -2715,10 +2496,6 @@ export const BRANDS: readonly Brand[] = [
   {
     name: "Kusmi Tea",
     match: ["KUSMI TEA"],
-  },
-  {
-    name: "Kärcher",
-    match: ["KAERCHER", "KÄRCHER"],
   },
   {
     name: "L'Occitane",
@@ -2782,7 +2559,7 @@ export const BRANDS: readonly Brand[] = [
   },
   {
     name: "Laline",
-    match: ["LALINE", "LALLIN", "ללין"],
+    match: ["LALINE"],
   },
   {
     name: "Lamborghini",
@@ -2815,10 +2592,6 @@ export const BRANDS: readonly Brand[] = [
   {
     name: "Lawson",
     match: ["LAWSON"],
-  },
-  {
-    name: "Le Château",
-    match: ["LE CHÂTEAU"],
   },
   {
     name: "Le Coq Sportif",
@@ -2881,7 +2654,6 @@ export const BRANDS: readonly Brand[] = [
     match: [
       "LIDL",
       "LIDL DEUTSCHLAND",
-      "LIDL ESPAÑA",
       "LIDL FRANCE",
       "LIDL ITALIA",
       "LIDL POLSKA",
@@ -2938,12 +2710,7 @@ export const BRANDS: readonly Brand[] = [
   },
   {
     name: "Loft",
-    match: [
-      "ANN TAYLOR LOFT",
-      "LOFT / ANN TAYLOR LOFT",
-      "LOFT OUTLET",
-      "THE LOFT",
-    ],
+    match: ["ANN TAYLOR LOFT", "LOFT OUTLET", "THE LOFT"],
   },
   {
     name: "London Drugs",
@@ -2983,11 +2750,7 @@ export const BRANDS: readonly Brand[] = [
   },
   {
     name: "Love's Alternative Energy",
-    match: [
-      "LOVES ALTERNATIVE ENERGY",
-      "TRILLIUM CNG",
-      "TRILLIUM USA, GAIN CLEAN FUEL CNG",
-    ],
+    match: ["LOVES ALTERNATIVE ENERGY", "TRILLIUM CNG"],
   },
   {
     name: "Loving Hut",
@@ -3003,7 +2766,7 @@ export const BRANDS: readonly Brand[] = [
   },
   {
     name: "Luckin Coffee",
-    match: ["LUCKIN", "LUCKIN COFFEE"],
+    match: ["LUCKIN COFFEE"],
   },
   {
     name: "Lucky Brand",
@@ -3036,10 +2799,6 @@ export const BRANDS: readonly Brand[] = [
   {
     name: "Lynk & Co",
     match: ["LYNK & CO"],
-  },
-  {
-    name: "Läderach",
-    match: ["LÄDERACH"],
   },
   {
     name: "M&M Food Market",
@@ -3120,7 +2879,7 @@ export const BRANDS: readonly Brand[] = [
   },
   {
     name: "Maison Birks",
-    match: ["BIRKS", "MAISON BIRKS"],
+    match: ["MAISON BIRKS"],
   },
   {
     name: "Maison Margiela",
@@ -3129,10 +2888,6 @@ export const BRANDS: readonly Brand[] = [
   {
     name: "Makro",
     match: ["MAKRO"],
-  },
-  {
-    name: "Malin+Goetz",
-    match: ["MALIN+GOETZ"],
   },
   {
     name: "Manchu Wok",
@@ -3161,10 +2916,6 @@ export const BRANDS: readonly Brand[] = [
   {
     name: "Marc O'Polo",
     match: ["MARC OPOLO"],
-  },
-  {
-    name: "Marché Adonis",
-    match: ["ADONIS", "MARCHÉ ADONIS"],
   },
   {
     name: "Marella",
@@ -3243,10 +2994,6 @@ export const BRANDS: readonly Brand[] = [
     match: ["MAX MARA"],
   },
   {
-    name: "Maxi (Canada)",
-    match: ["MAXI (CANADA)"],
-  },
-  {
     name: "Mayoral",
     match: ["MAYORAL"],
   },
@@ -3257,10 +3004,6 @@ export const BRANDS: readonly Brand[] = [
   {
     name: "McArthurGlen Designer Outlet",
     match: ["MCARTHURGLEN DESIGNER OUTLET"],
-  },
-  {
-    name: "McCafé",
-    match: ["MCCAFÉ"],
   },
   {
     name: "McDonald's",
@@ -3288,7 +3031,7 @@ export const BRANDS: readonly Brand[] = [
   },
   {
     name: "Mercedes-Benz",
-    match: ["MERCEDES", "MERCEDES-BENZ"],
+    match: ["MERCEDES-BENZ"],
   },
   {
     name: "Mercedes-Benz Trucks",
@@ -3344,7 +3087,7 @@ export const BRANDS: readonly Brand[] = [
   },
   {
     name: "Milestones",
-    match: ["MILESTONES", "MILESTONES GRILL + BAR", "MILESTONES GRILL AND BAR"],
+    match: ["MILESTONES", "MILESTONES GRILL AND BAR"],
   },
   {
     name: "Mini Mall Storage",
@@ -3384,15 +3127,11 @@ export const BRANDS: readonly Brand[] = [
   },
   {
     name: "Mobil",
-    match: ["MOBIL", "MOBILE"],
+    match: ["MOBIL"],
   },
   {
     name: "Mobil Mart",
-    match: ["MOBIL", "MOBIL MART"],
-  },
-  {
-    name: "Mobile Mini (North America)",
-    match: ["MOBILE MINI (NORTH AMERICA)"],
+    match: ["MOBIL MART"],
   },
   {
     name: "Mohawk",
@@ -3436,7 +3175,7 @@ export const BRANDS: readonly Brand[] = [
   },
   {
     name: "Morton's Grille",
-    match: ["MORTONS", "MORTONS GRILLE"],
+    match: ["MORTONS GRILLE"],
   },
   {
     name: "Mothercare",
@@ -3512,12 +3251,11 @@ export const BRANDS: readonly Brand[] = [
   },
   {
     name: "NAPA Auto Parts (US)",
-    match: ["NAPA", "NAPA AUTO PARTS (US)", "THE NAPA NETWORK"],
+    match: ["THE NAPA NETWORK"],
   },
   {
     name: "NAPA AutoCare Center",
     match: [
-      "NAPA",
       "NAPA AUTOCARE",
       "NAPA AUTOCARE CENTER",
       "NAPA AUTOCARE COLLISION CENTER",
@@ -3674,14 +3412,6 @@ export const BRANDS: readonly Brand[] = [
     match: ["OK TIRE"],
   },
   {
-    name: "OPA! of Greece",
-    match: ["OPA! OF GREECE"],
-  },
-  {
-    name: "Oakberry Açaí bowls",
-    match: ["OAKBERRY AÇAÍ BOWLS"],
-  },
-  {
     name: "Off-White",
     match: ["OFF-WHITE"],
   },
@@ -3719,7 +3449,7 @@ export const BRANDS: readonly Brand[] = [
   },
   {
     name: "OneZo Tapioca",
-    match: ["ONEZO", "ONEZO TAPIOCA", "ONEZO TEA", "丸作食茶"],
+    match: ["ONEZO TAPIOCA", "ONEZO TEA"],
   },
   {
     name: "Opel",
@@ -3763,7 +3493,7 @@ export const BRANDS: readonly Brand[] = [
   },
   {
     name: "OshKosh B'gosh",
-    match: ["OSHKOSH", "OSHKOSH BGOSH"],
+    match: ["OSHKOSH BGOSH"],
   },
   {
     name: "Osmow's",
@@ -3860,7 +3590,7 @@ export const BRANDS: readonly Brand[] = [
   },
   {
     name: "Payless ShoeSource",
-    match: ["PAYLESS", "PAYLESS SHOESOURCE"],
+    match: ["PAYLESS SHOESOURCE"],
   },
   {
     name: "Pearle Vision",
@@ -3876,7 +3606,7 @@ export const BRANDS: readonly Brand[] = [
   },
   {
     name: "Peloton",
-    match: ["PELETON", "PELOTON"],
+    match: ["PELOTON"],
   },
   {
     name: "Pendleton",
@@ -3908,7 +3638,7 @@ export const BRANDS: readonly Brand[] = [
   },
   {
     name: "Pepper Lunch",
-    match: ["PEPPER LUNCH", "ペッパーランチ"],
+    match: ["PEPPER LUNCH"],
   },
   {
     name: "Perkins",
@@ -3971,14 +3701,6 @@ export const BRANDS: readonly Brand[] = [
     match: ["PHARMAPRIX"],
   },
   {
-    name: "Pharmasave (Canada)",
-    match: ["PHARMASAVE (CANADA)"],
-  },
-  {
-    name: "Phở Hòa",
-    match: ["PHỞ HÒA"],
-  },
-  {
     name: "Piaget",
     match: ["PIAGET"],
   },
@@ -4039,10 +3761,6 @@ export const BRANDS: readonly Brand[] = [
     match: ["PIZZA PIZZA"],
   },
   {
-    name: "Pizza Salvatoré",
-    match: ["PIZZA SALVATORÉ"],
-  },
-  {
     name: "Pizzaville",
     match: ["PIZZAVILLE"],
   },
@@ -4096,7 +3814,7 @@ export const BRANDS: readonly Brand[] = [
   },
   {
     name: "Popeye's Supplements",
-    match: ["POPEYES", "POPEYES SUPPLEMENTS"],
+    match: ["POPEYES SUPPLEMENTS"],
   },
   {
     name: "Popeyes",
@@ -4140,7 +3858,7 @@ export const BRANDS: readonly Brand[] = [
   },
   {
     name: "Primark",
-    match: ["PRIMARK", "PRIMARK / PENNEYS"],
+    match: ["PRIMARK"],
   },
   {
     name: "Prime Storage",
@@ -4199,10 +3917,6 @@ export const BRANDS: readonly Brand[] = [
     match: ["PURDYS CHOCOLATIER"],
   },
   {
-    name: "Pür & Simple",
-    match: ["PÜR & SIMPLE"],
-  },
-  {
     name: "QB HOUSE",
     match: ["QB HOUSE"],
   },
@@ -4228,7 +3942,7 @@ export const BRANDS: readonly Brand[] = [
   },
   {
     name: "Quiksilver",
-    match: ["QUICKSILVER", "QUIKSILVER"],
+    match: ["QUIKSILVER"],
   },
   {
     name: "Quiznos",
@@ -4300,7 +4014,7 @@ export const BRANDS: readonly Brand[] = [
   },
   {
     name: "Regal Nails",
-    match: ["REGAL NAILS", "REGAL NAILS, SALON & SPA"],
+    match: ["REGAL NAILS"],
   },
   {
     name: "Regatta Great Outdoors",
@@ -4318,14 +4032,13 @@ export const BRANDS: readonly Brand[] = [
     name: "Removery",
     match: [
       "FRESH START LASER CLINIC",
-      "INKOFF ME",
       "REMOVERY",
       "REMOVERY TATTOO REMOVAL & FADING",
     ],
   },
   {
     name: "Renault",
-    match: ["GARAGE RENAULT", "RENAULT", "REUNOKORIA"],
+    match: ["GARAGE RENAULT", "RENAULT"],
   },
   {
     name: "Renault Trucks",
@@ -4333,7 +4046,7 @@ export const BRANDS: readonly Brand[] = [
   },
   {
     name: "Repsol",
-    match: ["CAMPSA", "REPSOL"],
+    match: ["REPSOL"],
   },
   {
     name: "Reserved",
@@ -4437,7 +4150,7 @@ export const BRANDS: readonly Brand[] = [
   },
   {
     name: "Rona",
-    match: ["LOWES", "RONA", "RÉNO-DÉPÔT"],
+    match: ["RONA"],
   },
   {
     name: "Roots",
@@ -4446,10 +4159,6 @@ export const BRANDS: readonly Brand[] = [
   {
     name: "Rose Bakeshop",
     match: ["ROSE BAKESHOP"],
-  },
-  {
-    name: "Royaltea 皇茶",
-    match: ["ROYALTEA 皇茶"],
   },
   {
     name: "Rubis",
@@ -4473,7 +4182,7 @@ export const BRANDS: readonly Brand[] = [
   },
   {
     name: "SAS (San Antonio Shoemakers)",
-    match: ["SAN ANTONIO SHOE", "SAS (SAN ANTONIO SHOEMAKERS)", "SAS SHOES"],
+    match: ["SAN ANTONIO SHOE", "SAS SHOES"],
   },
   {
     name: "STA Travel",
@@ -4486,10 +4195,6 @@ export const BRANDS: readonly Brand[] = [
   {
     name: "Safeway",
     match: ["SAFEWAY", "SAFEWAY PHARMACY"],
-  },
-  {
-    name: "Safeway (Canada)",
-    match: ["SAFEWAY (CANADA)"],
   },
   {
     name: "Safeway Fuel Station",
@@ -4593,7 +4298,7 @@ export const BRANDS: readonly Brand[] = [
   },
   {
     name: "Seiko",
-    match: ["SEIKO", "セイコー"],
+    match: ["SEIKO"],
   },
   {
     name: "Sephora",
@@ -4626,7 +4331,6 @@ export const BRANDS: readonly Brand[] = [
   {
     name: "Shell",
     match: [
-      "COLES",
       "COLES EXPRESS",
       "POSTO SHELL",
       "SHELL",
@@ -4688,10 +4392,6 @@ export const BRANDS: readonly Brand[] = [
     match: ["SIEMATIC"],
   },
   {
-    name: "Simitçi Dünyası",
-    match: ["SIMITÇI DÜNYASI"],
-  },
-  {
     name: "Sinsay",
     match: ["SINSAY"],
   },
@@ -4701,7 +4401,7 @@ export const BRANDS: readonly Brand[] = [
   },
   {
     name: "Skechers",
-    match: ["SKECHERS", "SKECHERS USA", "SKETCHERS"],
+    match: ["SKECHERS", "SKECHERS USA"],
   },
   {
     name: "Sleep Country",
@@ -4802,10 +4502,6 @@ export const BRANDS: readonly Brand[] = [
     match: ["SPEEDY AUTO SERVICE"],
   },
   {
-    name: "Speedy Glass (Canada)",
-    match: ["SPEEDY GLASS (CANADA)"],
-  },
-  {
     name: "Spencer's",
     match: ["SPENCERS"],
   },
@@ -4839,7 +4535,7 @@ export const BRANDS: readonly Brand[] = [
   },
   {
     name: "Sports Direct",
-    match: ["SPORTS DIRECT", "SPORTSDIRECT COM", "SPORTSDIRECT DOT COM"],
+    match: ["SPORTS DIRECT", "SPORTSDIRECT DOT COM"],
   },
   {
     name: "Springfield",
@@ -4866,10 +4562,6 @@ export const BRANDS: readonly Brand[] = [
     match: ["ST LOUIS BAR & GRILL"],
   },
   {
-    name: "Staples (Canada)",
-    match: ["STAPLES (CANADA)"],
-  },
-  {
     name: "Star Mart",
     match: ["STAR MART"],
   },
@@ -4883,7 +4575,7 @@ export const BRANDS: readonly Brand[] = [
   },
   {
     name: "Station Service E.Leclerc",
-    match: ["LECLERC", "STATION SERVICE E LECLERC", "STATION-SERVICE"],
+    match: ["STATION SERVICE E LECLERC"],
   },
   {
     name: "Stella McCartney",
@@ -4951,7 +4643,6 @@ export const BRANDS: readonly Brand[] = [
       "SUBWAY",
       "SUBWAY AUSTRALIA",
       "SUBWAY BRASIL",
-      "SUBWAY MÉXICO",
       "SUBWAY SANDWICHES",
       "SUBWAY UK & IRELAND",
     ],
@@ -4993,10 +4684,6 @@ export const BRANDS: readonly Brand[] = [
     match: ["SUPERDRY"],
   },
   {
-    name: "Sushi Shop (Canada)",
-    match: ["SUSHI SHOP (CANADA)"],
-  },
-  {
     name: "Suzuki",
     match: ["SUZUKI", "SUZUKI MOTORCYCLE INDIA"],
   },
@@ -5027,10 +4714,6 @@ export const BRANDS: readonly Brand[] = [
   {
     name: "Swiss Chalet",
     match: ["SWISS CHALET"],
-  },
-  {
-    name: "Søstrene Grene",
-    match: ["SØSTRENE GRENE"],
   },
   {
     name: "T-Mobile International",
@@ -5093,10 +4776,6 @@ export const BRANDS: readonly Brand[] = [
     match: ["TANGER OUTLETS"],
   },
   {
-    name: "Tape à l'Œil",
-    match: ["TAPE À LŒIL"],
-  },
-  {
     name: "Tartine et Chocolat",
     match: ["TARTINE ET CHOCOLAT"],
   },
@@ -5138,7 +4817,7 @@ export const BRANDS: readonly Brand[] = [
   },
   {
     name: "Ten Thousand Villages",
-    match: ["10 THOUSAND VILLAGES", "10,000 VILLAGES", "TEN THOUSAND VILLAGES"],
+    match: ["10 THOUSAND VILLAGES", "TEN THOUSAND VILLAGES"],
   },
   {
     name: "Teriyaki Experience",
@@ -5154,11 +4833,11 @@ export const BRANDS: readonly Brand[] = [
   },
   {
     name: "Tesco",
-    match: ["TESCO", "TESCO METRO", "TESCO SUPERSTORE"],
+    match: ["TESCO", "TESCO SUPERSTORE"],
   },
   {
     name: "Tesco Express",
-    match: ["TESCO EXPRESS", "TESCO METRO"],
+    match: ["TESCO EXPRESS"],
   },
   {
     name: "Tescoma",
@@ -5177,16 +4856,8 @@ export const BRANDS: readonly Brand[] = [
     match: ["TEZENIS"],
   },
   {
-    name: "Thaï Express (North America)",
-    match: ["THAÏ EXPRESS (NORTH AMERICA)"],
-  },
-  {
     name: "The Athlete's Foot",
     match: ["THE ATHLETES FOOT"],
-  },
-  {
-    name: "The Bargain! Shop",
-    match: ["THE BARGAIN! SHOP"],
   },
   {
     name: "The Body Shop",
@@ -5311,11 +4982,11 @@ export const BRANDS: readonly Brand[] = [
   },
   {
     name: "Tiffany & Company",
-    match: ["TIFFANY", "TIFFANY & COMPANY", "TIFFANYS"],
+    match: ["TIFFANY & COMPANY"],
   },
   {
     name: "Tiger Mart",
-    match: ["EXXON", "EXXON TIGER MART", "TIGER MART"],
+    match: ["EXXON TIGER MART", "TIGER MART"],
   },
   {
     name: "Tiger Sugar",
@@ -5386,10 +5057,6 @@ export const BRANDS: readonly Brand[] = [
     match: ["TOPMAN"],
   },
   {
-    name: "Topper's Pizza (Canada)",
-    match: ["TOPPERS PIZZA (CANADA)"],
-  },
-  {
     name: "Topshop",
     match: ["TOPSHOP"],
   },
@@ -5415,20 +5082,16 @@ export const BRANDS: readonly Brand[] = [
     match: ["TOYOTA", "TOYOTA USA"],
   },
   {
-    name: "Toys R Us (Canada)",
-    match: ["TOYS R US (CANADA)"],
-  },
-  {
     name: "Transat Travel",
     match: ["TRANSAT TRAVEL"],
   },
   {
     name: "Trek",
-    match: ["BIKE GALLERY", "TRECK", "TREK", "TREK BICYCLE"],
+    match: ["BIKE GALLERY", "TREK", "TREK BICYCLE"],
   },
   {
     name: "Triumph",
-    match: ["AMOS STYLE", "TRIUMPH", "トリンプ", "트라이엄프 인터내셔널"],
+    match: ["AMOS STYLE", "TRIUMPH"],
   },
   {
     name: "True Religion",
@@ -5461,10 +5124,6 @@ export const BRANDS: readonly Brand[] = [
   {
     name: "U.S. Polo Assn.",
     match: ["U S POLO", "U S POLO ASSN"],
-  },
-  {
-    name: "UGG",
-    match: ["UGG / UGG AUSTRALIA"],
   },
   {
     name: "UNTUCKit",
@@ -5591,10 +5250,6 @@ export const BRANDS: readonly Brand[] = [
     match: ["VICTORIAS SECRET"],
   },
   {
-    name: "Vidéotron",
-    match: ["VIDÉOTRON"],
-  },
-  {
     name: "Vilebrequin",
     match: ["VILEBREQUIN"],
   },
@@ -5655,12 +5310,8 @@ export const BRANDS: readonly Brand[] = [
     match: ["WHSMITH"],
   },
   {
-    name: "WOW! Mobile Boutique",
-    match: ["WOW! MOBILE BOUTIQUE"],
-  },
-  {
     name: "Wacoal",
-    match: ["WACOAL", "ワコール"],
+    match: ["WACOAL"],
   },
   {
     name: "Wagamama",
@@ -5752,7 +5403,7 @@ export const BRANDS: readonly Brand[] = [
   },
   {
     name: "White House Black Market",
-    match: ["WHITE HOUSE BLACK MARKET", "WHITE HOUSE | BLACK MARKET"],
+    match: ["WHITE HOUSE BLACK MARKET"],
   },
   {
     name: "White Spot",
@@ -5795,16 +5446,8 @@ export const BRANDS: readonly Brand[] = [
     match: ["WIMPYS DINER"],
   },
   {
-    name: "Wine Rack (Canada)",
-    match: ["WINE RACK (CANADA)"],
-  },
-  {
     name: "WingStreet",
     match: ["WINGSTREET"],
-  },
-  {
-    name: "WingsUp!",
-    match: ["WINGSUP!"],
   },
   {
     name: "Wingstop",
@@ -5863,10 +5506,6 @@ export const BRANDS: readonly Brand[] = [
     match: ["YANKEE CANDLE"],
   },
   {
-    name: "Yataş Bedding",
-    match: ["YATAŞ", "YATAŞ BEDDING"],
-  },
-  {
     name: "YellowKorner",
     match: ["YELLOWKORNER"],
   },
@@ -5880,10 +5519,6 @@ export const BRANDS: readonly Brand[] = [
     ],
   },
   {
-    name: "Yogen Früz",
-    match: ["YOGEN FRÜZ"],
-  },
-  {
     name: "Yogorino",
     match: ["YOGORINO"],
   },
@@ -5893,7 +5528,7 @@ export const BRANDS: readonly Brand[] = [
   },
   {
     name: "Your Independent Grocer",
-    match: ["INDEPENDENT", "YOUR INDEPENDENT GROCER"],
+    match: ["YOUR INDEPENDENT GROCER"],
   },
   {
     name: "Yunshang Rice Noodle",
@@ -5901,7 +5536,7 @@ export const BRANDS: readonly Brand[] = [
   },
   {
     name: "Yves Rocher",
-    match: ["YVES ROCHER", "ИВ РОШЕ"],
+    match: ["YVES ROCHER"],
   },
   {
     name: "Zagg",
@@ -5992,55 +5627,11 @@ export const BRANDS: readonly Brand[] = [
     match: ["ORSAY"],
   },
   {
-    name: "uSmile 昆仑好",
-    match: ["USMILE 昆仑好"],
-  },
-  {
     name: "vomFASS",
     match: ["VOMFASS"],
   },
   {
     name: "west elm",
     match: ["WEST ELM"],
-  },
-  {
-    name: "Škoda",
-    match: ["ŠKODA", "ŠKODA AUTO"],
-  },
-  {
-    name: "Гипер Лента",
-    match: ["ГИПЕР ЛЕНТА"],
-  },
-  {
-    name: "Доброном",
-    match: ["ДОБРОНОМ"],
-  },
-  {
-    name: "Ремонт обуви",
-    match: ["РЕМОНТ ОБУВИ"],
-  },
-  {
-    name: "Светофор",
-    match: ["СВЕТОФОР"],
-  },
-  {
-    name: "六福珠宝",
-    match: ["六福珠宝"],
-  },
-  {
-    name: "大統華 T&T Supermarket",
-    match: ["大統華 T&T SUPERMARKET"],
-  },
-  {
-    name: "库迪咖啡",
-    match: ["库迪咖啡"],
-  },
-  {
-    name: "杨国福麻辣烫",
-    match: ["杨国福麻辣烫"],
-  },
-  {
-    name: "重庆小天鹅火锅",
-    match: ["小天鹅火锅", "重庆小天鹅", "重庆小天鹅火锅"],
   },
 ];

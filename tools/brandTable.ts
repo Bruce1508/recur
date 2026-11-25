@@ -34,30 +34,57 @@ const COMMON_WORDS = new Set([
   "TYPO",
   "WAVES",
   "AMPM",
+  "MOBILE",
+  "CASINO",
+  "GARAGE",
+  "EXPERT",
 ]);
 
 const inCanada = ({ include = [], exclude = [] }: NsiItem["locationSet"]) =>
   !exclude.includes("ca") &&
   (include.includes("ca") || include.includes("001"));
 
-/** Canadian and worldwide brands of shop, restaurant, café, fuel and pharmacy kinds (ADR-021). */
+const LATIN_FORM = /^[A-Z0-9][A-Z0-9 &-]*$/;
+
+/**
+ * Canadian and worldwide brands of shop, restaurant, café, fuel and pharmacy kinds (ADR-021).
+ * Fails closed: a form must be Latin, at least four characters and not an ordinary word, a
+ * `matchNames` form must have two words, and a form claimed by two brands is dropped.
+ */
 export function buildBrands(nsi: Nsi): Brand[] {
-  const byName = new Map<string, Set<string>>();
+  const byName = new Map<string, { name: string; forms: Set<string> }>();
   for (const [key, { items }] of Object.entries(nsi)) {
     if (!KINDS.test(key)) continue;
     for (const item of items) {
       if (!inCanada(item.locationSet)) continue;
-      const forms = [item.displayName, ...(item.matchNames ?? [])]
+      const forms = [
+        item.displayName,
+        ...(item.matchNames ?? []).filter((m) => /\s/.test(m.trim())),
+      ]
         .map(normalise)
-        .filter((f) => f.length >= MIN_FORM && !COMMON_WORDS.has(f));
+        .filter(
+          (f) =>
+            f.length >= MIN_FORM && LATIN_FORM.test(f) && !COMMON_WORDS.has(f),
+        );
       if (forms.length === 0) continue;
-      const set = byName.get(item.displayName) ?? new Set<string>();
-      for (const f of forms) set.add(f);
-      byName.set(item.displayName, set);
+      const id = item.displayName.toLowerCase();
+      const entry = byName.get(id) ?? {
+        name: item.displayName,
+        forms: new Set(),
+      };
+      for (const f of forms) entry.forms.add(f);
+      byName.set(id, entry);
     }
   }
-  return [...byName]
-    .map(([name, forms]) => ({ name, match: [...forms].sort() }))
+  const claimed = new Map<string, number>();
+  for (const { forms } of byName.values())
+    for (const f of forms) claimed.set(f, (claimed.get(f) ?? 0) + 1);
+  return [...byName.values()]
+    .map(({ name, forms }) => ({
+      name,
+      match: [...forms].filter((f) => claimed.get(f) === 1).sort(),
+    }))
+    .filter((b) => b.match.length > 0)
     .sort((a, b) => (a.name < b.name ? -1 : a.name > b.name ? 1 : 0));
 }
 

@@ -1,5 +1,6 @@
 import fc from "fast-check";
 import { describe, expect, test } from "vitest";
+import { BRANDS } from "../src/core/merchant/brands";
 import { decodeDescription } from "../src/core/merchant/decode";
 import { buildBrands, renderBrands } from "./brandTable";
 
@@ -50,6 +51,42 @@ describe("buildBrands", () => {
     expect(out).toEqual([]);
   });
 
+  test("a matchNames form of one word is dropped, a multi-word one kept", () => {
+    const out = buildBrands({
+      "brands/amenity/fuel": {
+        items: [
+          item("Mobil", ["ca"], { matchNames: ["mobile", "mobil mart"] }),
+        ],
+      },
+    });
+    expect(out).toEqual([{ name: "Mobil", match: ["MOBIL", "MOBIL MART"] }]);
+  });
+
+  test("a form claimed by two brands is dropped from both", () => {
+    const out = buildBrands({
+      "brands/shop/x": {
+        items: [
+          item("Hudson Group", ["ca"], { matchNames: ["hudson news"] }),
+          item("Hudson News", ["ca"]),
+        ],
+      },
+    });
+    expect(out).toEqual([{ name: "Hudson Group", match: ["HUDSON GROUP"] }]);
+  });
+
+  test("case-duplicate names merge and non-Latin forms are dropped", () => {
+    const out = buildBrands({
+      "brands/shop/x": {
+        items: [
+          item("Bugatti", ["ca"]),
+          item("bugatti", ["ca"]),
+          item("セイコー", ["ca"]),
+        ],
+      },
+    });
+    expect(out).toEqual([{ name: "Bugatti", match: ["BUGATTI"] }]);
+  });
+
   test("match forms are normalised, deduplicated and include matchNames", () => {
     expect(brands.find((b) => b.name === "Costco")?.match).toEqual([
       "COSTCO",
@@ -93,5 +130,26 @@ describe("renderBrands", () => {
     expect(src).toContain("name-suggestion-index");
     expect(src).toContain('"Tim Hortons"');
     expect(renderBrands(buildBrands(nsi))).toBe(src);
+  });
+});
+
+describe("generated BRANDS", () => {
+  test("banking and common-word lines never get a brand name", () => {
+    for (const d of [
+      "MOBILE DEPOSIT",
+      "MOBILE PAYMENT",
+      "MOBILE CHEQUE DEPOSIT",
+      "CASINO NIAGARA",
+      "GARAGE DOOR REPAIR",
+      "EXPERT PLUMBING",
+      "E-TRANSFER SENT",
+      "PAYMENT THANK YOU",
+      "INTEREST CHARGE",
+      "SERVICE CHARGE",
+      "MONTHLY ACCOUNT FEE",
+    ]) {
+      const r = decodeDescription(d, { brands: BRANDS }).reading;
+      expect(r.kind === "name" ? r.source : "unknown", d).not.toBe("brand");
+    }
   });
 });
