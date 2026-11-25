@@ -62,6 +62,36 @@ const VERIFIED = {
   totals: "Verified: the amounts add up to the printed totals",
 } as const;
 
+const SHEET = "rounded-3xl bg-white-sheet p-5 shadow-sheet sm:p-8";
+const H2 = "font-display text-2xl font-extrabold";
+const BTN =
+  "rounded-pill bg-mint-note px-5 py-1.5 font-medium text-blurple shadow-pill";
+const BTN_QUIET =
+  "rounded-pill border border-ink/55 bg-white-sheet px-4 py-1 text-ink";
+const FINE = "text-sm text-quiet-gray";
+const TH = "pr-4 pb-2 text-left font-bold";
+const TD = "border-t border-stone py-1.5 pr-4";
+
+const BADGE = {
+  verified: { mark: "\u2713", tone: "bg-mint-note" },
+  mismatch: { mark: "\u26A0", tone: "bg-salmon-wash" },
+  unverifiable: { mark: "\u2139", tone: "bg-canary-note" },
+} as const;
+
+function StatusBadge({ r }: { r: Reconciliation }) {
+  const b = BADGE[r.status];
+  return (
+    <span
+      className={`inline-flex items-start gap-2 rounded-2xl px-3 py-1 text-ink ${b.tone}`}
+    >
+      <span aria-hidden="true" className="font-bold">
+        {b.mark}
+      </span>
+      <span>{describeStatus(r)}</span>
+    </span>
+  );
+}
+
 const isReady = (e: Entry) => e.input === "pdf" || e.confirmed;
 
 export function describeStatus(r: Reconciliation): string {
@@ -115,7 +145,7 @@ function convert(e: CsvEntry) {
 
 function Controls({ e, update }: { e: CsvEntry; update: Update }) {
   return (
-    <div className="space-x-4">
+    <div className="flex flex-wrap gap-x-4 gap-y-2 py-2">
       <label>
         Account type{" "}
         <select
@@ -290,21 +320,21 @@ export function Importer() {
   );
 
   return (
-    <div className="mt-6 space-y-6">
+    <div className="mt-8 space-y-6">
       <label
-        className="block rounded border-2 border-dashed p-6"
+        className={`block ${SHEET} border-2 border-dashed border-ink/55`}
         onDragOver={(ev) => ev.preventDefault()}
         onDrop={(ev) => {
           ev.preventDefault();
           void addFiles(ev.dataTransfer.files);
         }}
       >
-        <span className="block">
+        <span className="block font-hand text-xl">
           Choose one or more PDF statements or CSV files (or drop them here)
         </span>
         <input
           type="file"
-          className="mt-2 block w-full"
+          className="mt-3 block w-full"
           accept=".pdf,application/pdf,.csv,text/csv"
           multiple
           data-testid="file-input"
@@ -316,57 +346,66 @@ export function Importer() {
       </label>
 
       {errors.map((m) => (
-        <p key={m} role="alert" className="text-red-700">
-          {m}
+        <p
+          key={m}
+          role="alert"
+          className="flex gap-2 rounded-2xl bg-salmon-wash px-4 py-2 text-ink"
+        >
+          <span aria-hidden="true" className="font-bold">
+            {"\u26A0"}
+          </span>
+          <span>{m}</span>
         </p>
       ))}
 
       {pending.map((e) => (
-        <section key={e.id} className="rounded border p-4">
-          <h2 className="font-semibold">Confirm columns: {e.name}</h2>
-          <p className="text-sm">
+        <section key={e.id} className={SHEET}>
+          <h2 className={H2}>Confirm columns: {e.name}</h2>
+          <p className={FINE}>
             Check these first rows, then confirm. Nothing is converted until you
             do.
           </p>
-          <table className="my-2 text-sm">
-            <thead>
-              <tr>
-                {columnRoles(
-                  applyChoices(e.mapping, e),
-                  e.sample[0]?.length ?? 0,
-                ).map((role, i) => (
-                  // biome-ignore lint/suspicious/noArrayIndexKey: columns are positional
-                  <th key={i} className="pr-4 text-left font-semibold">
-                    {role}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {e.sample.map((row, r) => (
-                // biome-ignore lint/suspicious/noArrayIndexKey: sample rows may be identical and are static
-                <tr key={r}>
-                  {row.map((cell, i) => (
-                    // biome-ignore lint/suspicious/noArrayIndexKey: cells have no id; the sample is static
-                    <td key={i} className="pr-4">
-                      {cell}
-                    </td>
+          <div className="overflow-x-auto">
+            <table className="my-3 text-[15px]">
+              <thead>
+                <tr>
+                  {columnRoles(
+                    applyChoices(e.mapping, e),
+                    e.sample[0]?.length ?? 0,
+                  ).map((role, i) => (
+                    // biome-ignore lint/suspicious/noArrayIndexKey: columns are positional
+                    <th key={i} className={TH}>
+                      {role}
+                    </th>
                   ))}
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {e.sample.map((row, r) => (
+                  // biome-ignore lint/suspicious/noArrayIndexKey: sample rows may be identical and are static
+                  <tr key={r}>
+                    {row.map((cell, i) => (
+                      // biome-ignore lint/suspicious/noArrayIndexKey: cells have no id; the sample is static
+                      <td key={i} className={TD}>
+                        {cell}
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
           <Controls e={e} update={update} />
           <button
             type="button"
-            className="rounded border px-3"
+            className={BTN}
             onClick={() => update(e.id, { confirmed: true })}
           >
             Confirm
           </button>{" "}
           <button
             type="button"
-            className="rounded border px-3"
+            className={BTN_QUIET}
             onClick={() => remove(e.id)}
           >
             Remove file
@@ -376,17 +415,17 @@ export function Importer() {
 
       {entries.some(isReady) && (
         <>
-          <section>
-            <h2 className="font-semibold">Files</h2>
+          <section className={SHEET}>
+            <h2 className={H2}>Files</h2>
             <div className="overflow-x-auto">
-              <table className="text-sm">
+              <table className="text-[15px]">
                 <thead>
                   <tr>
-                    <th className="pr-4 text-left">File</th>
-                    <th className="pr-4 text-left">Account</th>
-                    <th className="pr-4 text-left">Rows</th>
-                    <th className="pr-4 text-left">Status</th>
-                    <th className="text-left">Adjust</th>
+                    <th className={TH}>File</th>
+                    <th className={TH}>Account</th>
+                    <th className={TH}>Rows</th>
+                    <th className={TH}>Status</th>
+                    <th className="pb-2 text-left font-bold">Adjust</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -394,8 +433,8 @@ export function Importer() {
                     .filter(({ entry }) => isReady(entry))
                     .map(({ entry, result, status }) => (
                       <tr key={entry.id}>
-                        <td className="pr-4">{entry.name}</td>
-                        <td className="pr-4">
+                        <td className={TD}>{entry.name}</td>
+                        <td className={TD}>
                           <select
                             aria-label={`Account for ${entry.name}`}
                             value={entry.account}
@@ -410,14 +449,14 @@ export function Importer() {
                         </td>
                         {result.ok ? (
                           <>
-                            <td className="pr-4">
+                            <td className={TD}>
                               {result.statement.transactions.length}
                             </td>
-                            <td className="pr-4">
-                              {status && describeStatus(status)}
+                            <td className={TD}>
+                              {status && <StatusBadge r={status} />}
                               {entry.input === "csv" &&
                                 status?.status === "verified" && (
-                                  <div className="text-amber-700">
+                                  <div className="mt-1 text-warning-ink">
                                     {describeEnds(
                                       summary.accounts.find(
                                         (a) => a.id === entry.account,
@@ -429,24 +468,27 @@ export function Importer() {
                                   </div>
                                 )}
                               {result.statement.warnings.map((w) => (
-                                <div key={w} className="text-amber-700">
+                                <div key={w} className="mt-1 text-warning-ink">
                                   {w}
                                 </div>
                               ))}
                             </td>
                           </>
                         ) : (
-                          <td colSpan={2} className="pr-4 text-red-700">
+                          <td colSpan={2} className={`${TD} text-ink`}>
+                            <span aria-hidden="true" className="font-bold">
+                              {"\u26A0"}{" "}
+                            </span>
                             Cannot read this file: {result.reason}
                           </td>
                         )}
-                        <td>
+                        <td className="border-t border-stone py-1.5">
                           {entry.input === "csv" && (
                             <Controls e={entry} update={update} />
                           )}
                           <button
                             type="button"
-                            className="rounded border px-3"
+                            className={BTN_QUIET}
                             onClick={() => remove(entry.id)}
                           >
                             Remove file
@@ -457,7 +499,7 @@ export function Importer() {
                 </tbody>
               </table>
             </div>
-            <p className="mt-2 text-sm">
+            <p className={`mt-3 ${FINE}`}>
               Files under one letter are merged as one account and
               de-duplicated: a Verified PDF replaces the CSV rows inside its
               period. PDFs start under A and CSV files under B; move a CSV to
@@ -465,24 +507,24 @@ export function Importer() {
             </p>
           </section>
 
-          <section>
-            <h2 className="font-semibold">
-              Transactions ({summary.rows.length})
-            </h2>
+          <section className={SHEET}>
+            <h2 className={H2}>Transactions ({summary.rows.length})</h2>
             {summary.rows.length > 0 && (
-              <p className="text-sm">
+              <div className="my-3 flex flex-wrap items-center gap-3">
                 <a
                   href={csvHref}
                   download="recur-transactions.csv"
-                  className="underline"
+                  className={BTN}
                 >
                   Download transactions (CSV)
-                </a>{" "}
-                Amounts are plain numbers. A description that a spreadsheet
-                would run as a formula starts with an apostrophe.
-              </p>
+                </a>
+                <p className={`${FINE} max-w-prose`}>
+                  Amounts are plain numbers. A description that a spreadsheet
+                  would run as a formula starts with an apostrophe.
+                </p>
+              </div>
             )}
-            <p className="text-sm" data-testid="ledger-notes">
+            <p className={`mt-2 ${FINE}`} data-testid="ledger-notes">
               {summary.duplicatesRemoved} duplicate row(s) removed.
               {summary.accounts
                 .filter((a) => a.missingMonths.length > 0)
@@ -492,7 +534,7 @@ export function Importer() {
                 )
                 .join("")}
             </p>
-            <ul className="text-sm" data-testid="chain-notes">
+            <ul className={FINE} data-testid="chain-notes">
               {summary.accounts.flatMap((a) =>
                 a.chain.boundaries
                   .filter((b) => b.outcome.status !== "chained")
@@ -504,20 +546,22 @@ export function Importer() {
               )}
             </ul>
             <div className="overflow-x-auto">
-              <table className="text-sm">
+              <table className="mt-3 text-[15px]">
                 <thead>
                   <tr>
-                    <th className="pr-4 text-left">Date</th>
-                    <th className="pr-4 text-left">Description</th>
-                    <th className="text-right">Amount</th>
+                    <th className={TH}>Date</th>
+                    <th className={TH}>Description</th>
+                    <th className="pb-2 text-right font-bold">Amount</th>
                   </tr>
                 </thead>
                 <tbody>
                   {summary.rows.map(({ transaction: t }) => (
                     <tr key={t.id}>
-                      <td className="pr-4">{t.date}</td>
-                      <td className="pr-4">{t.description}</td>
-                      <td className="text-right">{formatCents(t.amount)}</td>
+                      <td className={TD}>{t.date}</td>
+                      <td className={TD}>{t.description}</td>
+                      <td className="border-t border-stone py-1.5 text-right">
+                        {formatCents(t.amount)}
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -527,7 +571,7 @@ export function Importer() {
         </>
       )}
 
-      <footer className="text-sm">
+      <footer className={FINE}>
         <details>
           <summary>How to verify nothing is uploaded</summary>
           Open your browser's network tab and drop a file: no request is made.

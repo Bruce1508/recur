@@ -166,6 +166,16 @@ Queued by the autonomous workflow. Claude does not attempt these.
 
 Newest first. One entry per session: date, what changed, what was verified, what is next.
 
+### 2026-11-25 — M3: light paper theme (UI restyle, PR 1)
+
+- The owner wants the vibe of the style in `UI/DESIGN.md` (HEY's landing page; viewed live in Chrome, dark mode on the owner's machine), light theme first, free fonts. Tokens and fonts in `src/index.css`; Nunito Sans 800/900, DM Sans 400/500/700 and Shantell Sans 400 (latin woff2, OFL-1.1, from @fontsource 5.3.0, copied into `src/assets/fonts` with their licences, not an npm dependency; RESEARCH §14). The original Really Sans and Moniker are not verified as free and are not used. CSP unchanged (`font-src 'self'`).
+- Kept: all texts, aria-labels, test ids. Status badges carry a mark and the text (never colour alone); contrast ratios computed by the implementing agent (all at least 4.5:1 where text sits on a fill; Quiet Gray is not used on Stone). Gradient limited to the title. Download link is a mint pill.
+- Skills: `agent-skills:frontend-ui-engineering` (required). taste-skill and impeccable were allowed by the owner and not used.
+- Screenshots: `docs/evidence/theme-empty.png`, `theme-confirm.png`, `theme-results.png`. A first screenshot showed the Download pill overlapping the Transactions heading; fixed before the PR.
+- Dark mode, the readout screen and the label UI are later PRs. Decoder review notes (PR #53, non-blocking), backlog: `parseLabels` accepts a name made only of invisible format characters and lone surrogates; a leading non-ASCII letter is dropped from `merchantKey` (`ÉCOLE` reads as a wrong name); the AC-16 suite has no bank word of 4+ letters (`MB-XFER`) among its unknown lines, so 0% wrong does not cover that known limit.
+- Previous PR (#53): one review round (APPROVE, three non-blocking notes); CI green on the first run.
+- Verified: typecheck, Biome, `npm test` (576 passed), build, `npx playwright test` (18 passed, outside the sandbox, axe scan and 320 px check included).
+
 ### 2026-11-25 — M2 decoder core (#33; ADR-021 accepted in #52, ADR-027)
 
 - `src/core/merchant/`: types, cleaning rules in ADR-021 order, readings by fixed precedence (user label, exact brand, cleaned text, unknown), behaviour hints and shared cadence buckets, label file parse and serialise that fail closed, an invented descriptor suite and the AC-16 report. `bankCodes` on the bank profile is empty for TD: the meaning of its suffixes is unverified.
