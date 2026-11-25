@@ -240,3 +240,7 @@ Three fonts for the UI restyle, all SIL OFL-1.1: Nunito Sans (headings, weights 
 Why these: the display and text faces of the reference style (Really Sans, Moniker) are not verified as free to use, so they are unverified and not used. Nunito Sans, DM Sans and Shantell Sans are the substitutes with a known licence.
 
 CSP: the fonts are bundled by Vite and served from our own origin, so `font-src 'self'` (already in `vite.config.ts` and `docs/ARCHITECTURE.md`) covers them. No change to the policy.
+
+## 15. Browser minimums from the theme (2026-11-25)
+
+The dark theme (PR #59) uses CSS `light-dark()` and `color-mix()`. `light-dark()` needs Chrome and Edge 123, Firefox 120 or Safari 17.5; on an older browser the colour tokens are invalid and the page renders unstyled. PRD NFR-4 targets current Chrome, Edge, Firefox and Safari, so this is accepted; M5 should state these versions as the supported minimum (versions from the reviewer's recollection of MDN, not re-checked against caniuse).
