@@ -13,13 +13,13 @@ The earlier order was CSV first, PDF second (ADR-018). Stage 1 ships a useful pr
 | M0  | Validation gate and project bootstrap                 | —     | done    | Nov 10       | —          |
 | M1  | CSV import, ledger, fixture tooling, walking skeleton | 1     | 12–15 h | Nov 11–17    | M0         |
 | M2  | Transaction decoder and recurring-charge detection    | 1     | 18–22 h | Nov 18–24    | M7         |
-| M3  | Product UI, demo mode, exports, trust features        | 1     | 12–14 h | Nov 25–Dec 1 | M2         |
+| M3  | Product UI, demo mode, exports, trust features        | 1     | 14–17 h | Nov 25–Dec 1 | M2         |
 | M4  | Hardening, deployment, small launch, validation       | 1     | 8–10 h  | Dec 2–8      | M3         |
 | M5  | PDF extraction, line model, PDF fixture tooling       | 2     | 10–12 h | Dec 9–15     | M1         |
 | M6  | First PDF format (TD chequing) with reconciliation    | 2     | 14–16 h | Dec 16–23    | M5         |
 | M7  | Second PDF format (CIBC credit card)                  | 2     | 8–10 h  | Dec 24–30    | M6         |
 
-**Stage 1 total: 50–61 hours (M2 grew with ADR-021). Stage 2 total: 32–38 hours.** The owner reported more than 20 hours a week (2026-11-10). The dates are estimates, and mid-December exams will likely stretch stage 2.
+**Stage 1 total: 52–64 hours (M2 and M3 grew with ADR-021). Stage 2 total: 32–38 hours.** The owner reported more than 20 hours a week (2026-11-10). The dates are estimates, and mid-December exams will likely stretch stage 2.
 
 **Cut order if behind** (first cut first):
 
