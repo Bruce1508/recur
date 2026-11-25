@@ -32,6 +32,7 @@ A record is changed only by adding a new record that supersedes it. Statuses: Pr
 | 024 | Close the skill-routing loophole with a required step and a template                    | Accepted (2026-11-20)                                                  |
 | 025 | Statement chaining: closing balance against the next opening balance                    | Accepted (2026-11-20)                                                  |
 | 026 | TD page totals and overdrawn-balance suffix; per-page totals sum to the statement total | Accepted (owner delegated, 2026-11-25)                                 |
+| 027 | Decoder cleaning rules found by the first evaluation run                                | Accepted (owner delegated, 2026-11-25)                                 |
 
 All records become Accepted when Bruce signs off on the PRD.
 
@@ -628,3 +629,24 @@ Other facts from the same structure: every table page repeats the column header 
 **Stated limit (found in review).** A page missing from the middle of the extracted document is caught only through the balances: its rows' net change breaks the next checkpoint. A missing middle page whose rows net to exactly zero still verifies, because the page totals cover only the pages that were read and the end marker proves only that the end is there. The real dumps show no page-number line to check `1..n` against. A single end-of-statement total would have caught it; TD does not print one. The opening balance is read only from the row the profile labels (`openingLabel`, TD: `STARTING BALANCE`), so a lost first page cannot pass a balance brought forward off as the opening.
 
 **Revisit when** a TD statement fails on the end marker or the suffix, when a page-number or statement-total line is found in a dump, or when a page needs to be named in a totals mismatch (option C).
+
+---
+
+## ADR-027 — Decoder cleaning rules found by the first evaluation run
+
+**Status.** Accepted (2026-11-25, owner delegated). Amends the cleaning rules of ADR-021 without editing it.
+
+**Context.** The first run of the AC-16 suite (101 invented descriptions, written before the rules were run against them) gave 91 names shown, 88 correct, 3 wrong (3.3%, limit 3%), coverage 96.7%. The wrong ones kept a bare trailing store number (`... 4412`, `... 1180 ON`) or a company suffix (`... LTD`), shapes ADR-021's rules did not cover.
+
+**Decision.** Four changes to the rules, all general, none tied to a suite line.
+
+1. A trailing standalone token of 4 or more digits is removed as a store or reference number (ADR-021 said 5 or more for digit runs, which stays for runs anywhere). A digit token that is not last stays, so `CLUB 2024 GYM` is unchanged; the last word is never removed.
+2. A trailing company-suffix token (`LTD`, `LTEE`, `INC`, `CORP`, `LLC`, `LP`, `CO`) is removed, never when it would leave no word. The list is data in `rules.ts`.
+3. A dot that is not inside a number becomes a space instead of being dropped (ADR-021 step 1), so `STREAMLY.COM` keeps its word boundary and matches a brand.
+4. Any two-decimal amount is removed, with its asterisk when glued, not only an amount glued after an asterisk (`CLOUDBOX*STORAGE 2.99`).
+
+**Result.** The suite and the AC-16 thresholds were not changed. After the rules: 91 names shown, 91 correct, 0 wrong, coverage 91 of 91; the 10 code-like lines stay unknown.
+
+**Known limits.** Bank words with a real-looking word in them, such as `E-TRANSFER`, pass the name test and are read as medium-confidence names. A bank abbreviation of 4 or more letters with a vowel (an `MB-XFER` style line) would also be read as a name and counted wrong. No bank-word list is added now; it would need a verified source for each word, as for the bank codes (`docs/RESEARCH.md` section 13).
+
+**Revisit when** a real statement shows bank words read as names often enough to matter.

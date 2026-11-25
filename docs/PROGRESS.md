@@ -166,6 +166,14 @@ Queued by the autonomous workflow. Claude does not attempt these.
 
 Newest first. One entry per session: date, what changed, what was verified, what is next.
 
+### 2026-11-25 — M2 decoder core (#33; ADR-021 accepted in #52, ADR-027)
+
+- `src/core/merchant/`: types, cleaning rules in ADR-021 order, readings by fixed precedence (user label, exact brand, cleaned text, unknown), behaviour hints and shared cadence buckets, label file parse and serialise that fail closed, an invented descriptor suite and the AC-16 report. `bankCodes` on the bank profile is empty for TD: the meaning of its suffixes is unverified.
+- AC-16 on 101 invented descriptions: first run 3.3% wrong of names shown (limit 3%), caused by a bare 4-digit store number and a company suffix; ADR-027 adds those two general rules; now 0 wrong, coverage 91 of 91, 10 expected-unknown lines left unnamed. Caveat: the suite was written before the rules but the rules were added after seeing three failures, and the suite is small and invented, so 0% is not evidence about real statements. The real check is the owner's own data.
+- Known limits (ADR-027): bank words such as E-TRANSFER read as medium-confidence names; no real alias table (no public source named yet, demo aliases only); no NSI brand table yet (task 3, separate PR).
+- Previous PR (#52): no review rounds beyond one (APPROVE with notes, all fixed); CI green on the first run. A review caught real values from a screenshot in the ADR examples; replaced with fake values before merge (the earlier PR commits still hold them).
+- Verified: typecheck, Biome, `npm test` (576 passed), `fixtures:check`, build. Not verified: any real statement.
+
 ### 2026-11-25 — Real TD statements Verified
 
 - After PR #51 the owner re-dropped the two statements: both Verified, 150 transactions, no chain notes. The `OD` reading and the per-page totals held on real data; a wrong guess would have shown mismatch.

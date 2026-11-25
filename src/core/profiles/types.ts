@@ -32,4 +32,11 @@ export interface BankProfile {
   /** A balance printed as an amount directly followed by this suffix is negative. */
   readonly overdrawnSuffix?: string;
   readonly requiredAnchors: NonNullable<ParsedStatement["requiredAnchors"]>;
+  /**
+   * Meaning of the one-letter tail a bank puts on a description (`_V`), keyed by the letter. An
+   * entry needs a public source from the bank, recorded in docs/RESEARCH.md section 13 (ADR-021).
+   */
+  readonly bankCodes: Readonly<
+    Record<string, { readonly meaning: string; readonly source: string }>
+  >;
 }
