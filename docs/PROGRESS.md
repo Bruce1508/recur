@@ -34,10 +34,15 @@ Living document. Update it at the end of every working session. Never record sta
 
 **Next session, in order:**
 
-1. Run `git log origin/main` and `gh pr list` to confirm what is merged (PR #27 may still be open). Never `--admin`; never force-push (merge `main` into the branch instead of rebasing).
-2. Work the open issues in this order, one PR each, through `ship-task` (#30 is done in its own PR): #28 (UI accepts PDFs), #29 (property test and generator fix), #31 (statement chaining: Opus designs and writes the ADR, Sonnet implements). The model tier of each is in "Issues and model routing".
-3. Owner-blocked, do not attempt: #38 (census numbers, the hand-written subscription list (the CIBC dump is no longer needed: ADR-028)). When the owner pastes a reviewed dump or the census counts, record the quirks here and check the ADR-020 rules against them. Claude never reads a real statement; only the masked dump and counts.
-4. #32 is done (ADR-021 accepted, PR #52). Next: #33 (decoder; core merged in #53, the NSI brand table is still to do), #34 (recurring detection; needs the owner's subscription list), #36 (M3) and #37 (M4). M7 is dropped (ADR-028): nothing waits for it.
+1. Run `git log origin/main` and `gh pr list` to confirm what is merged. State at the end of 2026-11-25: `main` is at PR #55, no open PRs, 576 tests, the two real TD statements Verify, CIBC dropped (ADR-028). Never `--admin`; never force-push.
+2. Work in this order, one PR each, through `ship-task` (model tier in "Issues and model routing"; Sonnet implements, Opus designs and reviews parse, reconcile, pdf and CSP):
+   1. **#33, rest:** the NSI brand table (`tools/` script filtering name-suggestion-index to Canada and a few shop kinds, writes `src/core/merchant/brands.ts` with the BSD notice; README credit; measure the bundle size; RESEARCH §13 says it is not yet measured). A real alias table only with a named public source per entry.
+   2. **UI restyle PR 2:** dark mode (own PR: choose colours, measure contrast, `prefers-color-scheme` plus a manual switch if wanted). Style source: `UI/DESIGN.md`, vibe only (see the 2026-11-25 theme entry). taste-skill and impeccable are allowed by the owner for UI; `agent-skills:frontend-ui-engineering` is required.
+   3. **#36, the readout screen** in this style: totals by reading (AC-17, an aggregation function in core first), label UI with file download and load (AC-18), then demo mode (AC-10), the summary download and the calendar file (AC-14).
+   4. **#34, recurring detection** (AC-6, AC-7): starts only after the owner writes the subscription list.
+   5. **#37, M4:** deploy, README (TD chequing only, ADR-028), launch; each needs the owner's approval.
+   6. Small leftovers: decoder review notes and the PDF-reader recovery items in the backlog; `ROADMAP.md` still ends the dropped M7 section with "two PDF formats".
+3. Owner-blocked, do not attempt (#38): the hand-written subscription list (AC-7, outside the repo), a third real TD statement for the fixture count (AC-13), optional `UI/` commit decision, final project name and domain, deployment and launch approvals. Claude never reads a real statement; only masked structure and counts the owner pastes. Never copy strings from the owner's screenshots into the repo, PRs or prompts.
 
 **Requirements carried into task 11 and later** (found in reviews; most are pinned by a test or noted in code; the blank-description item is neither, add a test or a warning when touching `toStatement`):
 
