@@ -18,7 +18,7 @@ Living document. Update it at the end of every working session. Never record sta
 
 **Superseded on 2026-11-25 (the parser now verifies two real TD statements, above):** the parser had never run on a real PDF. Everything above is tested on invented data whose geometry comes from one masked page. The importer accepts PDFs (#28), but only synthetic ones have been dropped in it. There are no real fixtures (AC-13 needs three per format), no second bank (M7), no recurring detection or decoder (M2), no exports or demo (M3), no deployment (M4). `reconcile` has never produced `verified` for a real statement.
 
-**Direction under discussion:** see the ADR-021 paragraph below. **Open work:** GitHub issues #28 to #38, listed with their model tier in "Issues and model routing".
+**Open work:** GitHub issues #28 to #38, listed with their model tier in "Issues and model routing".
 
 **Scope change (2026-11-14, ADR-019):** the owner checked and both TD chequing and CIBC credit card offer statement PDFs only. PDF parsing now comes first: the order is M5, M6, M7, then M2, M3, M4. The CSV code below stays on `main` with no new work, and the real-CSV fixtures (AC-3, real part) are dropped. `src/pdf/extract.ts` and `tools/pdf-dump.ts` (M5 tasks 1 and 4) are built: the owner runs `npm run pdf:dump` on his PDFs to produce a masked layout dump. `normalize` (M5 task 2) is built too. The `reconcile` checkpoint and totals methods are merged (PR #24), and the TD profile, `detect` and `parse` are built against a synthetic generator (M6 task 4). Next: the UI accepts PDFs (M6 task 6).
 
@@ -30,14 +30,14 @@ Living document. Update it at the end of every working session. Never record sta
 
 **CI note:** the earlier `verify` failures were not code. `npx playwright install --with-deps chromium` failed because the runner could not resolve `*.ubuntu.com` (apt, `Temporary failure resolving`). A rerun passed. If it recurs, cache the Playwright browsers or retry that step, in its own branch.
 
-**Direction under discussion (ADR-021, Proposed, 2026-11-20):** the owner wants the app to help read unfamiliar transaction descriptions (a readout of where the money went), without an LLM and without training a model. Read ADR-021 and PRD §1a before touching M2 or M3. It does not change M5 to M7. Waiting on the owner: run `npm run census` on his real statements and share the counts only; the ADR is completed from them.
+**Direction (ADR-021, Accepted 2026-11-25, PR #52):** the owner wants the app to help read unfamiliar transaction descriptions (a readout of where the money went), without an LLM and without training a model. Read ADR-021 and PRD §1a before touching M2 or M3. It did not change M5 and M6. The census was run (counts in the session log) and the ADR completed; the decoder core is merged (#53).
 
 **Next session, in order:**
 
 1. Run `git log origin/main` and `gh pr list` to confirm what is merged. State at the end of 2026-11-25: `main` is at PR #55, no open PRs, 576 tests, the two real TD statements Verify, CIBC dropped (ADR-028). Never `--admin`; never force-push.
 2. Work in this order, one PR each, through `ship-task` (model tier in "Issues and model routing"; Sonnet implements, Opus designs and reviews parse, reconcile, pdf and CSP):
    1. **#33, rest:** the NSI brand table (`tools/` script filtering name-suggestion-index to Canada and a few shop kinds, writes `src/core/merchant/brands.ts` with the BSD notice; README credit; measure the bundle size; RESEARCH §13 says it is not yet measured). A real alias table only with a named public source per entry.
-   2. **UI restyle PR 2:** dark mode (own PR: choose colours, measure contrast, `prefers-color-scheme` plus a manual switch if wanted). Style source: `UI/DESIGN.md`, vibe only (see the 2026-11-25 theme entry). taste-skill and impeccable are allowed by the owner for UI; `agent-skills:frontend-ui-engineering` is required.
+   2. **UI restyle PR 2:** dark mode (own PR: choose colours, measure contrast, `prefers-color-scheme` plus a manual switch if wanted). Style source: `UI/DESIGN.md`, vibe only (see the 2026-11-25 theme entry); that folder is untracked on the owner's machine until he decides to commit it, so a fresh clone lacks it: the theme tokens already in `src/index.css` and RESEARCH §14 are the source in that case. `agent-skills:frontend-ui-engineering` is required. The owner allowed taste-skill and impeccable for the 2026-11-25 restyle only; `.claude/rules/skill-selection.md` does not route them, so using them again needs his say-so recorded here and a routing-page change through a PR.
    3. **#36, the readout screen** in this style: totals by reading (AC-17, an aggregation function in core first), label UI with file download and load (AC-18), then demo mode (AC-10), the summary download and the calendar file (AC-14).
    4. **#34, recurring detection** (AC-6, AC-7): starts only after the owner writes the subscription list.
    5. **#37, M4:** deploy, README (TD chequing only, ADR-028), launch; each needs the owner's approval.
