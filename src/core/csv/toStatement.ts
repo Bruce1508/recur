@@ -1,3 +1,4 @@
+import { restoreText } from "../exportCsv";
 import { parseMoney } from "../money";
 import { parseDate } from "../plainDate";
 import type {
@@ -112,7 +113,9 @@ export function toStatement(
     transactions.push({
       id: `${id}:${n}`,
       date,
-      description: cell(row, mapping.description).replace(/\s+/g, " "),
+      description: restoreText(
+        cell(row, mapping.description).replace(/\s+/g, " "),
+      ),
       amount: cents,
       ...(balanceAfter === undefined ? {} : { balanceAfter }),
       source: { statementId: id, input: "csv", row: n },
