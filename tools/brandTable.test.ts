@@ -137,6 +137,9 @@ describe("generated BRANDS", () => {
   test("banking and common-word lines never get a brand name", () => {
     for (const d of [
       "MOBILE DEPOSIT",
+      "INTERNATIONAL TRANSFER FEE",
+      "FOREIGN CURRENCY CONVERSION",
+      "DISCOVERY CHANNEL",
       "MOBILE PAYMENT",
       "MOBILE CHEQUE DEPOSIT",
       "CASINO NIAGARA",

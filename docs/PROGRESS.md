@@ -173,7 +173,7 @@ Newest first. One entry per session: date, what changed, what was verified, what
 
 ### 2026-11-25 — Brand table from name-suggestion-index (#33)
 
-- Added `tools/brandTable.ts` (filter and render, tested incl. a fast-check property), `npm run brands:build -- <nsi.min.json>` and the generated `src/core/merchant/brands.ts` (1,371 brands, 22 KB gzipped; review round 1 fixed generic-word and ambiguous forms, BSD notice in the file, README credit). Not wired into the app yet (#36). Measurement in RESEARCH §13. Previous PRs #56 and #57 were docs only. Next: dark mode, then the readout screen (#36).
+- Added `tools/brandTable.ts` (filter and render, tested incl. a fast-check property), `npm run brands:build -- <nsi.min.json>` and the generated `src/core/merchant/brands.ts` (1,353 brands, 22 KB gzipped; two review rounds fixed generic-word and ambiguous forms, BSD notice in the file, README credit). Not wired into the app yet (#36). Measurement in RESEARCH §13. Previous PRs #56 and #57 were docs only. Next: dark mode, then the readout screen (#36).
 
 ### 2026-11-25 — Scope change: CIBC dropped (ADR-028)
 

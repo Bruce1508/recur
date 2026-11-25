@@ -848,10 +848,6 @@ export const BRANDS: readonly Brand[] = [
     match: ["CHA PAYOM"],
   },
   {
-    name: "Champion",
-    match: ["CHAMPION"],
-  },
-  {
     name: "Champs Sports",
     match: ["CHAMPS SPORTS"],
   },
@@ -1204,10 +1200,6 @@ export const BRANDS: readonly Brand[] = [
     match: ["DECATHLON"],
   },
   {
-    name: "Defender",
-    match: ["DEFENDER"],
-  },
-  {
     name: "Deichmann",
     match: ["DEICHMANN", "DEICHMANN SCHUHE"],
   },
@@ -1262,10 +1254,6 @@ export const BRANDS: readonly Brand[] = [
   {
     name: "Diptyque'",
     match: ["DIPTYQUE"],
-  },
-  {
-    name: "Discovery",
-    match: ["DISCOVERY"],
   },
   {
     name: "Disney Store",
@@ -1395,10 +1383,6 @@ export const BRANDS: readonly Brand[] = [
   {
     name: "Ecco",
     match: ["ECCO", "ECCO SHOES"],
-  },
-  {
-    name: "Eclipse",
-    match: ["ECLIPSE"],
   },
   {
     name: "Eddie Bauer",
@@ -1759,7 +1743,7 @@ export const BRANDS: readonly Brand[] = [
   },
   {
     name: "Genesis",
-    match: ["GENESIS", "GENESIS MOTOR", "GENESIS MOTORS"],
+    match: ["GENESIS MOTOR", "GENESIS MOTORS"],
   },
   {
     name: "George Richards Big & Tall Menswear",
@@ -1776,10 +1760,6 @@ export const BRANDS: readonly Brand[] = [
   {
     name: "Gerry Weber",
     match: ["GERRY WEBER"],
-  },
-  {
-    name: "Giant",
-    match: ["GIANT"],
   },
   {
     name: "Giant Tiger",
@@ -2202,10 +2182,6 @@ export const BRANDS: readonly Brand[] = [
     match: ["INSOMNIA COOKIES"],
   },
   {
-    name: "International",
-    match: ["INTERNATIONAL"],
-  },
-  {
     name: "International Clothiers",
     match: ["INTERNATIONAL CLOTHIERS"],
   },
@@ -2388,10 +2364,6 @@ export const BRANDS: readonly Brand[] = [
   {
     name: "Just Over the Top",
     match: ["JUST OVER THE TOP"],
-  },
-  {
-    name: "Justice",
-    match: ["JUSTICE"],
   },
   {
     name: "KBTR",
@@ -2899,7 +2871,7 @@ export const BRANDS: readonly Brand[] = [
   },
   {
     name: "Marathon",
-    match: ["MARATHON", "MARATHON GAS"],
+    match: ["MARATHON GAS"],
   },
   {
     name: "Marble Slab Creamery",
@@ -3645,10 +3617,6 @@ export const BRANDS: readonly Brand[] = [
     match: ["PERKINS"],
   },
   {
-    name: "Persona",
-    match: ["PERSONA"],
-  },
-  {
     name: "Pet Valu",
     match: ["PET VALU"],
   },
@@ -3705,10 +3673,6 @@ export const BRANDS: readonly Brand[] = [
     match: ["PIAGET"],
   },
   {
-    name: "Picture",
-    match: ["PICTURE"],
-  },
-  {
     name: "Pierre Cardin",
     match: ["PIERRE CARDIN"],
   },
@@ -3723,10 +3687,6 @@ export const BRANDS: readonly Brand[] = [
   {
     name: "Pinko",
     match: ["PINKO"],
-  },
-  {
-    name: "Pioneer",
-    match: ["PIONEER"],
   },
   {
     name: "Pita Pit",
@@ -3933,10 +3893,6 @@ export const BRANDS: readonly Brand[] = [
     match: ["QUESADA"],
   },
   {
-    name: "Quickly",
-    match: ["QUICKLY"],
-  },
-  {
     name: "QuikTrip",
     match: ["QUIKTRIP", "QUIKTRIP CORPORATION"],
   },
@@ -4047,10 +4003,6 @@ export const BRANDS: readonly Brand[] = [
   {
     name: "Repsol",
     match: ["REPSOL"],
-  },
-  {
-    name: "Reserved",
-    match: ["RESERVED"],
   },
   {
     name: "Restoration Hardware",
@@ -4261,20 +4213,12 @@ export const BRANDS: readonly Brand[] = [
     match: ["SAVE-ON-FOODS"],
   },
   {
-    name: "Savers",
-    match: ["SAVERS"],
-  },
-  {
     name: "Sbarro",
     match: ["SBARRO", "SBARRO PIZZERIA"],
   },
   {
     name: "Scania",
     match: ["SCANIA"],
-  },
-  {
-    name: "Scores",
-    match: ["SCORES"],
   },
   {
     name: "Scotch & Soda",
@@ -4380,10 +4324,6 @@ export const BRANDS: readonly Brand[] = [
     match: ["SHOPPERS DRUG MART"],
   },
   {
-    name: "Showcase",
-    match: ["SHOWCASE"],
-  },
-  {
     name: "Shuyi Tealicious",
     match: ["SHUYI TEALICIOUS"],
   },
@@ -4394,10 +4334,6 @@ export const BRANDS: readonly Brand[] = [
   {
     name: "Sinsay",
     match: ["SINSAY"],
-  },
-  {
-    name: "Sirens",
-    match: ["SIRENS"],
   },
   {
     name: "Skechers",
@@ -4484,10 +4420,6 @@ export const BRANDS: readonly Brand[] = [
   {
     name: "Spar Express",
     match: ["SPAR EXPRESS"],
-  },
-  {
-    name: "Specialized",
-    match: ["SPECIALIZED"],
   },
   {
     name: "Specsavers",
@@ -5091,7 +5023,7 @@ export const BRANDS: readonly Brand[] = [
   },
   {
     name: "Triumph",
-    match: ["AMOS STYLE", "TRIUMPH"],
+    match: ["AMOS STYLE"],
   },
   {
     name: "True Religion",
@@ -5180,10 +5112,6 @@ export const BRANDS: readonly Brand[] = [
   {
     name: "Vacheron Constantin",
     match: ["VACHERON CONSTANTIN"],
-  },
-  {
-    name: "Valentine",
-    match: ["VALENTINE"],
   },
   {
     name: "Valentino",
