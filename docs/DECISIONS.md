@@ -4,33 +4,34 @@
 
 A record is changed only by adding a new record that supersedes it. Statuses: Proposed, Accepted, Superseded.
 
-| #   | Decision                                                                        | Status                                                                 |
-| --- | ------------------------------------------------------------------------------- | ---------------------------------------------------------------------- |
-| 001 | Client-only static app; no backend, no telemetry                                | Proposed                                                               |
-| 002 | `pdfjs-dist` for PDF text extraction                                            | Proposed                                                               |
-| 003 | Header-anchored column geometry for parsing                                     | Proposed                                                               |
-| 004 | Balance reconciliation is a hard gate; fail closed                              | Proposed                                                               |
-| 005 | Redacted positioned-text fixtures; no real PDFs anywhere                        | Proposed                                                               |
-| 006 | MIT licence; independent implementation; monopoly as a reference for facts only | Accepted (choice delegated by the owner, 2026-11-10)                   |
-| 007 | React + Vite + TypeScript                                                       | Proposed                                                               |
-| 008 | No custom Web Worker in the MVP                                                 | Proposed                                                               |
-| 009 | Cloudflare Pages, with a host-independent CSP                                   | Proposed                                                               |
-| 010 | In-memory state only                                                            | Proposed                                                               |
-| 011 | Integer cents and plain date strings                                            | Proposed                                                               |
-| 012 | TypeScript 7 + Biome + Vitest + Playwright, npm, Node 24                        | Proposed                                                               |
-| 013 | No LLM in the product path                                                      | Proposed                                                               |
-| 014 | Rule-based recurring detection                                                  | Proposed                                                               |
-| 015 | Autonomous PR workflow and Claude Code automation                               | Accepted                                                               |
-| 016 | Real statements live outside the repository                                     | Accepted                                                               |
-| 017 | Run `gh` and `git push/fetch/pull` as standalone commands                       | Accepted                                                               |
-| 018 | CSV import first, PDF parsing second; usefulness is the first goal              | Accepted (owner's decision, 2026-11-10); stage order superseded by 019 |
-| 019 | PDF first for the owner's banks; no further CSV work                            | Accepted (owner's decision, 2026-11-14)                                |
-| 020 | Checkpoint and totals reconciliation; amount columns found from the amounts     | Accepted (owner delegated the design, 2026-11-14)                      |
-| 021 | Reframe: help the user read their transactions; verified numbers stay on device | Accepted (owner delegated the details, 2026-11-25)                     |
-| 022 | Prose rules become lint and coverage checks                                     | Accepted (2026-11-20)                                                  |
-| 023 | One routing page for installed skill packs                                      | Accepted (2026-11-20)                                                  |
-| 024 | Close the skill-routing loophole with a required step and a template            | Accepted (2026-11-20)                                                  |
-| 025 | Statement chaining: closing balance against the next opening balance            | Accepted (2026-11-20)                                                  |
+| #   | Decision                                                                                | Status                                                                 |
+| --- | --------------------------------------------------------------------------------------- | ---------------------------------------------------------------------- |
+| 001 | Client-only static app; no backend, no telemetry                                        | Proposed                                                               |
+| 002 | `pdfjs-dist` for PDF text extraction                                                    | Proposed                                                               |
+| 003 | Header-anchored column geometry for parsing                                             | Proposed                                                               |
+| 004 | Balance reconciliation is a hard gate; fail closed                                      | Proposed                                                               |
+| 005 | Redacted positioned-text fixtures; no real PDFs anywhere                                | Proposed                                                               |
+| 006 | MIT licence; independent implementation; monopoly as a reference for facts only         | Accepted (choice delegated by the owner, 2026-11-10)                   |
+| 007 | React + Vite + TypeScript                                                               | Proposed                                                               |
+| 008 | No custom Web Worker in the MVP                                                         | Proposed                                                               |
+| 009 | Cloudflare Pages, with a host-independent CSP                                           | Proposed                                                               |
+| 010 | In-memory state only                                                                    | Proposed                                                               |
+| 011 | Integer cents and plain date strings                                                    | Proposed                                                               |
+| 012 | TypeScript 7 + Biome + Vitest + Playwright, npm, Node 24                                | Proposed                                                               |
+| 013 | No LLM in the product path                                                              | Proposed                                                               |
+| 014 | Rule-based recurring detection                                                          | Proposed                                                               |
+| 015 | Autonomous PR workflow and Claude Code automation                                       | Accepted                                                               |
+| 016 | Real statements live outside the repository                                             | Accepted                                                               |
+| 017 | Run `gh` and `git push/fetch/pull` as standalone commands                               | Accepted                                                               |
+| 018 | CSV import first, PDF parsing second; usefulness is the first goal                      | Accepted (owner's decision, 2026-11-10); stage order superseded by 019 |
+| 019 | PDF first for the owner's banks; no further CSV work                                    | Accepted (owner's decision, 2026-11-14)                                |
+| 020 | Checkpoint and totals reconciliation; amount columns found from the amounts             | Accepted (owner delegated the design, 2026-11-14)                      |
+| 021 | Reframe: help the user read their transactions; verified numbers stay on device         | Accepted (owner delegated the details, 2026-11-25)                     |
+| 022 | Prose rules become lint and coverage checks                                             | Accepted (2026-11-20)                                                  |
+| 023 | One routing page for installed skill packs                                              | Accepted (2026-11-20)                                                  |
+| 024 | Close the skill-routing loophole with a required step and a template                    | Accepted (2026-11-20)                                                  |
+| 025 | Statement chaining: closing balance against the next opening balance                    | Accepted (2026-11-20)                                                  |
+| 026 | TD page totals and overdrawn-balance suffix; per-page totals sum to the statement total | Accepted (owner delegated, 2026-11-25)                                 |
 
 All records become Accepted when Bruce signs off on the PRD.
 
