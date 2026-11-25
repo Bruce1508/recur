@@ -10,6 +10,10 @@ CSV exports come first; verified PDF statement parsing follows.
 - Architecture: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)
 - Roadmap and progress: [docs/ROADMAP.md](docs/ROADMAP.md), [docs/PROGRESS.md](docs/PROGRESS.md)
 
+## Credits
+
+- Brand names for the transaction readout come from the OpenStreetMap [name-suggestion-index](https://github.com/osmlab/name-suggestion-index) (BSD 3-Clause, Copyright (c) 2018 Bryan Housel and contributors), filtered into `src/core/merchant/brands.ts` by `npm run brands:build`.
+
 ## Licence
 
 MIT. See [LICENSE](LICENSE).
