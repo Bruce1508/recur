@@ -4,7 +4,7 @@
 
 ## Overview
 
-**Re-ordered by ADR-019 (2026-11-14): PDF first for the owner's banks.** TD chequing and CIBC credit card offer statement PDFs only, so M1's code is done and the next milestones are M5, M6, M7, then M2, M3, M4. The CSV pipeline stays on `main` but gets no new work. The target weeks in the table below predate this change and are stale; re-plan them when M5 starts. Where M2 to M4 below say "stage 1", read "after the PDF milestones".
+**Re-ordered by ADR-019 (2026-11-14): PDF first for the owner's banks.** TD chequing and CIBC credit card offer statement PDFs only, so M1's code is done and the next milestones are M5, M6, then M2, M3, M4 (M7, CIBC, was dropped by ADR-028). The CSV pipeline stays on `main` but gets no new work. The target weeks in the table below predate this change and are stale; re-plan them when M5 starts. Where M2 to M4 below say "stage 1", read "after the PDF milestones".
 
 The earlier order was CSV first, PDF second (ADR-018). Stage 1 ships a useful product that works with most banks. Stage 2 adds verified PDF parsing for the history and accounts that CSV exports do not reach.
 
@@ -30,7 +30,7 @@ The earlier order was CSV first, PDF second (ADR-018). Stage 1 ships a useful pr
 
 **Never cut:** the verification status on every import, the privacy tests, demo mode. They are the project's reason to exist.
 
-**Stage gate after M4.** Superseded for TD and CIBC by ADR-019: M5 to M7 start now. The validation in M4 still decides whether to support other banks.
+**Stage gate after M4.** Superseded for TD by ADR-019: M5 and M6 start now (M7 dropped, ADR-028). The validation in M4 still decides whether to support other banks.
 
 **Resume checkpoint.** After M6 the repository shows the hardest technical part (verified PDF table extraction with tests). After M4 there is also a live product with real users' feedback.
 
@@ -49,7 +49,7 @@ A milestone is done only when all of these are true:
 
 ## M0 — Validation gate and project bootstrap (done 2026-11-10)
 
-Scaffold, CSP placeholder, CI job `verify`, privacy probe, and the gate decision **go**. Target formats: TD chequing and CIBC credit card. Details are in `docs/PROGRESS.md`. One item stays open and does not block anything: the owner's test of existing tools (open question 5).
+Scaffold, CSP placeholder, CI job `verify`, privacy probe, and the gate decision **go**. Target formats then: TD chequing and CIBC credit card (CIBC dropped later, ADR-028). Details are in `docs/PROGRESS.md`. One item stays open and does not block anything: the owner's test of existing tools (open question 5).
 
 ---
 
