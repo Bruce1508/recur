@@ -12,14 +12,14 @@ The earlier order was CSV first, PDF second (ADR-018). Stage 1 ships a useful pr
 | --- | ----------------------------------------------------- | ----- | ------- | ------------ | ---------- |
 | M0  | Validation gate and project bootstrap                 | —     | done    | Nov 10       | —          |
 | M1  | CSV import, ledger, fixture tooling, walking skeleton | 1     | 12–15 h | Nov 11–17    | M0         |
-| M2  | Recurring-charge detection                            | 1     | 12–15 h | Nov 18–24    | M7         |
-| M3  | Product UI, demo mode, exports, trust features        | 1     | 12–14 h | Nov 25–Dec 1 | M2         |
+| M2  | Transaction decoder and recurring-charge detection    | 1     | 18–22 h | Nov 18–24    | M7         |
+| M3  | Product UI, demo mode, exports, trust features        | 1     | 14–17 h | Nov 25–Dec 1 | M2         |
 | M4  | Hardening, deployment, small launch, validation       | 1     | 8–10 h  | Dec 2–8      | M3         |
 | M5  | PDF extraction, line model, PDF fixture tooling       | 2     | 10–12 h | Dec 9–15     | M1         |
 | M6  | First PDF format (TD chequing) with reconciliation    | 2     | 14–16 h | Dec 16–23    | M5         |
 | M7  | Second PDF format (CIBC credit card)                  | 2     | 8–10 h  | Dec 24–30    | M6         |
 
-**Stage 1 total: 44–54 hours. Stage 2 total: 32–38 hours.** The owner reported more than 20 hours a week (2026-11-10). The dates are estimates, and mid-December exams will likely stretch stage 2.
+**Stage 1 total: 52–64 hours (M2 and M3 grew with ADR-021). Stage 2 total: 32–38 hours.** The owner reported more than 20 hours a week (2026-11-10). The dates are estimates, and mid-December exams will likely stretch stage 2.
 
 **Cut order if behind** (first cut first):
 
@@ -85,31 +85,37 @@ Scaffold, CSP placeholder, CI job `verify`, privacy probe, and the gate decision
 
 ---
 
-## M2 — Recurring-charge detection
+## M2 — Transaction decoder and recurring-charge detection
 
-**Objective.** Find recurring charges in a ledger and explain each finding.
+**Objective.** Say what each line probably is, or that it is unknown (ADR-021); find recurring charges in a ledger and explain each finding; total where the money went.
 
 **Dependencies.** M7 (ADR-019 order); the ledger it reads is M1 code, fed by PDF statements.
 
-**Tasks**
+**Tasks** (re-ordered by ADR-021, 2026-11-25: decoder first, then its evaluation, then recurring detection, which groups by the decoder's key)
 
 1. Before reading any detector output, the owner writes down the subscriptions he believes he has (ground truth for AC-7).
-2. (ADR-021, proposed: this task becomes the transaction decoder, with FR-16 to FR-18; wait for the owner's census numbers before designing it.) `merchant/`: normalisation rules and alias table, tested against a hand-written list of realistic descriptors. Mark descriptors that hide the real service (app-store and payment-processor charges) as ambiguous (FR-14).
-3. `recurring/`: grouping, cadence bucketing, consistency scoring, amount stability, price-change detection, confidence, next expected date, monthly and annual cost.
-4. Annual cadence: two charges from the same merchant about a year apart are a confirmed annual series; a single large charge stays "possible". This needs 13 months or more of history, and the UI says so when the history is shorter.
-5. Labelled scenario suite (≥ 30): fixed monthly, price increase, weekly, bi-weekly, annual, variable bills, groceries and coffee as negatives, refunds, missed month, duplicate merchants.
-6. Precision and recall report printed by the test run.
-7. Property tests: results do not depend on input order; no series from fewer than two occurrences.
+2. `merchant/` types and cleaning rules: bank-code tail, processor prefix (FR-14), leading asterisk, glued amount, store numbers, reference codes, city and province; `merchantKey`. `bankCodes` field on the bank profile, empty for TD.
+3. Brand table: a `tools/` script that filters the name-suggestion-index to Canada and a few shop kinds and writes `src/core/merchant/brands.ts` with the BSD notice; README credit; measure the added bundle size. A small hand-written alias table for online services, each entry with a public source.
+4. Reading by precedence (label, brand, cleaned text, unknown) and user labels in core: apply by key, label-file parse and serialise, fail closed on a malformed file (FR-18 core part).
+5. Behaviour hints per key: count, cadence bucket, amount stability, dates, verified flag.
+6. Descriptor evaluation suite (AC-16): ≥ 100 invented descriptions in the census mix with expected readings, the printed correct/wrong/unknown report per source, and fast-check properties (order independence; hints never yield a name; no name on an expected-unknown line).
+7. `recurring/`: grouping by `merchantKey`, cadence bucketing, consistency scoring, amount stability, price-change detection, confidence, next expected date, monthly and annual cost.
+8. Annual cadence: two charges from the same merchant about a year apart are a confirmed annual series; a single large charge stays "possible". This needs 13 months or more of history, and the UI says so when the history is shorter.
+9. Labelled scenario suite (≥ 30): fixed monthly, price increase, weekly, bi-weekly, annual, variable bills, groceries and coffee as negatives, refunds, missed month, duplicate merchants.
+10. Precision and recall report printed by the test run.
+11. Property tests: results do not depend on input order; no series from fewer than two occurrences.
+12. Readout aggregation in core (FR-17, AC-17): totals by reading that partition the ledger to the cent, unknown as its own group, new this period, unusual against earlier lines, verification status carried through.
 
 **Acceptance criteria**
 
 - AC-6: precision ≥ 0.90 and recall ≥ 0.80 on the labelled suite.
 - AC-7: at least 80% of the owner's hand-listed subscriptions are found in his own data.
+- AC-16: the decoder meets its limits on the descriptor suite; AC-17 and AC-18 for the core parts (aggregation, labels).
 - Every series exposes its evidence transactions.
 
-**Verification.** Test output with the confusion matrix; the AC-7 result recorded as counts only.
+**Verification.** Test output with the confusion matrix and the decoder report; the AC-7 result recorded as counts only.
 
-**Done when** both criteria pass, or the shortfall and its cause are documented with a tuning plan.
+**Done when** AC-6, AC-7 and AC-16 pass, or the shortfall and its cause are documented with a tuning plan.
 
 ---
 
@@ -120,6 +126,8 @@ Scaffold, CSP placeholder, CI job `verify`, privacy probe, and the gate decision
 **Dependencies.** M2.
 
 **Tasks**
+
+ADR-021: the main results screen is the readout (FR-17): where the money went by decoded name, unknown lines as their own group, each reading with its source and behaviour hint, naming a line (FR-18) and label-file download and load. The recurring list is one section of it. Tasks already merged stay as they are; the readout screen, the label UI and AC-17 and AC-18's Playwright parts are added here and need the routed `frontend-ui-engineering` skill.
 
 1. Empty, processing, results and error states; Subscriptions, Transactions and Files views.
 2. "How to download your transactions" help: short steps per supported bank, written from the owner's own experience; generic steps for other banks.
@@ -136,7 +144,7 @@ Scaffold, CSP placeholder, CI job `verify`, privacy probe, and the gate decision
 
 **Acceptance criteria**
 
-- AC-4, AC-5, AC-8, AC-9, AC-10, AC-14.
+- AC-4, AC-5, AC-8, AC-9, AC-10, AC-14; the UI parts of AC-17 and AC-18.
 - No serious issues in the automated accessibility scan.
 - A person unfamiliar with the project completes the demo flow unaided (one hallway test).
 
