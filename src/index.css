@@ -39,19 +39,20 @@
 }
 
 @theme {
-  --color-ink: #231c33;
-  --color-paper: #f9f7f5;
-  --color-white-sheet: #ffffff;
-  --color-quiet-gray: #736c83;
-  --color-blurple: #5522fa;
-  --color-mint-note: #b3f4e0;
-  --color-salmon-glow: #ec8580;
-  --color-salmon-wash: #fcc9c6;
-  --color-sky-wash: #b6dbff;
-  --color-canary-note: #fff5ca;
-  --color-warning-ink: #7a4100;
-  --color-stone: #edeae6;
-  --color-rose-deep: #c2304f;
+  --color-ink: light-dark(#231c33, #f1edf8);
+  --color-paper: light-dark(#f9f7f5, #15111d);
+  --color-white-sheet: light-dark(#ffffff, #1f1a2b);
+  --color-quiet-gray: light-dark(#736c83, #a9a2bb);
+  --color-blurple: light-dark(#5522fa, #b3a0ff);
+  --color-mint-note: light-dark(#b3f4e0, #0e3a2e);
+  --color-salmon-glow: light-dark(#ec8580, #ff9d97);
+  --color-salmon-wash: light-dark(#fcc9c6, #5c2a30);
+  --color-sky-wash: light-dark(#b6dbff, #1f3f66);
+  --color-canary-note: light-dark(#fff5ca, #4a3f17);
+  --color-warning-ink: light-dark(#7a4100, #ffd37a);
+  --color-stone: light-dark(#edeae6, #2e2840);
+  --color-rose-deep: light-dark(#c2304f, #ff8fa8);
+  --color-shadow: light-dark(#231c33, #000000);
 
   --font-display:
     "Nunito Sans", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
@@ -67,20 +68,49 @@
   --radius-pill: 43.68px;
 
   --shadow-sheet:
-    0 0 0 1px rgba(35, 28, 51, 0.02), 0 6.4px 51.2px -25.6px rgba(
-      35,
-      28,
-      51,
-      0.2
+    0 0 0 1px color-mix(in srgb, var(--color-shadow) 2%, transparent),
+    0 6.4px 51.2px -25.6px color-mix(
+      in srgb,
+      var(--color-shadow) 20%,
+      transparent
     ),
-    0 12.8px 76.8px -32px rgba(35, 28, 51, 0.3),
-    0 12.8px 25.6px -38.4px rgba(35, 28, 51, 0.4),
-    0 25.6px 38.4px -51.2px rgba(35, 28, 51, 0.5),
-    0 38.4px 51.2px -64px rgba(35, 28, 51, 0.6);
+    0 12.8px 76.8px -32px color-mix(
+      in srgb,
+      var(--color-shadow) 30%,
+      transparent
+    ),
+    0 12.8px 25.6px -38.4px color-mix(
+      in srgb,
+      var(--color-shadow) 40%,
+      transparent
+    ),
+    0 25.6px 38.4px -51.2px color-mix(
+      in srgb,
+      var(--color-shadow) 50%,
+      transparent
+    ),
+    0 38.4px 51.2px -64px color-mix(
+      in srgb,
+      var(--color-shadow) 60%,
+      transparent
+    );
   --shadow-pill:
-    0 3.2px 6.4px -3.2px rgba(35, 28, 51, 0.2),
-    0 6.4px 12.8px -6.4px rgba(35, 28, 51, 0.4),
-    0 9.6px 19.2px -9.6px rgba(35, 28, 51, 0.6);
+    0 3.2px 6.4px -3.2px
+    color-mix(in srgb, var(--color-shadow) 20%, transparent),
+    0 6.4px 12.8px -6.4px
+    color-mix(in srgb, var(--color-shadow) 40%, transparent),
+    0 9.6px 19.2px -9.6px
+    color-mix(in srgb, var(--color-shadow) 60%, transparent);
+}
+
+:root {
+  color-scheme: light dark;
+}
+:root[data-theme="light"] {
+  color-scheme: light;
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
 }
 
 @layer base {
@@ -102,7 +132,7 @@
     outline: 2px solid var(--color-blurple);
   }
   select {
-    border: 1px solid rgba(35, 28, 51, 0.55);
+    border: 1px solid color-mix(in srgb, var(--color-ink) 55%, transparent);
     border-radius: 8px;
     background: var(--color-white-sheet);
     padding: 2px 8px;
