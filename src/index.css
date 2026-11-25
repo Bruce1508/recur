@@ -102,7 +102,7 @@
     outline: 2px solid var(--color-blurple);
   }
   select {
-    border: 1px solid rgba(35, 28, 51, 0.35);
+    border: 1px solid rgba(35, 28, 51, 0.55);
     border-radius: 8px;
     background: var(--color-white-sheet);
     padding: 2px 8px;

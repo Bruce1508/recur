@@ -67,7 +67,7 @@ const H2 = "font-display text-2xl font-extrabold";
 const BTN =
   "rounded-pill bg-mint-note px-5 py-1.5 font-medium text-blurple shadow-pill";
 const BTN_QUIET =
-  "rounded-pill border border-ink/35 bg-white-sheet px-4 py-1 text-ink";
+  "rounded-pill border border-ink/55 bg-white-sheet px-4 py-1 text-ink";
 const FINE = "text-sm text-quiet-gray";
 const TH = "pr-4 pb-2 text-left font-bold";
 const TD = "border-t border-stone py-1.5 pr-4";
@@ -322,7 +322,7 @@ export function Importer() {
   return (
     <div className="mt-8 space-y-6">
       <label
-        className={`block ${SHEET} border-2 border-dashed border-ink/25`}
+        className={`block ${SHEET} border-2 border-dashed border-ink/55`}
         onDragOver={(ev) => ev.preventDefault()}
         onDrop={(ev) => {
           ev.preventDefault();
