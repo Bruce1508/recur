@@ -4,33 +4,33 @@
 
 ## Overview
 
-**Re-ordered by ADR-019 (2026-11-14): PDF first for the owner's banks.** TD chequing and CIBC credit card offer statement PDFs only, so M1's code is done and the next milestones are M5, M6, M7, then M2, M3, M4. The CSV pipeline stays on `main` but gets no new work. The target weeks in the table below predate this change and are stale; re-plan them when M5 starts. Where M2 to M4 below say "stage 1", read "after the PDF milestones".
+**Re-ordered by ADR-019 (2026-11-14): PDF first for the owner's banks.** TD chequing and CIBC credit card offer statement PDFs only, so M1's code is done and the next milestones are M5, M6, then M2, M3, M4 (M7, CIBC, was dropped by ADR-028). The CSV pipeline stays on `main` but gets no new work. The target weeks in the table below predate this change and are stale; re-plan them when M5 starts. Where M2 to M4 below say "stage 1", read "after the PDF milestones".
 
 The earlier order was CSV first, PDF second (ADR-018). Stage 1 ships a useful product that works with most banks. Stage 2 adds verified PDF parsing for the history and accounts that CSV exports do not reach.
 
-| #   | Milestone                                             | Stage | Effort  | Target week  | Depends on |
-| --- | ----------------------------------------------------- | ----- | ------- | ------------ | ---------- |
-| M0  | Validation gate and project bootstrap                 | —     | done    | Nov 10       | —          |
-| M1  | CSV import, ledger, fixture tooling, walking skeleton | 1     | 12–15 h | Nov 11–17    | M0         |
-| M2  | Transaction decoder and recurring-charge detection    | 1     | 18–22 h | Nov 18–24    | M7         |
-| M3  | Product UI, demo mode, exports, trust features        | 1     | 14–17 h | Nov 25–Dec 1 | M2         |
-| M4  | Hardening, deployment, small launch, validation       | 1     | 8–10 h  | Dec 2–8      | M3         |
-| M5  | PDF extraction, line model, PDF fixture tooling       | 2     | 10–12 h | Dec 9–15     | M1         |
-| M6  | First PDF format (TD chequing) with reconciliation    | 2     | 14–16 h | Dec 16–23    | M5         |
-| M7  | Second PDF format (CIBC credit card)                  | 2     | 8–10 h  | Dec 24–30    | M6         |
+| #   | Milestone                                                 | Stage | Effort  | Target week  | Depends on |
+| --- | --------------------------------------------------------- | ----- | ------- | ------------ | ---------- |
+| M0  | Validation gate and project bootstrap                     | —     | done    | Nov 10       | —          |
+| M1  | CSV import, ledger, fixture tooling, walking skeleton     | 1     | 12–15 h | Nov 11–17    | M0         |
+| M2  | Transaction decoder and recurring-charge detection        | 1     | 18–22 h | Nov 18–24    | M6         |
+| M3  | Product UI, demo mode, exports, trust features            | 1     | 14–17 h | Nov 25–Dec 1 | M2         |
+| M4  | Hardening, deployment, small launch, validation           | 1     | 8–10 h  | Dec 2–8      | M3         |
+| M5  | PDF extraction, line model, PDF fixture tooling           | 2     | 10–12 h | Dec 9–15     | M1         |
+| M6  | First PDF format (TD chequing) with reconciliation        | 2     | 14–16 h | Dec 16–23    | M5         |
+| M7  | ~~Second PDF format (CIBC credit card)~~ dropped, ADR-028 | 2     | —       | —            | —          |
 
-**Stage 1 total: 52–64 hours (M2 and M3 grew with ADR-021). Stage 2 total: 32–38 hours.** The owner reported more than 20 hours a week (2026-11-10). The dates are estimates, and mid-December exams will likely stretch stage 2.
+**Stage 1 total: 52–64 hours (M2 and M3 grew with ADR-021). Stage 2 total: 24–28 hours (M7 dropped, ADR-028).** The owner reported more than 20 hours a week (2026-11-10). The dates are estimates, and mid-December exams will likely stretch stage 2.
 
 **Cut order if behind** (first cut first):
 
 1. Calendar (`.ics`) export.
 2. Firefox and WebKit end-to-end runs (keep Chromium).
 3. Evidence drill-down polish in the UI.
-4. The second PDF format (M7).
+4. (M7, the second PDF format, is dropped: ADR-028.)
 
 **Never cut:** the verification status on every import, the privacy tests, demo mode. They are the project's reason to exist.
 
-**Stage gate after M4.** Superseded for TD and CIBC by ADR-019: M5 to M7 start now. The validation in M4 still decides whether to support other banks.
+**Stage gate after M4.** Superseded for TD by ADR-019: M5 and M6 start now (M7 dropped, ADR-028). The validation in M4 still decides whether to support other banks.
 
 **Resume checkpoint.** After M6 the repository shows the hardest technical part (verified PDF table extraction with tests). After M4 there is also a live product with real users' feedback.
 
@@ -49,7 +49,7 @@ A milestone is done only when all of these are true:
 
 ## M0 — Validation gate and project bootstrap (done 2026-11-10)
 
-Scaffold, CSP placeholder, CI job `verify`, privacy probe, and the gate decision **go**. Target formats: TD chequing and CIBC credit card. Details are in `docs/PROGRESS.md`. One item stays open and does not block anything: the owner's test of existing tools (open question 5).
+Scaffold, CSP placeholder, CI job `verify`, privacy probe, and the gate decision **go**. Target formats then: TD chequing and CIBC credit card (CIBC dropped later, ADR-028). Details are in `docs/PROGRESS.md`. One item stays open and does not block anything: the owner's test of existing tools (open question 5).
 
 ---
 
@@ -89,7 +89,7 @@ Scaffold, CSP placeholder, CI job `verify`, privacy probe, and the gate decision
 
 **Objective.** Say what each line probably is, or that it is unknown (ADR-021); find recurring charges in a ledger and explain each finding; total where the money went.
 
-**Dependencies.** M7 (ADR-019 order); the ledger it reads is M1 code, fed by PDF statements.
+**Dependencies.** M6 (M7 was dropped, ADR-028); the ledger it reads is M1 code, fed by PDF statements.
 
 **Tasks** (re-ordered by ADR-021, 2026-11-25: decoder first, then its evaluation, then recurring detection, which groups by the decoder's key)
 
@@ -236,7 +236,9 @@ ADR-021: the main results screen is the readout (FR-17): where the money went by
 
 ---
 
-## M7 — Second PDF format (CIBC credit card)
+## M7 — Second PDF format (CIBC credit card): DROPPED (ADR-028, 2026-11-25)
+
+The owner removed the CIBC credit card from the plan. Nothing below is scheduled. A second bank returns only through a new ADR. The notes are kept so the idea is not lost.
 
 **Objective.** Prove that a bank format is data, not code.
 
@@ -249,7 +251,7 @@ ADR-021: the main results screen is the readout (FR-17): where the money went by
 
 **Acceptance criteria**
 
-- AC-13 (two PDF formats, three fixtures each).
+- AC-13 (one PDF format after ADR-028, three fixtures).
 - The profile was added without modifying `parse/` or `reconcile.ts`. If it needed core changes, note what and why.
 
 **Verification.** CI.

@@ -121,15 +121,15 @@ The product has no telemetry by design (it would undercut the privacy claim), so
 - Recurring-charge detection with cadence (weekly to annual), typical amount, monthly and yearly cost, price-change flag, confidence, and the evidence rows.
 - Clear labels on charges whose real service cannot be known from the description (app-store and payment-processor charges).
 - Take the result away: download the recurring list, and a calendar file with the next renewal dates.
-- "How to download your statements" help for the supported banks (PDF for TD and CIBC; CSV help only for a bank that offers CSV and has been verified).
+- "How to download your statements" help for the supported banks (PDF for TD; CSV help only for a bank that offers CSV and has been verified).
 - "Try with sample data" demo using synthetic data.
 - A "How to verify nothing is uploaded" panel.
 - English UI.
 
-**Stage 2 — PDF, built first (M5–M7, before M2–M4; ADR-019)**
+**Stage 2 — PDF, built first (M5–M6, before M2–M4; ADR-019; M7 dropped, ADR-028)**
 
 - PDF statements as a second input, for history older than the CSV export reaches and for accounts with no export.
-- Two verified PDF formats: TD chequing and CIBC credit card, with balance reconciliation.
+- One verified PDF format, TD chequing, with balance reconciliation. The CIBC credit card format was dropped on 2026-11-25 (ADR-028); another bank is post-MVP.
 
 **Out (post-MVP backlog)**
 
@@ -172,7 +172,7 @@ More PDF formats, French-language files, scanned PDFs (OCR), password-protected 
 
 ## 11. Acceptance criteria
 
-Stage 1 is done when AC-1 to AC-12 and AC-14 to AC-18 hold. Stage 2 adds AC-13. ADR-019 builds AC-13's PDF formats (M5 to M7) before the rest of stage 1; the criteria themselves are unchanged apart from AC-3. The thresholds in AC-6 and AC-7 did not change in ADR-018.
+Stage 1 is done when AC-1 to AC-12 and AC-14 to AC-18 hold. Stage 2 adds AC-13 (one format after ADR-028). ADR-019 builds AC-13's PDF format (M5 and M6) before the rest of stage 1; the criteria themselves are unchanged apart from AC-3. The thresholds in AC-6 and AC-7 did not change in ADR-018.
 
 | ID    | Criterion                                                                                                                                                                                                                                                                                                                                  | Verified by                                   |
 | ----- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------------------------- |
@@ -193,7 +193,7 @@ Added by ADR-018:
 
 | ID    | Criterion                                                                                                                                                                                                                                        | Verified by                            |
 | ----- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------- |
-| AC-13 | Stage 2: ≥ 2 PDF statement formats, each backed by ≥ 3 redacted fixtures from real statements, all reconciling as **Verified**                                                                                                                   | Fixture count and golden tests in CI   |
+| AC-13 | Stage 2: ≥ 1 PDF statement format (TD chequing, ADR-028), backed by ≥ 3 redacted fixtures from real statements, all reconciling as **Verified**                                                                                                  | Fixture count and golden tests in CI   |
 | AC-14 | The calendar file parses back to the same dates and names it was built from, and the recurring-list download matches what is on screen                                                                                                           | Unit tests and Playwright              |
 | AC-15 | At least five people outside the project tried the deployed app on their own bank export; for each, the bank, whether the import worked, whether the recurring list was right, and what they wanted next are recorded, with no financial details | Validation notes in `docs/PROGRESS.md` |
 
