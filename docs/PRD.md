@@ -2,7 +2,7 @@
 
 |             |                                                                                                 |
 | ----------- | ----------------------------------------------------------------------------------------------- |
-| **Status**  | Draft v0.4 — ADR-021 proposed: add a transaction readout (see §1a); ADR-019 order still applies |
+| **Status**  | Draft v0.5 — ADR-021 accepted 2026-11-25: a transaction readout (see §1a); ADR-019 order still applies |
 | **Owner**   | Bruce Vo                                                                                        |
 | **Date**    | 2026-11-10                                                                                      |
 | **Related** | `docs/RESEARCH.md`, `docs/ARCHITECTURE.md`, `docs/DECISIONS.md`, `docs/ROADMAP.md`              |
@@ -17,9 +17,9 @@ The input order changed on 2026-11-10 (ADR-018): CSV import ships first because 
 
 One-line pitch: _the "find my forgotten subscriptions" feature of Rocket Money, for Canadians, without handing over bank credentials._
 
-## 1a. Proposed direction (ADR-021, not yet accepted)
+## 1a. Transaction readout (ADR-021, accepted 2026-11-25)
 
-A second persona is added: **P4, the person who loses track of spending and cannot read their own statement** ("what is this charge?"). For P4 the product becomes a readout: where the money went, and what each line probably is, with every figure checked against the statement. A chatbot can also explain a statement, so the claim is verified numbers that never leave the device, not better explanations. Descriptions that cannot be decoded are shown as unknown, never guessed. New requirements FR-16 to FR-18 below are proposed with it. Design details wait for the owner's description census (`npm run census`). Budgets, goals and categories remain non-goals.
+A second persona is added: **P4, the person who loses track of spending and cannot read their own statement** ("what is this charge?"). For P4 the product becomes a readout: where the money went, and what each line probably is, with every figure checked against the statement. A chatbot can also explain a statement, so the claim is verified numbers that never leave the device, not better explanations. Descriptions that cannot be decoded are shown as unknown, never guessed. New requirements FR-16 to FR-18 and acceptance criteria AC-16 to AC-18 come with it. The owner's description census (two real TD statements, counts only) found 89% of lines readable text with noise around it, 7% code-like and 4% with a processor prefix, so cleaning rules and a brand table carry most of the decoding and code-like lines stay unknown (ADR-021). Budgets, goals and categories remain non-goals: the readout groups by decoded name, never by spending category.
 
 ## 2. Problem
 
@@ -39,7 +39,7 @@ The gap: no tool found is (a) fully client-side, (b) usable with Canadian banks'
 | **P2 — Spreadsheet budgeter / self-employed**                                      | Transactions as CSV for a spreadsheet or bookkeeping tool                     | Drops exports and statements from several accounts, downloads one merged CSV                                                         |
 | **P3 — Evaluator** (recruiter, engineer, potential contributor)                    | Judge the project in under two minutes without owning a Canadian bank account | Clicks "Try with a sample statement", reads the README, skims the code                                                               |
 
-P4 (proposed, ADR-021): a loose spender who keeps no books and cannot read statement lines. Needs: see where the money went and what unfamiliar lines are, without setup. Primary use case: drops in statements, reads the summary, labels the few lines they recognise.
+P4 (ADR-021): a loose spender who keeps no books and cannot read statement lines. Needs: see where the money went and what unfamiliar lines are, without setup. Primary use case: drops in statements, reads the summary, labels the few lines they recognise.
 
 P1 is the primary persona since ADR-018. P3 still matters: a recruiter, and a cautious first-time visitor, will not hand over their own file. A one-click demo with synthetic data is a requirement, not a nice-to-have.
 
@@ -154,9 +154,9 @@ More PDF formats, French-language files, scanned PDFs (OCR), password-protected 
 | FR-13 | Download the recurring list as CSV and as a printable page, because nothing is stored between visits                                                                                                                                                                                                                    |
 | FR-14 | Label a charge as ambiguous when its description names only an app store or a payment processor                                                                                                                                                                                                                         |
 | FR-15 | Detect annual charges when the history holds two occurrences about a year apart; say how much history is needed when it is shorter                                                                                                                                                                                      |
-| FR-16 | (Proposed, ADR-021) Decode each description into a readable name where a rule, bank code, brand list or behaviour supports it; show the source and a confidence; a reading from behaviour alone (for example, monthly with a stable amount) is a label, never a merchant name; show "unknown" otherwise and never guess |
-| FR-17 | (Proposed, ADR-021) A readout of where the money went: totals by decoded name for the period, the largest and the most frequent, new names that appeared this month, and lines that look unusual against earlier months                                                                                                 |
-| FR-18 | (Proposed, ADR-021) Let the user name a line once and apply it to every matching line; download the labels as a file (a user-initiated download, not storage) and load them later; nothing is stored by the app                                                                                                         |
+| FR-16 | (ADR-021) Decode each description into a readable name where a rule, bank code, brand list or behaviour supports it; show the source and a confidence; a reading from behaviour alone (for example, monthly with a stable amount) is a label, never a merchant name; show "unknown" otherwise and never guess |
+| FR-17 | (ADR-021) A readout of where the money went: totals by decoded name for the period, the largest and the most frequent, new names that appeared this month, and lines that look unusual against earlier months                                                                                                 |
+| FR-18 | (ADR-021) Let the user name a line once and apply it to every matching line; download the labels as a file (a user-initiated download, not storage) and load them later; nothing is stored by the app                                                                                                         |
 
 ## 10. Non-functional requirements
 
@@ -172,7 +172,7 @@ More PDF formats, French-language files, scanned PDFs (OCR), password-protected 
 
 ## 11. Acceptance criteria
 
-Stage 1 is done when AC-1 to AC-12, AC-14 and AC-15 hold. Stage 2 adds AC-13. ADR-019 builds AC-13's PDF formats (M5 to M7) before the rest of stage 1; the criteria themselves are unchanged apart from AC-3. The thresholds in AC-6 and AC-7 did not change in ADR-018.
+Stage 1 is done when AC-1 to AC-12 and AC-14 to AC-18 hold. Stage 2 adds AC-13. ADR-019 builds AC-13's PDF formats (M5 to M7) before the rest of stage 1; the criteria themselves are unchanged apart from AC-3. The thresholds in AC-6 and AC-7 did not change in ADR-018.
 
 | ID    | Criterion                                                                                                                                                                                                                                                                                                                                  | Verified by                                   |
 | ----- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------------------------- |
@@ -196,6 +196,14 @@ Added by ADR-018:
 | AC-13 | Stage 2: ≥ 2 PDF statement formats, each backed by ≥ 3 redacted fixtures from real statements, all reconciling as **Verified**                                                                                                                   | Fixture count and golden tests in CI   |
 | AC-14 | The calendar file parses back to the same dates and names it was built from, and the recurring-list download matches what is on screen                                                                                                           | Unit tests and Playwright              |
 | AC-15 | At least five people outside the project tried the deployed app on their own bank export; for each, the bank, whether the import worked, whether the recurring list was right, and what they wanted next are recorded, with no financial details | Validation notes in `docs/PROGRESS.md` |
+
+Added by ADR-021 (2026-11-25). A **wrong** reading is a shown name that differs from the expected one, or any name on a line expected to stay unknown; a wrong reading counts worse than an unknown one, which is why AC-16's limits on wrong readings are tighter than its coverage target.
+
+| ID    | Criterion | Verified by |
+| ----- | --------- | ----------- |
+| AC-16 | FR-16. On a committed suite of ≥ 100 invented descriptions in the census mix (about 85 readable, 10 code-like, 5 processor-prefixed; never copied from a statement), each with an expected reading or `unknown`: (a) no line expected to be unknown gets a name; (b) wrong readings are at most 3% of the names shown; (c) at least 80% of the lines with an expected name get it. The test prints correct, wrong and unknown counts per source (user, brand, rule). Every reading names its source; a behaviour hint never becomes a name; a bank-code meaning is shown only from a sourced table entry. Results do not depend on input order | Unit and fast-check tests with a printed report |
+| AC-17 | FR-17. The readout's totals by reading add up to the ledger's money-out and money-in totals to the cent, with unknown lines as their own visible group, never dropped; every figure from a statement that is not **Verified** is labelled; "new this period" and "unusual" are computed only from the loaded ledger (unusual: outside 7.5% or $1 of the median of at least two earlier lines with the same key) | fast-check partition property and unit tests |
+| AC-18 | FR-18. A label applies to every line with the same key and to no other; a downloaded label file loads back to the same labels; a malformed file is rejected with a message and changes nothing; labels and decoded readings are never written to browser storage | Unit tests and Playwright |
 
 ## 12. Top risks
 
