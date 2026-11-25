@@ -21,7 +21,15 @@ export interface BankProfile {
   readonly period: RegExp;
   /** Matches a row date as one item: month name and day, no year. */
   readonly rowDate: RegExp;
+  /** Matches the description of the row that carries the opening balance; no other row may set it. */
+  readonly openingLabel: RegExp;
   /** Matches the first item of the total row. */
   readonly totalLabel: RegExp;
+  /** Every table page ends with its own `Total` row (ADR-026); `printedTotals` is their sum. */
+  readonly pageTotals: boolean;
+  /** Only the last table page shows its total on two separate lines, which marks the end of the statement. */
+  readonly lastPageRepeatsTotal: boolean;
+  /** A balance printed as an amount directly followed by this suffix is negative. */
+  readonly overdrawnSuffix?: string;
   readonly requiredAnchors: NonNullable<ParsedStatement["requiredAnchors"]>;
 }

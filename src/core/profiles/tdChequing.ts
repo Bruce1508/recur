@@ -23,6 +23,10 @@ export const tdChequing: BankProfile = {
   },
   period: PERIOD,
   rowDate: /^([A-Z]{3})(\d{2})$/i,
+  openingLabel: /^starting balance$/i,
   totalLabel: /^total$/i,
+  pageTotals: true,
+  lastPageRepeatsTotal: true,
+  overdrawnSuffix: "OD",
   requiredAnchors: ["printedTotals"],
 };

@@ -94,6 +94,9 @@ export function parse(doc: LineDocument, profile: BankProfile): ParseResult {
   let opening: Cents | undefined;
   let totals: { withdrawals: Cents; deposits: Cents } | undefined;
   let totalRows = 0;
+  const pageTotals: { withdrawals: Cents; deposits: Cents }[] = [];
+  const headerPages: { repeated: boolean }[] = [];
+  let totalsBad = false;
   let previousDate: PlainDate | undefined;
 
   const dateOf = (text: string): PlainDate | null => {
@@ -141,12 +144,27 @@ export function parse(doc: LineDocument, profile: BankProfile): ParseResult {
     };
     const isAmount = (i: RawItem) =>
       AMOUNT.test(i.str.trim()) && right(i) >= firstAmountX;
+    const suffix = profile.overdrawnSuffix;
+    const isOverdrawn = (i: RawItem) => {
+      const t = i.str.trim();
+      return (
+        suffix !== undefined &&
+        t.endsWith(suffix) &&
+        AMOUNT.test(t.slice(0, -suffix.length)) &&
+        right(i) >= firstAmountX
+      );
+    };
+    const balanceCents = (i: RawItem): Cents | null => {
+      if (!isOverdrawn(i)) return parseMoney(i.str);
+      const n = parseMoney(i.str.trim().slice(0, -(suffix?.length ?? 0)));
+      return n === null ? null : 0 - n;
+    };
+    const isTotal = (l: Line) =>
+      profile.totalLabel.test(l.items[0]?.str.trim() ?? "");
 
     // The body runs to the total row, or else to the last line with an amount in a column.
     const after = lines.slice(header.index + 1);
-    const totalAt = after.findIndex((l) =>
-      profile.totalLabel.test(l.items[0]?.str.trim() ?? ""),
-    );
+    const totalAt = after.findIndex(isTotal);
     let end = totalAt;
     if (end < 0) {
       end = 0;
@@ -154,15 +172,18 @@ export function parse(doc: LineDocument, profile: BankProfile): ParseResult {
         if (l.items.some((i) => isAmount(i))) end = k + 1;
       });
     }
-    const extraTotals = after
-      .slice(totalAt < 0 ? after.length : totalAt + 1)
-      .filter((l) => profile.totalLabel.test(l.items[0]?.str.trim() ?? ""));
-    totalRows += extraTotals.length;
+    const totalLines = after.filter(isTotal);
+    if (!profile.pageTotals) totalRows += Math.max(0, totalLines.length - 1);
 
     const body = after.slice(0, end);
     const totalLine = totalAt >= 0 ? after[totalAt] : undefined;
     const edges = new Map<AmountColumn, number[]>();
-    for (const l of [...body, ...(totalLine ? [totalLine] : [])]) {
+    const counted = profile.pageTotals
+      ? totalLines
+      : totalLine
+        ? [totalLine]
+        : [];
+    for (const l of [...body, ...counted]) {
       for (const i of l.items) {
         const col = isAmount(i) ? columnOf(i) : null;
         if (col) edges.set(col, [...(edges.get(col) ?? []), right(i)]);
@@ -173,25 +194,36 @@ export function parse(doc: LineDocument, profile: BankProfile): ParseResult {
     );
     if (ragged) {
       warnings.push(`page ${page}: an amount column is not right-aligned`);
+      totalsBad = true;
       continue;
     }
 
-    if (totalLine) {
-      totalRows++;
+    const readTotal = (l: Line) => {
       const col = (c: AmountColumn) =>
-        totalLine.items.filter((i) => isAmount(i) && columnOf(i) === c);
+        l.items.filter((i) => isAmount(i) && columnOf(i) === c);
       const [w, d] = [col("withdrawals"), col("deposits")];
       const wc = w.length === 1 ? parseMoney(w[0]?.str ?? "") : null;
       const dc = d.length === 1 ? parseMoney(d[0]?.str ?? "") : null;
-      if (wc !== null && dc !== null)
-        totals = { withdrawals: wc, deposits: dc };
-      else warnings.push(`page ${page}: the total row could not be read`);
+      return wc !== null && dc !== null
+        ? { withdrawals: wc, deposits: dc }
+        : null;
+    };
+    if (totalLine && !profile.pageTotals) {
+      totalRows++;
+      totals = readTotal(totalLine) ?? totals;
+      if (!readTotal(totalLine))
+        warnings.push(`page ${page}: the total row could not be read`);
     }
+    const rowsBefore = draft.length;
 
     for (const line of body) {
       const lineIndex = lines.indexOf(line);
       const by = (c: AmountColumn) =>
-        line.items.filter((i) => isAmount(i) && columnOf(i) === c);
+        line.items.filter(
+          (i) =>
+            (isAmount(i) || (c === "balance" && isOverdrawn(i))) &&
+            columnOf(i) === c,
+        );
       const [w, d, b] = [by("withdrawals"), by("deposits"), by("balance")];
       // Anything in the amount area that is not a placed amount or a row date (a trailing-minus
       // amount, a stray label) is text the parser cannot place: warn rather than ignore it.
@@ -200,10 +232,12 @@ export function parse(doc: LineDocument, profile: BankProfile): ParseResult {
           i.str.trim() !== "" &&
           (isAmount(i)
             ? columnOf(i) === null
-            : i.x >= firstAmountX && !profile.rowDate.test(i.str.trim())),
+            : isOverdrawn(i)
+              ? columnOf(i) !== "balance"
+              : i.x >= firstAmountX && !profile.rowDate.test(i.str.trim())),
       );
       const description = line.items
-        .filter((i) => !isAmount(i) && i.x < firstAmountX)
+        .filter((i) => !isAmount(i) && !isOverdrawn(i) && i.x < firstAmountX)
         .map((i) => i.str.trim())
         .filter((s) => s !== "")
         .join(" ");
@@ -211,26 +245,29 @@ export function parse(doc: LineDocument, profile: BankProfile): ParseResult {
         profile.rowDate.test(i.str.trim()),
       );
 
-      if (
-        stray ||
-        w.length > 1 ||
-        d.length > 1 ||
-        b.length > 1 ||
-        (w[0] && d[0])
-      ) {
+      if (stray)
+        warnings.push(
+          `page ${page}: a row has amounts that could not be placed`,
+        );
+      if (w.length > 1 || d.length > 1 || b.length > 1 || (w[0] && d[0])) {
         warnings.push(
           `page ${page}: a row has amounts that could not be placed`,
         );
         continue;
       }
-      const balance = b[0] ? parseMoney(b[0].str) : null;
+      const balance = b[0] ? balanceCents(b[0]) : null;
       const moved = w[0] ?? d[0];
       if (!moved && dateText && balance === null && description !== "") {
         warnings.push(`page ${page}: a dated row has no amount`);
         continue;
       }
       if (!moved) {
-        if (balance !== null && draft.length === 0 && opening === undefined) {
+        if (
+          balance !== null &&
+          draft.length === 0 &&
+          opening === undefined &&
+          profile.openingLabel.test(description)
+        ) {
           opening = balance;
         } else if (balance === null && description !== "" && !dateText) {
           const prev = draft[draft.length - 1];
@@ -258,11 +295,54 @@ export function parse(doc: LineDocument, profile: BankProfile): ParseResult {
         },
       });
     }
+
+    if (profile.pageTotals) {
+      const read = totalLines.map(readTotal);
+      const first = read[0];
+      headerPages.push({ repeated: totalLines.length >= 2 });
+      if (read.some((t) => t === null)) {
+        warnings.push(`page ${page}: the total row could not be read`);
+        totalsBad = true;
+      } else if (
+        first &&
+        read.some(
+          (t) =>
+            t?.withdrawals !== first.withdrawals ||
+            t?.deposits !== first.deposits,
+        )
+      ) {
+        warnings.push(`page ${page}: the total rows disagree`);
+        totalsBad = true;
+      } else if (first) {
+        pageTotals.push(first);
+      } else if (draft.length > rowsBefore) {
+        warnings.push(`page ${page} has rows but no total row`);
+        totalsBad = true;
+      }
+    }
   }
 
   if (totalRows > 1) {
     warnings.push("the statement has more than one total row");
     totals = undefined;
+  }
+  if (profile.pageTotals) {
+    const last = headerPages[headerPages.length - 1];
+    const endMarked =
+      last?.repeated === true &&
+      headerPages.slice(0, -1).every((p) => !p.repeated);
+    if (profile.lastPageRepeatsTotal && !endMarked) {
+      warnings.push("the last page of the statement was not found");
+      totalsBad = true;
+    }
+    if (!totalsBad)
+      totals = pageTotals.reduce(
+        (a, t) => ({
+          withdrawals: a.withdrawals + t.withdrawals,
+          deposits: a.deposits + t.deposits,
+        }),
+        { withdrawals: 0, deposits: 0 },
+      );
   }
   if (draft.length === 0) {
     return { ok: false, reason: "no transactions were read" };

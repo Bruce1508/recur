@@ -56,16 +56,10 @@ const days = fc
 test("random ledger round-trips through the PDF path and verifies", async () => {
   await fc.assert(
     fc.asyncProperty(
-      fc.integer({ min: 16000000, max: 17000000 }),
+      fc.integer({ min: -3000000, max: 17000000 }),
       days,
-      fc.option(fc.integer({ min: 5, max: 40 }), { nil: undefined }),
-      async (opening, ds, pageSize) => {
-        // A continuation line ending a non-final page is cut by parse's body rule (known limit).
-        const multi = pageSize !== undefined;
-        const slotsPerPage = pageSize ?? 100;
-        if (multi)
-          for (const d of ds)
-            for (const x of d.rows) x.continuation = undefined;
+      fc.integer({ min: 5, max: 40 }),
+      async (opening, ds, slotsPerPage) => {
         const spec: TdSpec = {
           period: "SEP 01/25 - OCT 01/25",
           opening,
