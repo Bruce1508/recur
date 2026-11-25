@@ -49,7 +49,7 @@ Living document. Update it at the end of every working session. Never record sta
 **Backlog (not scheduled):**
 
 - PDF reader recovery (review of PR #48): if the worker script fails to load, every PDF waits forever instead of failing with a reason (pdf.js listens for no `error` event on a port); if the module-load `import()` of pdf.js rejects, the rejection is unhandled and cached until reload. Rare (the network drops between the HTML and the worker); fix with an `error` listener raced against `task.promise`, and a retry of the import.
-- CSV export has no UTF-8 BOM, so Excel may garble accented merchant names (security review of PR #47). `readCsv` already strips a BOM, so adding one keeps AC-8. Do it with the summary download (M3 task 7).
+
 - A card export with labelled Debit/Credit columns and a balance is "ready" without asking, and the account type defaults to chequing, so it can show a false "Mismatch" until the user switches the type. Default the type from the balance direction, or ask (found in the task 11 re-review).
 - `mapColumns` returns low confidence for any extra text column (a card number, a memo) and in one probe picked the card column as the description. `fixture:dump --description` works around it for fixtures; the UI has no way to pick the description column yet. See what the real CIBC export looks like first.
 - `reconcile` reports `mismatch` rather than `unverifiable` when an export lists same-day rows against its overall date direction; check against the real TD and CIBC fixtures.
@@ -163,6 +163,13 @@ Queued by the autonomous workflow. Claude does not attempt these.
 ## Session log
 
 Newest first. One entry per session: date, what changed, what was verified, what is next.
+
+### 2026-11-25 — M3: phone width and a BOM on the CSV export
+
+- At 320 px the results state scrolled sideways by 138 px, then 71 px: the two tables and the native file input were wider than the screen. The tables now scroll inside their own container and the input is `w-full`. `e2e/a11y.spec.ts` asserts no page-level horizontal scroll at 320 px.
+- The CSV export starts with a UTF-8 byte order mark (security review note on PR #47); `readCsv` already strips it, so the AC-8 round trip is unchanged. Removed the backlog line for it.
+- Previous PR (#49): one review round (APPROVE, no findings), CI green on the first run. The merge call was denied by the auto-mode classifier once; the merge had gone through anyway.
+- Verified: typecheck, Biome, `npm test`, build, `npx playwright test` (18 passed, outside the sandbox). Not verified: any real statement, keyboard order and focus styles by hand.
 
 ### 2026-11-25 — M3 task 11 (part): axe scan
 

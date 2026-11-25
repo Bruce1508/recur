@@ -42,7 +42,7 @@ test("the merged ledger downloads as a CSV with formulas neutralised and sends n
   expect(download.suggestedFilename()).toBe("recur-transactions.csv");
   const path = await download.path();
   expect((await readFile(path, "utf8")).split("\r\n")).toEqual([
-    "Date,Description,Amount,Balance,Account",
+    "\uFEFFDate,Description,Amount,Balance,Account",
     "2025-01-01,PAY,1000.00,1000.00,B",
     '2025-01-02,"\'=HYPERLINK(""http://x"")",-4.50,995.50,B',
     "2025-01-03,BOOKS,-20.00,975.50,B",
