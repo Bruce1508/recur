@@ -48,6 +48,7 @@ Living document. Update it at the end of every working session. Never record sta
 
 **Backlog (not scheduled):**
 
+- PDF reader recovery (review of PR #48): if the worker script fails to load, every PDF waits forever instead of failing with a reason (pdf.js listens for no `error` event on a port); if the module-load `import()` of pdf.js rejects, the rejection is unhandled and cached until reload. Rare (the network drops between the HTML and the worker); fix with an `error` listener raced against `task.promise`, and a retry of the import.
 - CSV export has no UTF-8 BOM, so Excel may garble accented merchant names (security review of PR #47). `readCsv` already strips a BOM, so adding one keeps AC-8. Do it with the summary download (M3 task 7).
 - A card export with labelled Debit/Credit columns and a balance is "ready" without asking, and the account type defaults to chequing, so it can show a false "Mismatch" until the user switches the type. Default the type from the balance direction, or ask (found in the task 11 re-review).
 - `mapColumns` returns low confidence for any extra text column (a card number, a memo) and in one probe picked the card column as the description. `fixture:dump --description` works around it for fixtures; the UI has no way to pick the description column yet. See what the real CIBC export looks like first.
@@ -166,6 +167,7 @@ Newest first. One entry per session: date, what changed, what was verified, what
 ### 2026-11-25 — M3 task 12 (part): offline and timing (AC-4, AC-5, AC-9)
 
 - Found and fixed: a PDF dropped after the network went down failed ("the PDF reader stopped with an error"), because pdf.js and its worker were fetched on the first PDF. `readPdf` now starts the dynamic import when the app loads, and `extract.ts` starts the worker as a `workerPort` when it loads. Cost: every visitor downloads pdf.js (about 153 kB gzip) and its worker after first paint, CSV users included.
+- Review fix: the worker is one `PDFWorker` passed to `getDocument`, not `GlobalWorkerOptions.workerPort`, because a finished task destroyed the shared worker under a PDF still being read. A same-tick double drop test was added; it passed before the fix too (the race window is narrow), so the fix rests on reading pdf.js `PDFDocumentLoadingTask.destroy`.
 - `e2e/offline-timing.spec.ts`: offline import of a CSV and a PDF; 12 one-year CSVs and 12 monthly TD PDFs (cut from one synthetic year, each opening where the last closed) each verify in under 5 s.
 - Previous PR (#47): one review round (APPROVE, two non-blocking notes, one fixed); security review found nothing blocking. CI failed on the first run (Biome formatting of the progress table, edited after lint ran); fixed in the branch.
 - Verified: typecheck, Biome, `npm test` (494 passed), `fixtures:check`, build, `npx playwright test` (12 passed, outside the sandbox). Not verified: any real statement.

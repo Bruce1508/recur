@@ -55,8 +55,9 @@ test("AC-5: after the page has loaded, a CSV and a PDF still import and verify o
   context,
 }) => {
   if (!splitLayout) throw new Error("layout missing");
+  const workerLoaded = page.waitForResponse(/pdf\.worker/);
   await page.goto("/");
-  await expect(page.getByRole("heading", { name: "Recur" })).toBeVisible();
+  await workerLoaded;
   await context.setOffline(true);
   await dropAndWaitVerified(page, [
     csvFile("a.csv", renderCsv(generateLedger(1, 2), splitLayout)),
@@ -87,4 +88,35 @@ test("AC-9: twelve CSV files of a year each, and twelve monthly PDFs, each proce
   });
   expect(csvMs).toBeLessThan(5000);
   expect(pdfMs).toBeLessThan(5000);
+});
+
+test("PDFs added while another batch is still being read are all read", async ({
+  page,
+}) => {
+  await page.goto("/");
+  const batches = [monthlyPdfs(3).slice(0, 6), monthlyPdfs(3).slice(6)].map(
+    (b) => b.map((f) => ({ name: f.name, bytes: [...f.buffer] })),
+  );
+  // Two drops in the same tick, so the second batch starts while the first is being read.
+  await page.evaluate((batches) => {
+    const input = document.querySelector<HTMLInputElement>(
+      '[data-testid="file-input"]',
+    );
+    if (!input) throw new Error("no file input");
+    for (const batch of batches) {
+      const dt = new DataTransfer();
+      for (const f of batch)
+        dt.items.add(
+          new File([new Uint8Array(f.bytes)], f.name, {
+            type: "application/pdf",
+          }),
+        );
+      input.files = dt.files;
+      input.dispatchEvent(new Event("change", { bubbles: true }));
+    }
+  }, batches);
+  await expect(page.getByText(/^Verified:/)).toHaveCount(12, {
+    timeout: 15_000,
+  });
+  await expect(page.getByRole("alert")).toHaveCount(0);
 });
