@@ -119,7 +119,7 @@ Created 2026-11-20 as GitHub issues, each with a "Model routing" section from `/
 
 ## Decisions pending sign-off
 
-ADR-006 (MIT), ADR-015, ADR-016, ADR-017, ADR-018 (stage order superseded by ADR-019) and ADR-019 are Accepted. The rest stay Proposed until the owner signs off on the PRD.
+ADR-006 (MIT), ADR-015 to ADR-017, ADR-018 (stage order superseded by ADR-019) and ADR-019 to ADR-028 are Accepted (see the index in `docs/DECISIONS.md`). ADR-001 to ADR-005, ADR-007 to ADR-014 stay Proposed until the owner signs off on the PRD.
 
 ## Waiting on the owner
 
