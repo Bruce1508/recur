@@ -18,6 +18,7 @@
     "fixture:dump": "vite build --ssr tools/fixture-dump.ts --outDir .tooling --emptyOutDir --logLevel error && node .tooling/fixture-dump.js",
     "fixtures:check": "vite build --ssr tools/check-fixtures.ts --outDir .tooling --emptyOutDir --logLevel error && node .tooling/check-fixtures.js",
     "pdf:dump": "vite build --ssr tools/pdf-dump.ts --outDir .tooling --emptyOutDir --logLevel error && node .tooling/pdf-dump.js",
+    "brands:build": "vite build --ssr tools/brands-build.ts --outDir .tooling --emptyOutDir --logLevel error && node .tooling/brands-build.js",
     "census": "vite build --ssr tools/description-census.ts --outDir .tooling --emptyOutDir --logLevel error && node .tooling/description-census.js"
   },
   "dependencies": {
