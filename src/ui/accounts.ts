@@ -1,6 +1,7 @@
 import type { AccountChain } from "../core/chain";
+import type { ExportRow } from "../core/exportCsv";
 import { buildLedger } from "../core/ledger";
-import type { ParsedStatement, Transaction } from "../core/types";
+import type { ParsedStatement } from "../core/types";
 
 export interface ImportedFile {
   readonly name: string;
@@ -15,8 +16,8 @@ export interface Summary {
     readonly missingMonths: readonly string[];
     readonly chain: AccountChain;
   }[];
-  /** All accounts, sorted by date. */
-  readonly transactions: readonly Transaction[];
+  /** All accounts, sorted by date, each row with the account it was merged under. */
+  readonly rows: readonly ExportRow[];
   readonly duplicatesRemoved: number;
 }
 
@@ -38,7 +39,7 @@ export function summarize(files: readonly ImportedFile[]): Summary {
     missingMonths: readonly string[];
     chain: AccountChain;
   }[] = [];
-  const transactions: Transaction[] = [];
+  const rows: ExportRow[] = [];
   let duplicatesRemoved = 0;
   for (const [id, statements] of [...byAccount].sort(([a], [b]) =>
     a.localeCompare(b),
@@ -49,14 +50,25 @@ export function summarize(files: readonly ImportedFile[]): Summary {
       missingMonths: ledger.missingMonths,
       chain: ledger.chain,
     });
-    transactions.push(...ledger.transactions);
+    rows.push(
+      ...ledger.transactions.map((transaction) => ({
+        account: id,
+        transaction,
+      })),
+    );
     duplicatesRemoved += ledger.duplicatesRemoved;
   }
   // Array.prototype.sort is stable: same-day rows keep account, then ledger order.
-  transactions.sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0));
+  rows.sort((a, b) =>
+    a.transaction.date < b.transaction.date
+      ? -1
+      : a.transaction.date > b.transaction.date
+        ? 1
+        : 0,
+  );
   return {
     accounts,
-    transactions,
+    rows,
     duplicatesRemoved,
   };
 }

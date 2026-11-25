@@ -1,6 +1,7 @@
 import { useMemo, useRef, useState } from "react";
 import type { Boundary } from "../core/chain";
 import { toStatement } from "../core/csv/toStatement";
+import { exportLedgerCsv } from "../core/exportCsv";
 import { formatCents } from "../core/money";
 import { reconcile } from "../core/reconcile";
 import type {
@@ -273,6 +274,12 @@ export function Importer() {
     }
     return summarize(files);
   }, [converted]);
+  // A data: URL, not a blob: one, so there is no object URL to revoke and nothing that looks like a request.
+  const csvHref = useMemo(
+    () =>
+      `data:text/csv;charset=utf-8,${encodeURIComponent(exportLedgerCsv(summary.rows))}`,
+    [summary],
+  );
 
   const nameOf = (id: string) =>
     converted.find(({ result }) => result.ok && result.statement.id === id)
@@ -457,8 +464,21 @@ export function Importer() {
 
           <section>
             <h2 className="font-semibold">
-              Transactions ({summary.transactions.length})
+              Transactions ({summary.rows.length})
             </h2>
+            {summary.rows.length > 0 && (
+              <p className="text-sm">
+                <a
+                  href={csvHref}
+                  download="recur-transactions.csv"
+                  className="underline"
+                >
+                  Download transactions (CSV)
+                </a>{" "}
+                Amounts are plain numbers. A description that a spreadsheet
+                would run as a formula starts with an apostrophe.
+              </p>
+            )}
             <p className="text-sm" data-testid="ledger-notes">
               {summary.duplicatesRemoved} duplicate row(s) removed.
               {summary.accounts
@@ -489,7 +509,7 @@ export function Importer() {
                 </tr>
               </thead>
               <tbody>
-                {summary.transactions.map((t) => (
+                {summary.rows.map(({ transaction: t }) => (
                   <tr key={t.id}>
                     <td className="pr-4">{t.date}</td>
                     <td className="pr-4">{t.description}</td>
