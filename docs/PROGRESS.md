@@ -36,8 +36,8 @@ Living document. Update it at the end of every working session. Never record sta
 
 1. Run `git log origin/main` and `gh pr list` to confirm what is merged (PR #27 may still be open). Never `--admin`; never force-push (merge `main` into the branch instead of rebasing).
 2. Work the open issues in this order, one PR each, through `ship-task` (#30 is done in its own PR): #28 (UI accepts PDFs), #29 (property test and generator fix), #31 (statement chaining: Opus designs and writes the ADR, Sonnet implements). The model tier of each is in "Issues and model routing".
-3. Owner-blocked, do not attempt: #38 (census numbers, dumps of pages 2 to 4 and the CIBC statement, the hand-written subscription list). When the owner pastes a reviewed dump or the census counts, record the quirks here and check the ADR-020 rules against them. Claude never reads a real statement; only the masked dump and counts.
-4. After the census numbers: #32 (accept ADR-021, Opus). Then, following the ADR-019 order (M7 before M2): #35 (M7, needs the CIBC dump), then #33 (decoder) and #34 (recurring detection), then #36 (M3) and #37 (M4). If the CIBC dump is late, starting #33 after #32 would change the stated order and needs the owner's say-so recorded here; #34 always waits for M7.
+3. Owner-blocked, do not attempt: #38 (census numbers, the hand-written subscription list (the CIBC dump is no longer needed: ADR-028)). When the owner pastes a reviewed dump or the census counts, record the quirks here and check the ADR-020 rules against them. Claude never reads a real statement; only the masked dump and counts.
+4. After the census numbers: #32 (accept ADR-021, Opus). Then, following the ADR-019 order (M7 before M2): #35 (M7, dropped: ADR-028), then #33 (decoder) and #34 (recurring detection), then #36 (M3) and #37 (M4). If the CIBC dump is late, starting #33 after #32 would change the stated order and needs the owner's say-so recorded here; #34 always waits for M7.
 
 **Requirements carried into task 11 and later** (found in reviews; most are pinned by a test or noted in code; the blank-description item is neither, add a test or a warning when touching `toStatement`):
 
@@ -74,7 +74,7 @@ Created 2026-11-20 as GitHub issues, each with a "Model routing" section from `/
 | #32   | ADR-021: complete and accept              | Opus                                 | Fable if messy      | owner census (#38)         |
 | #33   | M2: transaction decoder                   | Sonnet (Haiku for scaffolding)       | Opus                | #32                        |
 | #34   | M2: recurring-charge detection            | Sonnet                               | Opus                | M7 order; owner list (#38) |
-| #35   | M7: CIBC credit card                      | Opus (ADR), then Sonnet              | Sonnet only         | owner CIBC dump (#38)      |
+| #35   | M7: CIBC credit card                      | dropped (ADR-028)                    | n/a                 | closed                     |
 | #36   | M3: UI, demo, exports                     | Sonnet (Opus reviews the CSV export) | Opus                | M2                         |
 | #37   | M4: hardening, deployment, launch         | Sonnet                               | Opus on CSP failure | M3; owner approvals        |
 | #38   | Owner tasks                               | not for Claude                       | n/a                 | n/a                        |
@@ -88,8 +88,8 @@ Created 2026-11-20 as GitHub issues, each with a "Model routing" section from `/
 | M1  | CSV import, ledger, fixture tooling, walking skeleton | Code done   | 2026-11-11 | 2026-11-13 | Tasks 1 to 11 merged; real-CSV fixtures dropped (ADR-019)                                                                                                |
 | M5  | PDF extraction, line model, PDF fixture tooling       | Mostly done | 2026-11-14 |            | Extract, normalize, mask and dump built; first real page seen; real fixtures wait on the owner                                                           |
 | M6  | First PDF format (TD chequing) with reconciliation    | In progress | 2026-11-14 |            | Reconcile, profile, detect, parse built on synthetic data; UI (#28), property test (#29), chaining (#31) merged; real-statement checks wait on the owner |
-| M7  | Second PDF format (CIBC credit card)                  | Not started |            |            | After M6                                                                                                                                                 |
-| M2  | Recurring-charge detection                            | Not started |            |            | Now after M7                                                                                                                                             |
+| M7  | Second PDF format (CIBC credit card)                  | Dropped     |            | 2026-11-25 | ADR-028: removed by the owner                                                                                                                            |
+| M2  | Recurring-charge detection                            | Not started |            |            | After M6                                                                                                                                                 |
 | M3  | Product UI, demo mode, exports, trust features        | In progress | 2026-11-25 |            |                                                                                                                                                          |
 | M4  | Hardening, deployment, small launch, validation       | Not started |            |            | Ends with the launch and testers                                                                                                                         |
 
@@ -122,7 +122,7 @@ Queued by the autonomous workflow. Claude does not attempt these.
 
 - [ ] `sudo chown -R 501:20 ~/.npm`: the npm cache has root-owned files, so `npm` fails in the sandbox (worked around with a temp cache).
 - [x] ~~M1: download CSVs from TD and CIBC~~ Dropped by ADR-019: both banks offer PDF only (owner checked 2026-11-14). Open question 7 is moot.
-- [ ] M5: keep at least three statement PDFs per account (TD chequing, CIBC credit card) in `~/Statements/`. Run `npm run pdf:dump -- /abs/path/statement.pdf` on one PDF per account (add `--deny-list /abs/path/deny.txt` with your own names and numbers). It writes `<name>.layout.json` next to the PDF, outside the repository, and refuses a PDF with no text layer. Read the output; if it holds no real names, numbers or merchants, paste it to Claude. Dates and amounts are kept as they are (the parser needs them), so look at those too.
+- [ ] M5: keep at least three statement PDFs per account (TD chequing; CIBC dropped, ADR-028) in `~/Statements/`. Run `npm run pdf:dump -- /abs/path/statement.pdf` on one PDF per account (add `--deny-list /abs/path/deny.txt` with your own names and numbers). It writes `<name>.layout.json` next to the PDF, outside the repository, and refuses a PDF with no text layer. Read the output; if it holds no real names, numbers or merchants, paste it to Claude. Dates and amounts are kept as they are (the parser needs them), so look at those too.
 - [ ] Description census (ADR-021, pending): run `npm run census -- /abs/path/a.pdf /abs/path/b.pdf ...` on your real TD statements, outside the repository. It prints counts and percentages only, never a description (readable text, payment-processor prefix, opaque code; bank-code suffixes; digit runs). Paste the output to Claude.
 - [ ] Optional, only if you ever get a CSV: `npm run fixture:dump` still works (`--description <n>` for an extra text column, `--deny-list /abs/path/deny.txt` for your own names and numbers). Its merchant map holds real merchant names: keep it outside the repository.
 - [ ] M2: before looking at any detector output, write down the subscriptions you believe you have (ground truth for AC-7). Keep the list out of the repository.
@@ -165,6 +165,11 @@ Queued by the autonomous workflow. Claude does not attempt these.
 ## Session log
 
 Newest first. One entry per session: date, what changed, what was verified, what is next.
+
+### 2026-11-25 — Scope change: CIBC dropped (ADR-028)
+
+- The owner removed the CIBC credit card (M7) from the plan. PRD stage 2 and AC-13 now mean one PDF format (TD chequing, at least 3 real redacted fixtures; the owner has 2 consecutive statements, so one more is needed); ROADMAP M7 marked dropped, M2 depends on M6, stage 2 estimate 24–28 h; issue #35 closed; the CIBC dump no longer waits on the owner. Product claims in the README and launch post must say "TD chequing" only.
+- Scope change recorded here as required by CLAUDE.md; ADR-028 supersedes the M7 part of ADR-019.
 
 ### 2026-11-25 — M3: light paper theme (UI restyle, PR 1)
 

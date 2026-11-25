@@ -33,6 +33,7 @@ A record is changed only by adding a new record that supersedes it. Statuses: Pr
 | 025 | Statement chaining: closing balance against the next opening balance                    | Accepted (2026-11-20)                                                  |
 | 026 | TD page totals and overdrawn-balance suffix; per-page totals sum to the statement total | Accepted (owner delegated, 2026-11-25)                                 |
 | 027 | Decoder cleaning rules found by the first evaluation run                                | Accepted (owner delegated, 2026-11-25)                                 |
+| 028 | Drop the CIBC credit card format (M7); one PDF format ships                             | Accepted (owner, 2026-11-25)                                           |
 
 All records become Accepted when Bruce signs off on the PRD.
 
@@ -650,3 +651,26 @@ Other facts from the same structure: every table page repeats the column header 
 **Known limits.** Bank words with a real-looking word in them, such as `E-TRANSFER`, pass the name test and are read as medium-confidence names. A bank abbreviation of 4 or more letters with a vowel (an `MB-XFER` style line) would also be read as a name and counted wrong. No bank-word list is added now; it would need a verified source for each word, as for the bank codes (`docs/RESEARCH.md` section 13).
 
 **Revisit when** a real statement shows bank words read as names often enough to matter.
+
+## ADR-028 — Drop the CIBC credit card format (M7); one PDF format ships
+
+**Status.** Accepted (owner's decision, 2026-11-25). Supersedes the M7 part of ADR-019 and the "two formats" wording of AC-13.
+
+**Context.** ADR-019 planned two PDF formats, TD chequing and CIBC credit card (M7), so that "a bank format is data, not code" would be proved twice. TD chequing now verifies two real statements (ADR-026). The owner asked to remove CIBC from the plan.
+
+| Option                                | Cost                                                                  |
+| ------------------------------------- | --------------------------------------------------------------------- |
+| A. Keep M7                            | A second real layout, a credit-card balance direction, 8–10 h         |
+| **B. Drop M7; ship TD chequing only** | The "profile, not code" claim rests on one format until a second bank |
+
+**Decision.** B.
+
+- M7 is removed from the schedule; M2 depends on M6. Stage 2 is 24–28 h.
+- AC-13 becomes: at least one PDF format (TD chequing) backed by at least 3 redacted fixtures from real statements, all Verified. The owner has two consecutive real statements; one more is needed for the fixture count.
+- Credit-card reconciliation (the `step` sign in `reconcile`, ADR-020) stays in core but is untested on a real card statement: say so in any public copy.
+- Public claims (README, launch post, supported-files table) name TD chequing only. CSV import remains for any bank, synthetic-tested.
+- A second bank returns only through a new ADR with a real dump of its layout.
+
+**Consequences.** Issue #35 is closed. The owner no longer needs to provide a CIBC dump.
+
+**Revisit when** a tester or the owner needs a second bank.
