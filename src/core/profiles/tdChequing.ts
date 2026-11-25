@@ -29,4 +29,6 @@ export const tdChequing: BankProfile = {
   lastPageRepeatsTotal: true,
   overdrawnSuffix: "OD",
   requiredAnchors: ["printedTotals"],
+  // UNVERIFIED: no public TD source explains the one-letter tails (docs/RESEARCH.md section 13).
+  bankCodes: {},
 };
