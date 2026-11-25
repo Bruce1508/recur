@@ -37,7 +37,7 @@ Living document. Update it at the end of every working session. Never record sta
 1. Run `git log origin/main` and `gh pr list` to confirm what is merged (PR #27 may still be open). Never `--admin`; never force-push (merge `main` into the branch instead of rebasing).
 2. Work the open issues in this order, one PR each, through `ship-task` (#30 is done in its own PR): #28 (UI accepts PDFs), #29 (property test and generator fix), #31 (statement chaining: Opus designs and writes the ADR, Sonnet implements). The model tier of each is in "Issues and model routing".
 3. Owner-blocked, do not attempt: #38 (census numbers, the hand-written subscription list (the CIBC dump is no longer needed: ADR-028)). When the owner pastes a reviewed dump or the census counts, record the quirks here and check the ADR-020 rules against them. Claude never reads a real statement; only the masked dump and counts.
-4. After the census numbers: #32 (accept ADR-021, Opus). Then #33 (decoder; core merged in #53, the NSI brand table is still to do), #34 (recurring detection; needs the owner's subscription list), #36 (M3) and #37 (M4). M7 is dropped (ADR-028): nothing waits for it.
+4. #32 is done (ADR-021 accepted, PR #52). Next: #33 (decoder; core merged in #53, the NSI brand table is still to do), #34 (recurring detection; needs the owner's subscription list), #36 (M3) and #37 (M4). M7 is dropped (ADR-028): nothing waits for it.
 
 **Requirements carried into task 11 and later** (found in reviews; most are pinned by a test or noted in code; the blank-description item is neither, add a test or a warning when touching `toStatement`):
 
