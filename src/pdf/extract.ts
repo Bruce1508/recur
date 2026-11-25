@@ -12,9 +12,11 @@ export type ExtractResult =
   | { ok: true; doc: RawDocument }
   | { ok: false; reason: string };
 
-// Node presets its own in-process worker; a browser loads the worker file Vite serves from our own
-// origin (CSP worker-src 'self').
+// Node presets its own in-process worker. A browser starts the worker from our own origin (CSP
+// worker-src 'self') when this module loads, so PDFs still open after the network drops (AC-5).
 GlobalWorkerOptions.workerSrc ||= workerUrl;
+if (typeof Worker !== "undefined")
+  GlobalWorkerOptions.workerPort ??= new Worker(workerUrl, { type: "module" });
 
 const round = (n: number) => Math.round(n * 100) / 100;
 const text = (v: unknown) =>
