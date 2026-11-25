@@ -8,13 +8,15 @@ Living document. Update it at the end of every working session. Never record sta
 
 **Order change (owner, 2026-11-25):** while the census numbers and the dumps (#38) are pending, the M3 tasks that do not need M2 run first: CSV export (task 6, AC-8), network, offline and timing tests (task 12; AC-4, AC-5, AC-9), verification badges and the "nothing is uploaded" panel (tasks 5 and 9), accessibility (task 11). Tasks that need recurring series (the Subscriptions view, the summary download, the calendar file, demo recurring charges; AC-10, AC-14) wait for M2. Issues #28 to #31 are closed (merged in PRs #41, #42, #44, #45 and #46).
 
-**State on 2026-11-20 (verified against `git log origin/main` and the GitHub issue list):** `main` is at `3c808b9` (PR #26), 440 tests, CI green. Open pull request: #27 (ADR-021 proposed, docs only). Built and merged:
+**First real-statement result (owner, 2026-11-25, after PR #51 / ADR-026):** two consecutive TD chequing statements of one account, dropped into the dev build, both show **Verified** ("every printed balance and the statement totals follow from the amounts"): 51 and 99 rows, 150 transactions, no chain notes between them (closing balance of one equals the opening of the next). Counts and status only. M6's "a real statement shows Verified" criterion is met for TD chequing; AC-1 still needs three fixtures per format, and no real fixture exists yet.
+
+**State on 2026-11-20 (older; `main` is now at PR #51, see the session log):** `main` was at `3c808b9` (PR #26), 440 tests, CI green. Built and merged then:
 
 - M1, the CSV pipeline and walking-skeleton UI (PRs #5 to #16): code complete, synthetic data only.
 - M5: `src/pdf/extract.ts` (the only `pdfjs-dist` importer), `normalize` (with the overdraw fix), the layout mask and `npm run pdf:dump`. The owner has run the dump on two real TD chequing statements and shared page 1 of one as a masked table; pages 2 to 4, the second statement and the CIBC statement have not been seen.
 - M6 so far: ADR-020 and `reconcile` checkpoints and totals (PRs #23, #24); the `BankProfile` type, the `td-chequing` profile, `detect`, `parse` and a synthetic TD statement generator (PR #25); the description census CLI (PR #26).
 
-**Not true yet, so do not assume it:** the parser has never run on a real PDF. Everything above is tested on invented data whose geometry comes from one masked page. The importer accepts PDFs (#28), but only synthetic ones have been dropped in it. There are no real fixtures (AC-13 needs three per format), no second bank (M7), no recurring detection or decoder (M2), no exports or demo (M3), no deployment (M4). `reconcile` has never produced `verified` for a real statement.
+**Superseded on 2026-11-25 (the parser now verifies two real TD statements, above):** the parser had never run on a real PDF. Everything above is tested on invented data whose geometry comes from one masked page. The importer accepts PDFs (#28), but only synthetic ones have been dropped in it. There are no real fixtures (AC-13 needs three per format), no second bank (M7), no recurring detection or decoder (M2), no exports or demo (M3), no deployment (M4). `reconcile` has never produced `verified` for a real statement.
 
 **Direction under discussion:** see the ADR-021 paragraph below. **Open work:** GitHub issues #28 to #38, listed with their model tier in "Issues and model routing".
 
@@ -132,7 +134,7 @@ Queued by the autonomous workflow. Claude does not attempt these.
 
 | ID    | Criterion (short)                             | Status  | Evidence                                                                                                                                                                                                                         |
 | ----- | --------------------------------------------- | ------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| AC-1  | Fixtures match golden output and reconcile    | Partial | 11 synthetic CSV layouts and one synthetic TD PDF format (PR #25) parse to exact golden output and verify; no real fixture yet                                                                                                   |
+| AC-1  | Fixtures match golden output and reconcile    | Partial | 11 synthetic CSV layouts and one synthetic TD PDF format parse to exact golden output and verify; two real TD statements Verify in the dev build (2026-11-25, status only); no committed real fixture yet                        |
 | AC-2  | Mutations produce a mismatch                  | Partial | CSV: middle rows by the file's own check, first and last rows by the chain with a neighbour (ADR-025, #31); outer ends labelled. Synthetic TD PDF: every row removed or altered by a cent gives mismatch                         |
 | AC-3  | Synthetic CSV layouts (real CSV dropped)      | Met     | 11 synthetic layouts (task 7); real TD and CIBC CSV dropped by ADR-019                                                                                                                                                           |
 | AC-4  | No cross-origin requests, no request bodies   | Met     | Every e2e flow (page load, CSV, PDF, CSV download) asserts no cross-origin request and no request body: `e2e/network.spec.ts`, `import.spec.ts`, `export.spec.ts`                                                                |
@@ -163,6 +165,11 @@ Queued by the autonomous workflow. Claude does not attempt these.
 ## Session log
 
 Newest first. One entry per session: date, what changed, what was verified, what is next.
+
+### 2026-11-25 — Real TD statements Verified
+
+- After PR #51 the owner re-dropped the two statements: both Verified, 150 transactions, no chain notes. The `OD` reading and the per-page totals held on real data; a wrong guess would have shown mismatch.
+- Limits still true: a missing middle page with zero net change would verify (ADR-026); only TD chequing; three fixtures per format (AC-13) still missing.
 
 ### 2026-11-25 — First real-statement run; ADR-026 (TD page totals, OD balances)
 
