@@ -61,6 +61,15 @@ describe("buildReadout", () => {
     expect(r.groups.every((g) => g.verified)).toBe(true);
   });
 
+  test("each group lists its distinct cleaned descriptions, never an empty one", () => {
+    expect(r.groups.find((g) => g.name === "Acme Coffee")?.keys).toEqual([
+      "ACME COFFEE",
+    ]);
+    expect(r.unknown.keys).toEqual(["XQZ"]);
+    const blank = buildReadout([tx("2025-02-01", "", -5)], ctx, ok, "2025-02");
+    expect(blank.unknown.keys).toEqual([]);
+  });
+
   test("a user label wins and merges with a brand of the same name", () => {
     const labelled = buildReadout(
       [tx("2025-02-01", "ACME COFFEE", -100), tx("2025-02-02", "ZZ SHOP", -50)],
