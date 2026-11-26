@@ -14,6 +14,7 @@ import type {
 } from "../core/types";
 import { type ImportedFile, summarize } from "./accounts";
 import { analyzeCsv, applyChoices, columnRoles } from "./analyze";
+import demoCsv from "./demo/sample-chequing.csv?raw";
 import { Readout } from "./Readout";
 import { verifiedIds } from "./readoutView";
 import { readPdf } from "./readPdf";
@@ -207,7 +208,7 @@ export function Importer() {
   const [labels, setLabels] = useState<LabelFile>({ version: 1, labels: [] });
   const nextId = useRef(1);
 
-  async function addFiles(list: FileList | null) {
+  async function addFiles(list: ArrayLike<File> | null) {
     if (!list) return;
     const added: Entry[] = [];
     const failed: string[] = [];
@@ -369,6 +370,23 @@ export function Importer() {
           }}
         />
       </label>
+      <div className="flex flex-wrap items-center gap-3">
+        <button
+          type="button"
+          className={BTN}
+          onClick={() =>
+            void addFiles([
+              new File([demoCsv], "sample-chequing.csv", { type: "text/csv" }),
+            ])
+          }
+        >
+          Try with sample data
+        </button>
+        <p className={FINE}>
+          Twelve months of an invented account: made-up merchants and amounts,
+          nothing from a real statement.
+        </p>
+      </div>
 
       {errors.map((m) => (
         <p
