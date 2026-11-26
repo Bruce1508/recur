@@ -1,0 +1,18 @@
+import type { SeriesCadence } from "../core/recurring/types";
+
+const LABEL: Record<SeriesCadence, string> = {
+  weekly: "Weekly",
+  biweekly: "Every two weeks",
+  monthly: "Monthly",
+  quarterly: "Every three months",
+  annual: "Yearly",
+  "annual-possible": "Yearly? (one charge so far)",
+};
+
+export const cadenceLabel = (c: SeriesCadence): string => LABEL[c];
+
+export const CONFIDENCE_LABEL = {
+  high: "High",
+  medium: "Medium",
+  low: "Low",
+} as const;
