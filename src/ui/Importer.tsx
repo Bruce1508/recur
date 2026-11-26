@@ -13,6 +13,7 @@ import type {
 } from "../core/types";
 import { type ImportedFile, summarize } from "./accounts";
 import { analyzeCsv, applyChoices, columnRoles } from "./analyze";
+import { Readout } from "./Readout";
 import { readPdf } from "./readPdf";
 
 interface PdfEntry {
@@ -311,6 +312,22 @@ export function Importer() {
     [summary],
   );
 
+  const transactions = useMemo(
+    () => summary.rows.map((r) => r.transaction),
+    [summary],
+  );
+  const verifiedStatementIds = useMemo(
+    () =>
+      new Set(
+        converted.flatMap(({ result, status }) =>
+          result.ok && status?.status === "verified"
+            ? [result.statement.id]
+            : [],
+        ),
+      ),
+    [converted],
+  );
+
   const nameOf = (id: string) =>
     converted.find(({ result }) => result.ok && result.statement.id === id)
       ?.entry.name ?? id;
@@ -506,6 +523,13 @@ export function Importer() {
               its PDF's letter only if both are the same account.
             </p>
           </section>
+
+          {transactions.length > 0 && (
+            <Readout
+              transactions={transactions}
+              verifiedStatementIds={verifiedStatementIds}
+            />
+          )}
 
           <section className={SHEET}>
             <h2 className={H2}>Transactions ({summary.rows.length})</h2>

@@ -38,7 +38,7 @@ Living document. Update it at the end of every working session. Never record sta
 2. Work in this order, one PR each, through `ship-task` (model tier in "Issues and model routing"; Sonnet implements, Opus designs and reviews parse, reconcile, pdf and CSP):
    1. ~~**#33, rest:** the NSI brand table~~ done (this PR); was: the NSI brand table (`tools/` script filtering name-suggestion-index to Canada and a few shop kinds, writes `src/core/merchant/brands.ts` with the BSD notice; README credit; measure the bundle size; RESEARCH §13 says it is not yet measured). A real alias table only with a named public source per entry.
    2. ~~**UI restyle PR 2:** dark mode~~ done (this PR); was: dark mode (own PR: choose colours, measure contrast, `prefers-color-scheme` plus a manual switch if wanted). Style source: `UI/DESIGN.md`, vibe only (see the 2026-11-25 theme entry); that folder is untracked on the owner's machine until he decides to commit it, so a fresh clone lacks it: the theme tokens already in `src/index.css` and RESEARCH §14 are the source in that case. `agent-skills:frontend-ui-engineering` is required. The owner allowed taste-skill and impeccable for the 2026-11-25 restyle only; `.claude/rules/skill-selection.md` does not route them, so using them again needs his say-so recorded here and a routing-page change through a PR.
-   3. **#36, the readout screen** in this style: totals by reading (AC-17, an aggregation function in core first), label UI with file download and load (AC-18), then demo mode (AC-10), the summary download and the calendar file (AC-14).
+   3. **#36, the readout screen** in this style (totals screen done 2026-11-26, PR in review; remaining): totals by reading (AC-17, an aggregation function in core first), label UI with file download and load (AC-18), then demo mode (AC-10), the summary download and the calendar file (AC-14).
    4. **#34, recurring detection** (AC-6, AC-7): starts only after the owner writes the subscription list.
    5. **#37, M4:** deploy, README (TD chequing only, ADR-028), launch; each needs the owner's approval.
    6. Small leftovers: decoder review notes and the PDF-reader recovery items in the backlog; `ROADMAP.md` still ends the dropped M7 section with "two PDF formats".
@@ -170,6 +170,10 @@ Queued by the autonomous workflow. Claude does not attempt these.
 ## Session log
 
 Newest first. One entry per session: date, what changed, what was verified, what is next.
+
+### 2026-11-26 — Readout screen (#36 part 2, UI of AC-17)
+
+- `src/ui/Readout.tsx` between Files and Transactions: totals by name (source shown: your label, brand list, cleaned text), "Not recognised" as its own visible group with no guessed name, a Total row equal to the ledger, a "not Verified" warning per group, a month picker for "new" and "unusual". The generated brand table is now in the bundle (`src/core/merchant/brands.ts`, no demo aliases in production). Labels (FR-18) are not in the UI yet, so a label never applies. Evidence: `e2e/readout.spec.ts` (grouping, totals, unknown, new/unusual, month switch, not-Verified label, axe in light and dark), `docs/evidence/readout-light.png`, `readout-dark.png`. Skill used: `agent-skills:frontend-ui-engineering`. Previous PR (#60): one review round, CI passed first time. Next: label UI and file download/load (AC-18), then demo mode, summary and calendar file.
 
 ### 2026-11-25 — Readout aggregation in core (#36 part 1, AC-17)
 
