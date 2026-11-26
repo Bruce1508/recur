@@ -1,6 +1,12 @@
 import fc from "fast-check";
 import { describe, expect, test } from "vitest";
-import { addDays, addMonths, daysBetween, parseDate } from "./plainDate";
+import {
+  addDays,
+  addMonths,
+  daysBetween,
+  isMonthEnd,
+  parseDate,
+} from "./plainDate";
 
 describe("parseDate", () => {
   test.each([
@@ -145,5 +151,20 @@ describe("addDays and addMonths", () => {
     expect(addMonths("2025-02-28", 1, 31)).toBe("2025-03-31");
     expect(addMonths("2025-04-30", 1, 31)).toBe("2025-05-31");
     expect(addMonths("2025-01-31", 1, 31)).toBe("2025-02-28");
+  });
+});
+
+describe("isMonthEnd", () => {
+  test.each([
+    ["2025-01-31", true],
+    ["2025-02-28", true],
+    ["2024-02-28", false],
+    ["2024-02-29", true],
+    ["2025-04-30", true],
+    ["2025-04-29", false],
+    ["2025-12-31", true],
+    ["2025-01-01", false],
+  ] as const)("%s is %s", (d, want) => {
+    expect(isMonthEnd(d)).toBe(want);
   });
 });

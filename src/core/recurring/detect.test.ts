@@ -283,6 +283,37 @@ describe("dates and names (review round 3)", () => {
       since: "2025-05-10",
     });
   });
+  test("pre-authorized bill payments are charges, not card payments", () => {
+    for (const d of [
+      "HYDRO ONE PREAUTH PYMT",
+      "ENBRIDGE GAS PREAUTH PMT",
+      "INSURANCE PREAUTH PYMT",
+    ])
+      expect(only(monthly(d, same(6, -9000))).cadence).toBe("monthly");
+  });
+  test("a seasonal bill that moves in pairs, or two prices that alternate, is a variable bill", () => {
+    const hydro = only(
+      monthly(
+        "CITY HYDRO",
+        [
+          -12000, -12400, -9000, -8800, -6500, -6600, -9000, -9300, -12100,
+          -12500,
+        ],
+      ),
+    );
+    expect(hydro.priceChange).toBeUndefined();
+    expect(hydro.amountKind).toBe("variable");
+    const abab = only(
+      monthly("CITY HYDRO", [
+        ...same(2, -5000),
+        ...same(2, -7000),
+        ...same(2, -5000),
+        ...same(2, -7000),
+      ]),
+    );
+    expect(abab.priceChange).toBeUndefined();
+    expect(abab.amountKind).toBe("variable");
+  });
   test("abbreviated card payments are not charges", () => {
     expect(
       detectRecurring(monthly("TD VISA PREAUTH PYMT", same(6, -50000)), ctx),

@@ -11,7 +11,7 @@ import type { RecurringSeries, SeriesCadence } from "./types";
 
 const NOT_A_CHARGE = new Set(["TFR", "TRANSFER", "ETRANSFER", "XFER", "ATM"]);
 const PAY_WORDS = new Set(["PAYMENT", "PYMT", "PMT"]);
-// PYMT, PMT and PREAUTH are guesses at how a bank abbreviates a card payment: unverified for TD.
+// PYMT and PMT are guesses at how a bank abbreviates a payment: unverified for TD. PREAUTH is not a card word (pre-authorized debits pay bills).
 const CARD_WORDS = new Set([
   "CARD",
   "VISA",
@@ -19,7 +19,6 @@ const CARD_WORDS = new Set([
   "MC",
   "AMEX",
   "THANK",
-  "PREAUTH",
 ]);
 /** Moving money, not buying: transfers, cash and card payments (a bill named "PAYMENT" is a charge). */
 const notACharge = (key: string): boolean => {
@@ -65,10 +64,13 @@ const median = (xs: readonly number[]): number =>
   lowerMedian([...xs].sort((a, b) => a - b));
 
 /**
- * The latest sustained price change: amounts are cut into runs wherever one jumps beyond the
- * tolerance of its run; only runs of at least two charges are price levels (a first prorated
- * charge, a one-off odd charge or a single new charge is not sustained); neighbouring levels
- * at the same price merge. Needs two levels.
+ * The latest sustained price change, found conservatively. Amounts are cut into runs wherever one
+ * leaves the tolerance of its run's median, but a cut only counts when the jump from the previous
+ * amount is itself beyond the tolerance (a slow drift is not a step). Only runs of at least two
+ * charges are price levels, so a prorated first charge, a one-off odd charge or a single new
+ * charge is not sustained; neighbouring levels at the same price merge. Anything ambiguous returns
+ * nothing and the series is a variable bill: levels that come back to an earlier price (seasonal
+ * bills, two prices that alternate), or amounts that mostly never settle on a price (groceries).
  */
 function lastPriceChange(
   amounts: readonly Cents[],
@@ -91,14 +93,15 @@ function lastPriceChange(
     if (r.amounts.length < 2) continue;
     covered += r.amounts.length;
     const level = median(r.amounts);
-    const prev = levels[levels.length - 1];
-    if (!prev || !withinTolerance(level, prev.level))
+    const last = levels[levels.length - 1];
+    if (!last || !withinTolerance(level, last.level)) {
+      if (levels.some((l) => withinTolerance(level, l.level))) return undefined;
       levels.push({ start: r.start, level });
+    }
   }
+  if (covered / amounts.length < FIXED_SHARE) return undefined;
   const to = levels[levels.length - 1];
   const from = levels[levels.length - 2];
-  // Amounts that never settle on a price (groceries) are not a series with price changes.
-  if (covered / amounts.length < FIXED_SHARE) return undefined;
   return to && from
     ? { from: from.level, to: to.level, since: dates[to.start] ?? "" }
     : undefined;
