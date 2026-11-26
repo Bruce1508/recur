@@ -1,5 +1,6 @@
+import fc from "fast-check";
 import { describe, expect, test } from "vitest";
-import { daysBetween, parseDate } from "./plainDate";
+import { addDays, addMonths, daysBetween, parseDate } from "./plainDate";
 
 describe("parseDate", () => {
   test.each([
@@ -103,5 +104,41 @@ describe("daysBetween", () => {
     // Ottawa moves clocks on 2026-03-08 and 2026-11-01; a Date-based diff can be off by an hour.
     expect(daysBetween("2026-03-07", "2026-03-09")).toBe(2);
     expect(daysBetween("2026-10-31", "2026-11-02")).toBe(2);
+  });
+});
+
+describe("addDays and addMonths", () => {
+  test.each([
+    ["2026-01-31", 1, "2026-02-01"],
+    ["2026-03-01", -1, "2026-02-28"],
+    ["2024-02-28", 2, "2024-03-01"],
+    ["2025-12-31", 366, "2027-01-01"],
+  ] as const)("addDays(%s, %i) = %s", (d, n, want) => {
+    expect(addDays(d, n)).toBe(want);
+  });
+  test("addDays inverts daysBetween", () => {
+    fc.assert(
+      fc.property(
+        fc.integer({ min: 1900, max: 2100 }),
+        fc.integer({ min: 1, max: 12 }),
+        fc.integer({ min: 1, max: 28 }),
+        fc.integer({ min: -4000, max: 4000 }),
+        (y, m, d, n) => {
+          const date = `${String(y).padStart(4, "0")}-${String(m).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+          expect(daysBetween(date, addDays(date, n))).toBe(n);
+        },
+      ),
+    );
+  });
+  test.each([
+    ["2026-01-15", 1, "2026-02-15"],
+    ["2026-01-31", 1, "2026-02-28"],
+    ["2024-01-31", 1, "2024-02-29"],
+    ["2026-11-30", 3, "2027-02-28"],
+    ["2026-12-15", 1, "2027-01-15"],
+    ["2026-03-31", -1, "2026-02-28"],
+    ["2025-06-10", 12, "2026-06-10"],
+  ] as const)("addMonths(%s, %i) = %s", (d, n, want) => {
+    expect(addMonths(d, n)).toBe(want);
   });
 });
