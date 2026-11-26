@@ -48,3 +48,52 @@ function dayNumber(date: PlainDate): number {
 export function daysBetween(a: PlainDate, b: PlainDate): number {
   return dayNumber(b) - dayNumber(a);
 }
+
+// Inverse of `dayNumber` (Howard Hinnant's civil_from_days).
+function fromDayNumber(z0: number): PlainDate {
+  const z = z0 + 719468;
+  const era = Math.floor(z / 146097);
+  const doe = z - era * 146097;
+  const yoe = Math.floor(
+    (doe -
+      Math.floor(doe / 1460) +
+      Math.floor(doe / 36524) -
+      Math.floor(doe / 146096)) /
+      365,
+  );
+  const doy = doe - (365 * yoe + Math.floor(yoe / 4) - Math.floor(yoe / 100));
+  const mp = Math.floor((5 * doy + 2) / 153);
+  const d = doy - Math.floor((153 * mp + 2) / 5) + 1;
+  const m = mp < 10 ? mp + 3 : mp - 9;
+  const y = yoe + era * 400 + (m <= 2 ? 1 : 0);
+  return `${String(y).padStart(4, "0")}-${String(m).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+}
+
+/** The date `n` days after `date` (`n` may be negative). `date` must come from `parseDate`. */
+export function addDays(date: PlainDate, n: number): PlainDate {
+  return fromDayNumber(dayNumber(date) + n);
+}
+
+/**
+ * The date `n` calendar months after `date`; a day past the end of the target month clamps to its
+ * last day. `anchorDay` replaces the date's own day, so a series billed on the 31st keeps that day
+ * after passing through February.
+ */
+export function addMonths(
+  date: PlainDate,
+  n: number,
+  anchorDay?: number,
+): PlainDate {
+  const [y = 0, m = 0, own = 0] = date.split("-").map(Number);
+  const d = anchorDay ?? own;
+  const index = y * 12 + (m - 1) + n;
+  const ty = Math.floor(index / 12);
+  const tm = (((index % 12) + 12) % 12) + 1;
+  return `${String(ty).padStart(4, "0")}-${String(tm).padStart(2, "0")}-${String(Math.min(d, daysInMonth(ty, tm))).padStart(2, "0")}`;
+}
+
+/** True when `date` is the last day of its month. */
+export function isMonthEnd(date: PlainDate): boolean {
+  const [y = 0, m = 0, d = 0] = date.split("-").map(Number);
+  return d === daysInMonth(y, m);
+}

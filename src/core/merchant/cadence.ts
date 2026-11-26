@@ -12,7 +12,7 @@ export const CADENCE_BUCKETS: readonly {
   { cadence: "quarterly", min: 85, max: 95 },
 ];
 
-const bucketOf = (gap: number): Cadence | undefined =>
+export const bucketOf = (gap: number): Cadence | undefined =>
   CADENCE_BUCKETS.find((b) => gap >= b.min && gap <= b.max)?.cadence;
 
 /**
