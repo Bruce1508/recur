@@ -130,7 +130,7 @@ export function Readout({
         </p>
       ) : (
         <ul data-testid="readout-unusual">
-          {readout.unusual.map((id) => {
+          {[...new Set(readout.unusual)].map((id) => {
             const t = byId.get(id);
             return (
               t && (

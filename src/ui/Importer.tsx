@@ -14,6 +14,7 @@ import type {
 import { type ImportedFile, summarize } from "./accounts";
 import { analyzeCsv, applyChoices, columnRoles } from "./analyze";
 import { Readout } from "./Readout";
+import { verifiedIds } from "./readoutView";
 import { readPdf } from "./readPdf";
 
 interface PdfEntry {
@@ -318,10 +319,15 @@ export function Importer() {
   );
   const verifiedStatementIds = useMemo(
     () =>
-      new Set(
-        converted.flatMap(({ result, status }) =>
-          result.ok && status?.status === "verified"
-            ? [result.statement.id]
+      verifiedIds(
+        converted.flatMap(({ entry, result, status }) =>
+          isReady(entry) && result.ok
+            ? [
+                {
+                  id: result.statement.id,
+                  verified: status?.status === "verified",
+                },
+              ]
             : [],
         ),
       ),
