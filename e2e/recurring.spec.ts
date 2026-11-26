@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 import AxeBuilder from "@axe-core/playwright";
 import { expect, type Page, test } from "@playwright/test";
 
@@ -31,8 +32,10 @@ test("the sample shows its recurring charges with evidence, a price change and a
   await row(page, "Streamflix")
     .getByText(/charge\(s\)/)
     .click();
-  await expect(row(page, "Streamflix").getByRole("listitem")).toHaveCount(12);
-  await expect(rec(page)).toContainText("13 months or more");
+  await expect(row(page, "Streamflix").getByRole("listitem")).toHaveCount(15);
+  await expect(row(page, "Domainhouse")).toContainText("Yearly");
+  await expect(row(page, "Domainhouse")).toContainText("2027-02-14");
+  await expect(rec(page)).not.toContainText("13 months or more");
   await expect(rec(page).getByTestId("recurring-total")).toBeVisible();
   await scan(page);
 });
@@ -74,4 +77,66 @@ test("dark recurring section has no accessibility violations", async ({
     path: "docs/evidence/recurring-dark.png",
   });
   await scan(page);
+});
+
+test("the downloads match what is on screen, and the calendar reads back", async ({
+  page,
+}) => {
+  await page.goto("/");
+  await page.getByRole("button", { name: "Try with sample data" }).click();
+  await rec(page)
+    .getByRole("button", { name: "Not recurring: Streamflix" })
+    .click();
+
+  const csvDownload = page.waitForEvent("download");
+  await rec(page)
+    .getByRole("link", { name: /Download list/ })
+    .click();
+  const csv = readFileSync(await (await csvDownload).path(), "utf8").replace(
+    "﻿",
+    "",
+  );
+  const csvRows = csv
+    .trim()
+    .split("\n")
+    .slice(1)
+    .map((l) => l.split(",")[0]);
+
+  const onScreen = await rec(page)
+    .getByTestId("recurring-row")
+    .evaluateAll((rows) =>
+      rows.map(
+        (r) => r.querySelector("td")?.firstChild?.textContent?.trim() ?? "",
+      ),
+    );
+  expect(csvRows).toEqual(onScreen);
+  expect(csvRows).not.toContain("Streamflix");
+  expect(csv).toContain(
+    "Maple Rent,Monthly,1200.00,no,,1200.00,14400.00,2026-04-01,High",
+  );
+
+  const icsDownload = page.waitForEvent("download");
+  await rec(page)
+    .getByRole("link", { name: /Download calendar/ })
+    .click();
+  const ics = readFileSync(await (await icsDownload).path(), "utf8");
+  expect(ics.startsWith("BEGIN:VCALENDAR\r\n")).toBe(true);
+  expect(ics).toContain("SUMMARY:Maple Rent\r\n");
+  expect(ics).toContain("DTSTART;VALUE=DATE:20260401\r\n");
+  expect(ics).not.toContain("Streamflix");
+  expect(ics.match(/BEGIN:VEVENT/g)).toHaveLength(onScreen.length);
+});
+
+test("printing shows the recurring list and hides the rest", async ({
+  page,
+}) => {
+  await page.goto("/");
+  await page.getByRole("button", { name: "Try with sample data" }).click();
+  await page.emulateMedia({ media: "print" });
+  await expect(page.getByTestId("recurring")).toBeVisible();
+  await expect(page.getByTestId("readout")).toBeHidden();
+  await expect(
+    page.getByRole("button", { name: "Try with sample data" }),
+  ).toBeHidden();
+  await expect(page.getByRole("link", { name: /Download list/ })).toBeHidden();
 });

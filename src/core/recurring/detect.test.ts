@@ -66,6 +66,10 @@ describe("cadence", () => {
       expect(s.monthlyEquivalent).toBe(monthlyEq);
     },
   );
+  test("the yearly cost is the amount times charges a year, not twelve rounded months", () => {
+    expect(only(every(7, "CLASS PASS", 5, -1699)).annualCost).toBe(88348);
+    expect(only(monthly("STREAMLY", same(4, -1699))).annualCost).toBe(20388);
+  });
   test("a missed month does not hide a monthly series", () => {
     const list = [
       tx("2025-01-10", "GYM", -4500),

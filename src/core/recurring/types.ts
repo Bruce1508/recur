@@ -14,6 +14,8 @@ export interface RecurringSeries {
   readonly typicalAmount: Cents;
   readonly amountKind: "fixed" | "variable";
   readonly monthlyEquivalent: Cents;
+  /** The typical amount times how many times a year it is charged, rounded once. */
+  readonly annualCost: Cents;
   /** The money-out lines behind the series, oldest first: the evidence. */
   readonly occurrences: readonly Transaction[];
   readonly nextExpected: PlainDate;

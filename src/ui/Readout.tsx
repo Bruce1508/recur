@@ -8,7 +8,7 @@ import type { Transaction } from "../core/types";
 import { Labels } from "./Labels";
 import { monthsOf, sourceLabel } from "./readoutView";
 
-const SHEET = "rounded-3xl bg-white-sheet p-5 shadow-sheet sm:p-8";
+const SHEET = "rounded-3xl bg-white-sheet p-5 shadow-sheet sm:p-8 print:hidden";
 const H2 = "font-display text-2xl font-extrabold";
 const FINE = "text-sm text-quiet-gray";
 const TH = "pr-4 pb-2 text-left font-bold";
