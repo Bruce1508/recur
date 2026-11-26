@@ -74,9 +74,18 @@ export function addDays(date: PlainDate, n: number): PlainDate {
   return fromDayNumber(dayNumber(date) + n);
 }
 
-/** The date `n` calendar months after `date`; a day past the end of the target month clamps to its last day. */
-export function addMonths(date: PlainDate, n: number): PlainDate {
-  const [y = 0, m = 0, d = 0] = date.split("-").map(Number);
+/**
+ * The date `n` calendar months after `date`; a day past the end of the target month clamps to its
+ * last day. `anchorDay` replaces the date's own day, so a series billed on the 31st keeps that day
+ * after passing through February.
+ */
+export function addMonths(
+  date: PlainDate,
+  n: number,
+  anchorDay?: number,
+): PlainDate {
+  const [y = 0, m = 0, own = 0] = date.split("-").map(Number);
+  const d = anchorDay ?? own;
   const index = y * 12 + (m - 1) + n;
   const ty = Math.floor(index / 12);
   const tm = (((index % 12) + 12) % 12) + 1;

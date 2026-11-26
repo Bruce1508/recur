@@ -234,10 +234,10 @@ export const SCENARIOS: readonly Scenario[] = [
     [{ key: "PET SITTER", cadence: "biweekly" }],
   ),
   sc(
-    "every two weeks, amount varies (a variable recurring bill)",
+    "every two weeks, amount varies (shopping, not a bill)",
     135,
     every(14, "MEAL PREP", 20, (i) => -(5500 + (i % 3) * 900)),
-    [{ key: "MEAL PREP", cadence: "biweekly" }],
+    [],
   ),
   sc(
     "a monthly and a weekly series together",
@@ -321,6 +321,19 @@ export const SCENARIOS: readonly Scenario[] = [
       "2025-02-15",
       "2025-03-27",
     ].map((d) => tx(d, "TOOL LIBRARY", -1200)),
+    [],
+  ),
+  sc(
+    "weekly groceries, amount varies, day within a day of the week",
+    152,
+    every(
+      7,
+      "FRESH FOODS",
+      40,
+      (i) => -(4000 + ((i * 37) % 9000)),
+      START,
+      (i) => [0, 1, -1, 0][i % 4] ?? 0,
+    ),
     [],
   ),
   sc(

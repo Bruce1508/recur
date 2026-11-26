@@ -17,8 +17,11 @@ const tx = (
   source: { statementId: "s", input: "csv", row: n },
 });
 const ctx = { brands: [] };
-const monthly = (desc: string, amounts: number[], start = "2025-01-10") =>
-  amounts.map((a, i) => tx(addMonths(start, i), desc, a));
+const monthly = (
+  desc: string,
+  amounts: readonly number[],
+  start = "2025-01-10",
+) => amounts.map((a, i) => tx(addMonths(start, i), desc, a));
 const every = (
   days: number,
   desc: string,
@@ -29,6 +32,8 @@ const every = (
   Array.from({ length: count }, (_, i) =>
     tx(addDays(start, i * days), desc, amount),
   );
+const same = (count: number, amount: number) =>
+  Array.from({ length: count }, () => amount);
 const only = (list: Transaction[]) => {
   const r = detectRecurring(list, ctx);
   expect(r).toHaveLength(1);
@@ -50,19 +55,17 @@ describe("cadence", () => {
     expect(s.occurrences).toHaveLength(4);
   });
   test.each([
-    [7, "weekly", 5, 1083],
-    [14, "biweekly", 4, 1083],
-    [91, "quarterly", 3, 333],
-  ] as const)("every %i days is %s", (days, cadence, count, monthlyEq) => {
-    const s = only(
-      every(days, "CLASS PASS", count, cadence === "quarterly" ? -1000 : -250),
-    );
-    expect(s.cadence).toBe(cadence);
-    if (cadence === "weekly") expect(s.monthlyEquivalent).toBe(1083);
-    if (cadence === "biweekly") expect(s.monthlyEquivalent).toBe(542);
-    if (cadence === "quarterly") expect(s.monthlyEquivalent).toBe(333);
-    expect(monthlyEq).toBeGreaterThan(0);
-  });
+    [7, "weekly", 5, -250, 1083],
+    [14, "biweekly", 4, -250, 542],
+    [91, "quarterly", 3, -1000, 333],
+  ] as const)(
+    "every %i days is %s",
+    (days, cadence, count, amount, monthlyEq) => {
+      const s = only(every(days, "CLASS PASS", count, amount));
+      expect(s.cadence).toBe(cadence);
+      expect(s.monthlyEquivalent).toBe(monthlyEq);
+    },
+  );
   test("a missed month does not hide a monthly series", () => {
     const list = [
       tx("2025-01-10", "GYM", -4500),
@@ -139,9 +142,32 @@ describe("amounts", () => {
     expect(s.typicalAmount).toBe(4900);
     expect(s.amountKind).toBe("fixed");
   });
+  test("a different first charge, a doubled first day and a slow drift are not price changes", () => {
+    const prorated = only(
+      monthly("IRON GYM", [-1500, -4500, -4500, -4500, -4500, -4500]),
+    );
+    expect(prorated.priceChange).toBeUndefined();
+    const doubled = only([
+      tx("2025-01-10", "IRON GYM", -4500),
+      tx("2025-01-10", "IRON GYM", -4500),
+      ...monthly("IRON GYM", same(4, -4500), "2025-02-10"),
+    ]);
+    expect(doubled.priceChange).toBeUndefined();
+    const drift = only(
+      monthly("IRON GYM", [-1000, -1050, -1100, -1150, -1200, -1250]),
+    );
+    expect(drift.priceChange).toBeUndefined();
+  });
   test("one odd amount is not a price change", () => {
     const s = only(monthly("IRON GYM", [-4500, -4500, -6000, -4500, -4500]));
     expect(s.priceChange).toBeUndefined();
+  });
+  test("weekly or biweekly purchases with varying amounts are shopping, not a bill", () => {
+    const list = every(7, "FRESH FOODS", 20, -4000).map((t, i) => ({
+      ...t,
+      amount: -(4000 + (i % 4) * 2500),
+    }));
+    expect(detectRecurring(list, ctx)).toEqual([]);
   });
   test("a steady date with swinging amounts is a variable bill", () => {
     const s = only(
@@ -170,6 +196,18 @@ describe("annual", () => {
     );
     expect(detectRecurring([tx("2025-03-05", "SNACK", -450)], ctx)).toEqual([]);
   });
+  test("two near-yearly charges, or a yearly price rise, stay possible instead of vanishing", () => {
+    const close = only([
+      tx("2024-03-05", "DOMAINS INC", -12000),
+      tx("2025-02-10", "DOMAINS INC", -12000),
+    ]);
+    expect(close.cadence).toBe("annual-possible");
+    const rise = only([
+      tx("2024-03-05", "DOMAINS INC", -12000),
+      tx("2025-03-06", "DOMAINS INC", -14000),
+    ]);
+    expect(rise.cadence).toBe("annual-possible");
+  });
   test("the note says when history is too short to see a yearly charge", () => {
     expect(
       annualHistoryNote([tx("2025-01-01", "A", -1), tx("2025-06-01", "A", -1)]),
@@ -177,6 +215,28 @@ describe("annual", () => {
     expect(
       annualHistoryNote([tx("2024-01-01", "A", -1), tx("2025-03-01", "A", -1)]),
     ).toBeUndefined();
+  });
+});
+
+describe("dates and names", () => {
+  test("an end-of-month series keeps its day", () => {
+    const s = only(monthly("NIGHT OWL", same(4, -2000), "2025-01-31"));
+    expect(s.nextExpected).toBe("2025-05-31");
+  });
+  test("a monthly insurance payment is a charge; a card payment is not", () => {
+    expect(
+      only(monthly("MAPLE INSURANCE PAYMENT", same(6, -12000))).cadence,
+    ).toBe("monthly");
+    expect(
+      detectRecurring(monthly("VISA PAYMENT", same(6, -12000)), ctx),
+    ).toEqual([]);
+  });
+  test("a processor prefix that still names the merchant is not ambiguous", () => {
+    const list = [
+      tx("2025-01-10", "SQ *GYM CLUB", -3000),
+      ...monthly("GYM CLUB", same(3, -3000), "2025-02-10"),
+    ];
+    expect(only(list).ambiguous).toBe(false);
   });
 });
 

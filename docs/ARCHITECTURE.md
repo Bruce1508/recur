@@ -266,7 +266,7 @@ Files: `types.ts`, `rules.ts`, `decode.ts`, `hints.ts`, `labels.ts` (parse and s
 3. Compute gaps in days between consecutive occurrences. Map the median gap to a cadence bucket: weekly 7 ± 1, bi-weekly 14 ± 2, monthly 28–33, quarterly 85–95.
 4. Score interval consistency (share of gaps inside the bucket) and amount stability (share of amounts within 7.5% or $1 of the median, the tolerance Actual Budget uses).
 5. A sustained step in the amount becomes a `priceChange`.
-6. Combine occurrence count, interval consistency and amount stability into high, medium or low confidence. Stable cadence with varying amounts is labelled a variable recurring bill.
+6. Combine occurrence count, interval consistency and amount stability into high, medium or low confidence. Stable cadence with varying amounts is labelled a variable recurring bill, but only for monthly or quarterly cadences: weekly or fortnightly purchases with varying amounts (groceries) are not reported.
 7. Annual: two charges from one merchant 350–380 days apart with a stable amount are an `annual` series. One large charge with no repeat stays `annual-possible`. When the history is shorter than 13 months the result says so.
 8. A series whose description names only an app store or a payment processor is marked `ambiguous`, because several services can hide behind one descriptor.
 

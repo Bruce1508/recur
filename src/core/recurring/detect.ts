@@ -10,15 +10,23 @@ import { addDays, addMonths, daysBetween } from "../plainDate";
 import type { Cents, PlainDate, Transaction } from "../types";
 import type { RecurringSeries, SeriesCadence } from "./types";
 
-const NOT_A_CHARGE = new Set([
-  "TFR",
-  "TRANSFER",
-  "ETRANSFER",
-  "XFER",
-  "PAYMENT",
-  "ATM",
-  "WITHDRAWAL",
+const NOT_A_CHARGE = new Set(["TFR", "TRANSFER", "ETRANSFER", "XFER", "ATM"]);
+const CARD_WORDS = new Set([
+  "CARD",
+  "VISA",
+  "MASTERCARD",
+  "MC",
+  "AMEX",
+  "THANK",
 ]);
+/** Moving money, not buying: transfers, cash and card payments (a bill named "PAYMENT" is a charge). */
+const notACharge = (key: string): boolean => {
+  const words = key.split(/[^A-Z0-9]+/);
+  return (
+    words.some((w) => NOT_A_CHARGE.has(w)) ||
+    (words.includes("PAYMENT") && words.some((w) => CARD_WORDS.has(w)))
+  );
+};
 const STORES = new Set([
   "APPLE",
   "GOOGLE",
@@ -53,15 +61,16 @@ const byDateThenId = (a: Transaction, b: Transaction): number =>
 const median = (xs: readonly number[]): number =>
   lowerMedian([...xs].sort((a, b) => a - b));
 
-/** First index where the amounts step to a new level that holds for at least two charges. */
+/** First index where the amounts jump to a new level; each level holds for at least two charges. */
 function stepAt(amounts: readonly Cents[]): number | undefined {
-  for (let k = 1; k <= amounts.length - 2; k++) {
+  for (let k = 2; k <= amounts.length - 2; k++) {
     const before = amounts.slice(0, k);
     const after = amounts.slice(k);
     if (
-      (before.length < 2 || amountsStable(before)) &&
+      amountsStable(before) &&
       amountsStable(after) &&
-      !withinTolerance(median(after), median(before))
+      !withinTolerance(median(after), median(before)) &&
+      !withinTolerance(amounts[k] ?? 0, amounts[k - 1] ?? 0)
     )
       return k;
   }
@@ -69,12 +78,17 @@ function stepAt(amounts: readonly Cents[]): number | undefined {
 }
 
 const PERIOD_DAYS: Record<string, number> = { weekly: 7, biweekly: 14 };
-const next = (date: PlainDate, cadence: SeriesCadence): PlainDate =>
+const next = (
+  date: PlainDate,
+  cadence: SeriesCadence,
+  anchorDay: number,
+): PlainDate =>
   cadence === "weekly" || cadence === "biweekly"
     ? addDays(date, PERIOD_DAYS[cadence] ?? 0)
     : addMonths(
         date,
         cadence === "monthly" ? 1 : cadence === "quarterly" ? 3 : 12,
+        anchorDay,
       );
 const PER_YEAR: Record<SeriesCadence, number> = {
   weekly: 52,
@@ -102,8 +116,7 @@ export function detectRecurring(
     if (t.amount >= 0) continue;
     const d = decodeDescription(t.description, ctx);
     if (d.merchantKey === "") continue;
-    if (d.merchantKey.split(/[^A-Z0-9]+/).some((w) => NOT_A_CHARGE.has(w)))
-      continue;
+    if (notACharge(d.merchantKey)) continue;
     const rows = groups.get(d.merchantKey);
     if (rows) rows.push(t);
     else {
@@ -132,9 +145,7 @@ export function detectRecurring(
       merchantKey,
       displayName:
         decoded.reading.kind === "name" ? decoded.reading.name : merchantKey,
-      ambiguous:
-        decoded.processor !== undefined ||
-        STORES.has(merchantKey.split(/[^A-Z0-9]+/)[0] ?? ""),
+      ambiguous: STORES.has(merchantKey.split(/[^A-Z0-9]+/)[0] ?? ""),
       occurrences: days.flatMap((d) => d.txs),
       ...series,
     });
@@ -165,6 +176,7 @@ function classify(days: readonly Day[]): Body | undefined {
   const amounts = days.map((d) => d.amount);
   const dates = days.map((d) => d.date);
   const lastDate = dates[dates.length - 1] ?? "";
+  const anchorDay = Math.max(...dates.map((d) => Number(d.slice(8, 10))));
   const body = (
     cadence: SeriesCadence,
     typical: Cents,
@@ -176,7 +188,7 @@ function classify(days: readonly Day[]): Body | undefined {
     typicalAmount: typical,
     amountKind: kind,
     monthlyEquivalent: monthlyOf(typical, cadence),
-    nextExpected: next(lastDate, cadence),
+    nextExpected: next(lastDate, cadence, anchorDay),
     confidence,
     ...(priceChange ? { priceChange } : {}),
   });
@@ -189,19 +201,25 @@ function classify(days: readonly Day[]): Body | undefined {
   const gaps = dates.slice(1).map((d, i) => daysBetween(dates[i] ?? d, d));
   const m = median(amounts);
   if (gaps.every((g) => g >= YEAR.min && g <= YEAR.max)) {
-    if (!amounts.every((a) => withinTolerance(a, m))) return undefined;
-    return body("annual", m, "fixed", days.length >= 3 ? "high" : "medium");
+    return amounts.every((a) => withinTolerance(a, m))
+      ? body("annual", m, "fixed", days.length >= 3 ? "high" : "medium")
+      : body(
+          "annual-possible",
+          amounts[amounts.length - 1] ?? 0,
+          "fixed",
+          "low",
+        );
   }
 
   if (days.length === 2) {
     const cadence = bucketOf(gaps[0] ?? 0);
     return cadence && withinTolerance(amounts[0] ?? 0, amounts[1] ?? 0)
       ? body(cadence, m, "fixed", "low")
-      : undefined;
+      : nearYearly(gaps, amounts, body);
   }
 
   const cadence = cadenceOfGaps(gaps);
-  if (!cadence) return undefined;
+  if (!cadence) return nearYearly(gaps, amounts, body);
   const regular =
     gaps.filter((g) => bucketOf(g) === cadence).length / gaps.length;
   const k = stepAt(amounts);
@@ -230,7 +248,27 @@ function classify(days: readonly Day[]): Body | undefined {
       "fixed",
       days.length >= 4 && regular >= 0.8 ? "high" : "medium",
     );
+  // Varying amounts make a bill only when it comes monthly or quarterly; weekly or fortnightly
+  // purchases with varying amounts are shopping habits, not charges to track.
+  if (cadence === "weekly" || cadence === "biweekly") return undefined;
   return body(cadence, m, "variable", days.length >= 5 ? "medium" : "low");
+}
+
+/** Charges close to a year apart that do not fit the yearly window or share an amount stay possible, not lost. */
+function nearYearly(
+  gaps: readonly number[],
+  amounts: readonly Cents[],
+  body: (
+    c: SeriesCadence,
+    t: Cents,
+    k: "fixed" | "variable",
+    conf: "low",
+  ) => Body,
+): Body | undefined {
+  const biggest = Math.max(...amounts);
+  return gaps.some((g) => g >= 330 && g <= 400) && biggest >= LARGE
+    ? body("annual-possible", amounts[amounts.length - 1] ?? 0, "fixed", "low")
+    : undefined;
 }
 
 /** Says when the history is too short to confirm a yearly charge (FR-15). */

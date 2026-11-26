@@ -141,4 +141,9 @@ describe("addDays and addMonths", () => {
   ] as const)("addMonths(%s, %i) = %s", (d, n, want) => {
     expect(addMonths(d, n)).toBe(want);
   });
+  test("an anchor day survives a short month", () => {
+    expect(addMonths("2025-02-28", 1, 31)).toBe("2025-03-31");
+    expect(addMonths("2025-04-30", 1, 31)).toBe("2025-05-31");
+    expect(addMonths("2025-01-31", 1, 31)).toBe("2025-02-28");
+  });
 });
