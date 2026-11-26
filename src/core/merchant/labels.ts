@@ -97,6 +97,10 @@ export function setLabel(
   key: string,
   name: string,
 ): ParsedLabels {
+  if (key.length > LABEL_LIMITS.key)
+    return fail("This line's description is too long to be named.");
+  if (forbidden(key))
+    return fail("This line's description has characters that cannot be named.");
   const labels = [
     ...file.labels.filter((l) => l.key !== key),
     { key, name: name.trim() },
