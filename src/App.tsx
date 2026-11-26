@@ -4,7 +4,7 @@ import { ThemeToggle } from "./ui/ThemeToggle";
 export function App() {
   return (
     <main className="mx-auto max-w-4xl px-4 py-8 sm:px-8 sm:py-12">
-      <div className="flex justify-end">
+      <div className="flex justify-end print:hidden">
         <ThemeToggle />
       </div>
       <h1 className="font-display text-5xl font-black tracking-tight">

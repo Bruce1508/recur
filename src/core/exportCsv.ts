@@ -26,7 +26,7 @@ export function restoreText(text: string): string {
 }
 
 /** Cents -> "-12.50": no currency sign or grouping, so every spreadsheet reads it as a number. */
-const decimal = (c: Cents): string => {
+export const decimal = (c: Cents): string => {
   const a = Math.abs(c);
   return `${c < 0 ? "-" : ""}${Math.floor(a / 100)}.${String(a % 100).padStart(2, "0")}`;
 };

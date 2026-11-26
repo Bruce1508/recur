@@ -67,7 +67,7 @@ const VERIFIED = {
   totals: "Verified: the amounts add up to the printed totals",
 } as const;
 
-const SHEET = "rounded-3xl bg-white-sheet p-5 shadow-sheet sm:p-8";
+const SHEET = "rounded-3xl bg-white-sheet p-5 shadow-sheet sm:p-8 print:hidden";
 const H2 = "font-display text-2xl font-extrabold";
 const BTN =
   "rounded-pill bg-mint-note px-5 py-1.5 font-medium text-blurple shadow-pill";
@@ -350,7 +350,7 @@ export function Importer() {
   );
 
   return (
-    <div className="mt-8 space-y-6">
+    <div className="mt-8 space-y-6 print:mt-2">
       <label
         className={`block ${SHEET} border-2 border-dashed border-ink/55`}
         onDragOver={(ev) => ev.preventDefault()}
@@ -374,7 +374,7 @@ export function Importer() {
           }}
         />
       </label>
-      <div className="flex flex-wrap items-center gap-3">
+      <div className="flex flex-wrap items-center gap-3 print:hidden">
         <button
           type="button"
           className={BTN}
@@ -387,7 +387,7 @@ export function Importer() {
           Try with sample data
         </button>
         <p className={FINE}>
-          Twelve months of an invented account: made-up merchants and amounts,
+          Fifteen months of an invented account: made-up merchants and amounts,
           nothing from a real statement.
         </p>
       </div>
@@ -635,7 +635,7 @@ export function Importer() {
         </>
       )}
 
-      <footer className={FINE}>
+      <footer className={`${FINE} print:hidden`}>
         <details>
           <summary>How to verify nothing is uploaded</summary>
           Open your browser's network tab and drop a file: no request is made.

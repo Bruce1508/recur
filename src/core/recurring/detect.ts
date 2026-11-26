@@ -197,6 +197,7 @@ type Body = Pick<
   | "typicalAmount"
   | "amountKind"
   | "monthlyEquivalent"
+  | "annualCost"
   | "nextExpected"
   | "priceChange"
   | "confidence"
@@ -221,6 +222,7 @@ function classify(days: readonly Day[]): Body | undefined {
     typicalAmount: typical,
     amountKind: kind,
     monthlyEquivalent: monthlyOf(typical, cadence),
+    annualCost: typical * PER_YEAR[cadence],
     nextExpected: next(lastDate, cadence, anchorDay),
     confidence,
     ...(priceChange ? { priceChange } : {}),

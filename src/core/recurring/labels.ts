@@ -1,4 +1,4 @@
-import type { SeriesCadence } from "../core/recurring/types";
+import type { SeriesCadence } from "./types";
 
 const LABEL: Record<SeriesCadence, string> = {
   weekly: "Weekly",

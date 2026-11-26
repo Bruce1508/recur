@@ -1,18 +1,22 @@
 import { useMemo, useState } from "react";
+import { exportIcs } from "../core/exportIcs";
+import { exportRecurringCsv } from "../core/exportRecurring";
 import { BRANDS } from "../core/merchant/brands";
 import { labelMap } from "../core/merchant/labels";
 import type { LabelFile } from "../core/merchant/types";
 import { formatCents } from "../core/money";
 import { annualHistoryNote, detectRecurring } from "../core/recurring/detect";
+import { CONFIDENCE_LABEL, cadenceLabel } from "../core/recurring/labels";
 import type { RecurringSeries } from "../core/recurring/types";
 import type { Transaction } from "../core/types";
-import { CONFIDENCE_LABEL, cadenceLabel } from "./recurringView";
 
 const SHEET = "rounded-3xl bg-white-sheet p-5 shadow-sheet sm:p-8";
 const H2 = "font-display text-2xl font-extrabold";
 const FINE = "text-sm text-quiet-gray";
 const TH = "pr-4 pb-2 text-left font-bold";
 const TD = "border-t border-stone py-1.5 pr-4 align-top";
+const BTN =
+  "rounded-pill bg-mint-note px-5 py-1.5 font-medium text-blurple shadow-pill";
 const BTN_QUIET =
   "rounded-pill border border-ink/55 bg-white-sheet px-4 py-1 text-ink";
 
@@ -69,12 +73,10 @@ function Row({
         )}
       </td>
       <td className={`${TD} text-right`}>{formatCents(s.monthlyEquivalent)}</td>
-      <td className={`${TD} text-right`}>
-        {formatCents(s.monthlyEquivalent * 12)}
-      </td>
+      <td className={`${TD} text-right`}>{formatCents(s.annualCost)}</td>
       <td className={TD}>{s.nextExpected}</td>
       <td className={TD}>{CONFIDENCE_LABEL[s.confidence]}</td>
-      <td className="border-t border-stone py-1.5 align-top">
+      <td className="border-t border-stone py-1.5 align-top print:hidden">
         <button
           type="button"
           className={BTN_QUIET}
@@ -115,6 +117,12 @@ export function Recurring({
   const hidden = series.filter((s) => dismissed.has(s.merchantKey));
   const confirmed = shown.filter((s) => s.cadence !== "annual-possible");
   const perMonth = confirmed.reduce((sum, s) => sum + s.monthlyEquivalent, 0);
+  const perYear = confirmed.reduce((sum, s) => sum + s.annualCost, 0);
+  const stamp =
+    transactions
+      .map((t) => t.date)
+      .sort()
+      .at(-1) ?? "0001-01-01";
   const set = (key: string, hide: boolean) =>
     setDismissed((prev) => {
       const next = new Set(prev);
@@ -132,6 +140,31 @@ export function Recurring({
         it. Three or more months of history work best.
       </p>
       {note && <p className={`mt-2 ${FINE}`}>{note}</p>}
+      {shown.length > 0 && (
+        <div className="mt-3 flex flex-wrap items-center gap-3 print:hidden">
+          <a
+            href={`data:text/csv;charset=utf-8,${encodeURIComponent(exportRecurringCsv(shown))}`}
+            download="recur-recurring-charges.csv"
+            className={BTN}
+          >
+            Download list (CSV)
+          </a>
+          <a
+            href={`data:text/calendar;charset=utf-8,${encodeURIComponent(exportIcs(shown, stamp))}`}
+            download="recur-next-charges.ics"
+            className={BTN}
+          >
+            Download calendar (.ics)
+          </a>
+          <button
+            type="button"
+            className={BTN_QUIET}
+            onClick={() => window.print()}
+          >
+            Print this list
+          </button>
+        </div>
+      )}
       {shown.length === 0 ? (
         <p className="mt-3" data-testid="recurring-empty">
           No recurring charges found in these files.
@@ -148,7 +181,7 @@ export function Recurring({
                 <th className={`${TH} text-right`}>Per year</th>
                 <th className={TH}>Next expected</th>
                 <th className={TH}>Confidence</th>
-                <th className="pb-2 text-left font-bold">
+                <th className="pb-2 text-left font-bold print:hidden">
                   <span className="sr-only">Actions</span>
                 </th>
               </tr>
@@ -176,9 +209,7 @@ export function Recurring({
                 >
                   {formatCents(perMonth)}
                 </td>
-                <td className={`${TD} text-right`}>
-                  {formatCents(perMonth * 12)}
-                </td>
+                <td className={`${TD} text-right`}>{formatCents(perYear)}</td>
                 <td colSpan={3} className="border-t border-stone" />
               </tr>
             </tfoot>
@@ -186,7 +217,7 @@ export function Recurring({
         </div>
       )}
       {hidden.length > 0 && (
-        <div className="mt-4" data-testid="recurring-hidden">
+        <div className="mt-4 print:hidden" data-testid="recurring-hidden">
           <h3 className="font-bold">Hidden for this visit</h3>
           <ul>
             {hidden.map((s) => (
