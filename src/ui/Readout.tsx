@@ -1,11 +1,13 @@
 import { useMemo, useState } from "react";
 import { BRANDS } from "../core/merchant/brands";
+import { labelMap } from "../core/merchant/labels";
 import { buildReadout, type ReadoutGroup } from "../core/merchant/readout";
+import type { LabelFile } from "../core/merchant/types";
 import { formatCents } from "../core/money";
 import type { Transaction } from "../core/types";
+import { Labels } from "./Labels";
 import { monthsOf, sourceLabel } from "./readoutView";
 
-const ctx = { brands: BRANDS };
 const SHEET = "rounded-3xl bg-white-sheet p-5 shadow-sheet sm:p-8";
 const H2 = "font-display text-2xl font-extrabold";
 const FINE = "text-sm text-quiet-gray";
@@ -46,9 +48,13 @@ function Row({ g }: { g: ReadoutGroup }) {
 export function Readout({
   transactions,
   verifiedStatementIds,
+  labels,
+  onLabels,
 }: {
   transactions: readonly Transaction[];
   verifiedStatementIds: ReadonlySet<string>;
+  labels: LabelFile;
+  onLabels: (next: LabelFile) => void;
 }) {
   const months = useMemo(() => monthsOf(transactions), [transactions]);
   const [chosen, setChosen] = useState<string | null>(null);
@@ -58,11 +64,19 @@ export function Readout({
     () =>
       period === undefined
         ? undefined
-        : buildReadout(transactions, ctx, verifiedStatementIds, period),
-    [transactions, verifiedStatementIds, period],
+        : buildReadout(
+            transactions,
+            { brands: BRANDS, labels: labelMap(labels) },
+            verifiedStatementIds,
+            period,
+          ),
+    [transactions, verifiedStatementIds, period, labels],
   );
   if (!readout || period === undefined) return null;
   const byId = new Map(transactions.map((t) => [t.id, t]));
+  const choices = [readout.unknown, ...readout.groups].flatMap((g) =>
+    g.keys.map((key) => ({ key, shownAs: g.name })),
+  );
   const rows = [
     ...readout.groups,
     ...(readout.unknown.count > 0 ? [readout.unknown] : []),
@@ -146,6 +160,7 @@ export function Readout({
         "Unusual" needs at least two earlier lines with the same cleaned
         description, and compares only against the files you loaded.
       </p>
+      <Labels choices={choices} labels={labels} onChange={onLabels} />
     </section>
   );
 }

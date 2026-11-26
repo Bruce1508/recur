@@ -10,6 +10,8 @@ export interface ReadoutGroup {
   readonly moneyOut: Cents;
   readonly moneyIn: Cents;
   readonly count: number;
+  /** The distinct cleaned descriptions in this group, sorted: what a label attaches to. */
+  readonly keys: readonly string[];
   /** False when any line came from a statement that is not verified (AC-17 labels it). */
   readonly verified: boolean;
 }
@@ -33,6 +35,7 @@ interface Acc {
   moneyOut: Cents;
   moneyIn: Cents;
   count: number;
+  keys: Set<string>;
   verified: boolean;
   first: string;
 }
@@ -45,6 +48,7 @@ const freeze = (a: Acc): ReadoutGroup => ({
   moneyOut: a.moneyOut,
   moneyIn: a.moneyIn,
   count: a.count,
+  keys: [...a.keys].sort(cmp),
   verified: a.verified,
 });
 
@@ -66,6 +70,7 @@ export function buildReadout(
     moneyOut: 0,
     moneyIn: 0,
     count: 0,
+    keys: new Set(),
     verified: true,
     first: "",
   };
@@ -81,6 +86,7 @@ export function buildReadout(
         moneyOut: 0,
         moneyIn: 0,
         count: 0,
+        keys: new Set(),
         verified: true,
         first: t.date,
       };
@@ -90,6 +96,7 @@ export function buildReadout(
     if (t.amount < 0) acc.moneyOut -= t.amount;
     else acc.moneyIn += t.amount;
     acc.count += 1;
+    if (d.merchantKey !== "") acc.keys.add(d.merchantKey);
     acc.verified &&= verifiedStatementIds.has(t.source.statementId);
     if (acc.first === "" || t.date < acc.first) acc.first = t.date;
     if (t.amount < 0 && d.merchantKey !== "") {

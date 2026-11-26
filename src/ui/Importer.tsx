@@ -2,6 +2,7 @@ import { useMemo, useRef, useState } from "react";
 import type { Boundary } from "../core/chain";
 import { toStatement } from "../core/csv/toStatement";
 import { exportLedgerCsv } from "../core/exportCsv";
+import type { LabelFile } from "../core/merchant/types";
 import { formatCents } from "../core/money";
 import { reconcile } from "../core/reconcile";
 import type {
@@ -203,6 +204,7 @@ function Controls({ e, update }: { e: CsvEntry; update: Update }) {
 export function Importer() {
   const [entries, setEntries] = useState<readonly Entry[]>([]);
   const [errors, setErrors] = useState<readonly string[]>([]);
+  const [labels, setLabels] = useState<LabelFile>({ version: 1, labels: [] });
   const nextId = useRef(1);
 
   async function addFiles(list: FileList | null) {
@@ -534,6 +536,8 @@ export function Importer() {
             <Readout
               transactions={transactions}
               verifiedStatementIds={verifiedStatementIds}
+              labels={labels}
+              onLabels={setLabels}
             />
           )}
 

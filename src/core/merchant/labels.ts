@@ -90,3 +90,20 @@ export function parseLabels(text: string): ParsedLabels {
 export function labelMap(file: LabelFile): Map<string, string> {
   return new Map(file.labels.map((l) => [l.key, l.name]));
 }
+
+/** Add or replace the label for `key`; the whole result goes through `parseLabels`, so the same rules apply. */
+export function setLabel(
+  file: LabelFile,
+  key: string,
+  name: string,
+): ParsedLabels {
+  const labels = [
+    ...file.labels.filter((l) => l.key !== key),
+    { key, name: name.trim() },
+  ];
+  return parseLabels(serialiseLabels({ version: 1, labels }));
+}
+
+export function removeLabel(file: LabelFile, key: string): LabelFile {
+  return { version: 1, labels: file.labels.filter((l) => l.key !== key) };
+}

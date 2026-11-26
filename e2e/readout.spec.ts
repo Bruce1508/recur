@@ -58,7 +58,7 @@ test("the readout groups by name, keeps unknown visible and adds up", async ({
   await expect(page.getByTestId("readout-unusual")).toContainText(
     "2025-03-02 TIM HORTONS #125 TORONTO ON -$9.00",
   );
-  await readout.getByRole("combobox").selectOption("2025-01");
+  await readout.getByLabel(/^Month for/).selectOption("2025-01");
   await expect(page.getByTestId("readout-new")).toHaveText(
     "Pay Acme, Tim Hortons",
   );

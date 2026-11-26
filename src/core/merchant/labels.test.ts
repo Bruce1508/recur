@@ -1,6 +1,13 @@
 import fc from "fast-check";
 import { describe, expect, test } from "vitest";
-import { LABEL_LIMITS, labelMap, parseLabels, serialiseLabels } from "./labels";
+import {
+  LABEL_LIMITS,
+  labelMap,
+  parseLabels,
+  removeLabel,
+  serialiseLabels,
+  setLabel,
+} from "./labels";
 import type { LabelFile } from "./types";
 
 const clean = fc
@@ -158,5 +165,42 @@ describe("labels", () => {
   test("random text never throws", () => {
     fc.assert(fc.property(fc.string(), (s) => void parseLabels(s)));
     fc.assert(fc.property(fc.json(), (s) => void parseLabels(s)));
+  });
+});
+
+describe("setLabel and removeLabel", () => {
+  const empty: LabelFile = { version: 1, labels: [] };
+  test("add, replace and remove", () => {
+    const a = setLabel(empty, "ACME", "  My coffee ");
+    expect(a).toEqual({
+      ok: true,
+      file: { version: 1, labels: [{ key: "ACME", name: "My coffee" }] },
+    });
+    if (!a.ok) return;
+    const b = setLabel(a.file, "ACME", "Coffee");
+    expect(b.ok && b.file.labels).toEqual([{ key: "ACME", name: "Coffee" }]);
+    expect(removeLabel(a.file, "ACME")).toEqual(empty);
+    expect(removeLabel(a.file, "OTHER")).toEqual(a.file);
+  });
+  test("a bad name is rejected with a message and the input is untouched", () => {
+    for (const name of [
+      "",
+      "   ",
+      "x".repeat(LABEL_LIMITS.name + 1),
+      "a\u0000b",
+    ]) {
+      expect(setLabel(empty, "ACME", name).ok).toBe(false);
+    }
+    expect(setLabel(empty, "__proto__", "Name").ok).toBe(false);
+    expect(setLabel(empty, "", "Name").ok).toBe(false);
+  });
+  test("a label the user sets can be downloaded and loaded back", () => {
+    fc.assert(
+      fc.property(clean, clean, (key, name) => {
+        const r = setLabel(empty, key, name);
+        if (!r.ok) return;
+        expect(ok(serialiseLabels(r.file))).toEqual(r.file);
+      }),
+    );
   });
 });
