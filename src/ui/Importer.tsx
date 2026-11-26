@@ -16,6 +16,7 @@ import { type ImportedFile, summarize } from "./accounts";
 import { analyzeCsv, applyChoices, columnRoles } from "./analyze";
 import demoCsv from "./demo/sample-chequing.csv?raw";
 import { Readout } from "./Readout";
+import { Recurring } from "./Recurring";
 import { verifiedIds } from "./readoutView";
 import { readPdf } from "./readPdf";
 
@@ -559,6 +560,14 @@ export function Importer() {
               verifiedStatementIds={verifiedStatementIds}
               labels={labels}
               onLabels={setLabels}
+            />
+          )}
+
+          {transactions.length > 0 && (
+            <Recurring
+              transactions={transactions}
+              verifiedStatementIds={verifiedStatementIds}
+              labels={labels}
             />
           )}
 
