@@ -279,8 +279,11 @@ export function Importer() {
     setEntries((prev) =>
       prev.map((e) => (e.id === id ? { ...e, account } : e)),
     );
-  const remove = (id: number) =>
-    setEntries((prev) => prev.filter((x) => x.id !== id));
+  const remove = (id: number) => {
+    const rest = entries.filter((x) => x.id !== id);
+    setEntries(rest);
+    if (rest.length === 0) setLabels({ version: 1, labels: [] });
+  };
 
   const converted = useMemo(
     () =>

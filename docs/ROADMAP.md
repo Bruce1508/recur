@@ -256,7 +256,7 @@ The owner removed the CIBC credit card from the plan. Nothing below is scheduled
 
 **Verification.** CI.
 
-**Done when** (dropped, ADR-028) two PDF formats are verified.
+**Done when** (dropped, ADR-028) not applicable: one PDF format (TD chequing) is the scope.
 
 ---
 

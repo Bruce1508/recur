@@ -194,6 +194,15 @@ describe("setLabel and removeLabel", () => {
     expect(setLabel(empty, "__proto__", "Name").ok).toBe(false);
     expect(setLabel(empty, "", "Name").ok).toBe(false);
   });
+  test("a key that can never be named says why", () => {
+    const long = setLabel(empty, "K".repeat(LABEL_LIMITS.key + 1), "Name");
+    expect(long).toEqual({
+      ok: false,
+      error: "This line's description is too long to be named.",
+    });
+    const bidi = setLabel(empty, "A\u202eB", "Name");
+    expect(bidi.ok === false && bidi.error).toContain("cannot be named");
+  });
   test("a label the user sets can be downloaded and loaded back", () => {
     fc.assert(
       fc.property(clean, clean, (key, name) => {

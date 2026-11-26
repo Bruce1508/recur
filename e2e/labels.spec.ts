@@ -109,3 +109,15 @@ test("a blank name is refused with a message", async ({ page }) => {
   await expect(page.getByRole("alert")).toBeVisible();
   await expect(row(page, "Not recognised")).toContainText("3$13.00");
 });
+
+test("removing the last file also clears the names", async ({ page }) => {
+  await page.goto("/");
+  await drop(page);
+  await nameLine(page, "XQZ", "My gym");
+  await expect(row(page, "My gym")).toBeVisible();
+  await page.getByRole("button", { name: "Remove file" }).click();
+  await expect(readout(page)).toHaveCount(0);
+  await drop(page);
+  await expect(row(page, "Not recognised")).toContainText("3$13.00");
+  await expect(readout(page).getByTestId("label-list")).toHaveCount(0);
+});
