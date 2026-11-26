@@ -91,3 +91,9 @@ export function addMonths(
   const tm = (((index % 12) + 12) % 12) + 1;
   return `${String(ty).padStart(4, "0")}-${String(tm).padStart(2, "0")}-${String(Math.min(d, daysInMonth(ty, tm))).padStart(2, "0")}`;
 }
+
+/** True when `date` is the last day of its month. */
+export function isMonthEnd(date: PlainDate): boolean {
+  const [y = 0, m = 0, d = 0] = date.split("-").map(Number);
+  return d === daysInMonth(y, m);
+}

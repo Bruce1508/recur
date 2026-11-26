@@ -1,16 +1,17 @@
 import {
-  amountsStable,
   bucketOf,
   cadenceOfGaps,
   lowerMedian,
   withinTolerance,
 } from "../merchant/cadence";
 import { type DecodeContext, decodeDescription } from "../merchant/decode";
-import { addDays, addMonths, daysBetween } from "../plainDate";
+import { addDays, addMonths, daysBetween, isMonthEnd } from "../plainDate";
 import type { Cents, PlainDate, Transaction } from "../types";
 import type { RecurringSeries, SeriesCadence } from "./types";
 
 const NOT_A_CHARGE = new Set(["TFR", "TRANSFER", "ETRANSFER", "XFER", "ATM"]);
+const PAY_WORDS = new Set(["PAYMENT", "PYMT", "PMT"]);
+// PYMT, PMT and PREAUTH are guesses at how a bank abbreviates a card payment: unverified for TD.
 const CARD_WORDS = new Set([
   "CARD",
   "VISA",
@@ -18,13 +19,15 @@ const CARD_WORDS = new Set([
   "MC",
   "AMEX",
   "THANK",
+  "PREAUTH",
 ]);
 /** Moving money, not buying: transfers, cash and card payments (a bill named "PAYMENT" is a charge). */
 const notACharge = (key: string): boolean => {
   const words = key.split(/[^A-Z0-9]+/);
   return (
     words.some((w) => NOT_A_CHARGE.has(w)) ||
-    (words.includes("PAYMENT") && words.some((w) => CARD_WORDS.has(w)))
+    (words.some((w) => PAY_WORDS.has(w)) &&
+      words.some((w) => CARD_WORDS.has(w)))
   );
 };
 const STORES = new Set([
@@ -61,20 +64,44 @@ const byDateThenId = (a: Transaction, b: Transaction): number =>
 const median = (xs: readonly number[]): number =>
   lowerMedian([...xs].sort((a, b) => a - b));
 
-/** First index where the amounts jump to a new level; each level holds for at least two charges. */
-function stepAt(amounts: readonly Cents[]): number | undefined {
-  for (let k = 2; k <= amounts.length - 2; k++) {
-    const before = amounts.slice(0, k);
-    const after = amounts.slice(k);
+/**
+ * The latest sustained price change: amounts are cut into runs wherever one jumps beyond the
+ * tolerance of its run; only runs of at least two charges are price levels (a first prorated
+ * charge, a one-off odd charge or a single new charge is not sustained); neighbouring levels
+ * at the same price merge. Needs two levels.
+ */
+function lastPriceChange(
+  amounts: readonly Cents[],
+  dates: readonly PlainDate[],
+): { from: Cents; to: Cents; since: PlainDate } | undefined {
+  const runs: { start: number; amounts: Cents[] }[] = [];
+  amounts.forEach((a, i) => {
+    const run = runs[runs.length - 1];
+    const prev = amounts[i - 1] ?? a;
     if (
-      amountsStable(before) &&
-      amountsStable(after) &&
-      !withinTolerance(median(after), median(before)) &&
-      !withinTolerance(amounts[k] ?? 0, amounts[k - 1] ?? 0)
+      run &&
+      (withinTolerance(a, median(run.amounts)) || withinTolerance(a, prev))
     )
-      return k;
+      run.amounts.push(a);
+    else runs.push({ start: i, amounts: [a] });
+  });
+  const levels: { start: number; level: Cents }[] = [];
+  let covered = 0;
+  for (const r of runs) {
+    if (r.amounts.length < 2) continue;
+    covered += r.amounts.length;
+    const level = median(r.amounts);
+    const prev = levels[levels.length - 1];
+    if (!prev || !withinTolerance(level, prev.level))
+      levels.push({ start: r.start, level });
   }
-  return undefined;
+  const to = levels[levels.length - 1];
+  const from = levels[levels.length - 2];
+  // Amounts that never settle on a price (groceries) are not a series with price changes.
+  if (covered / amounts.length < FIXED_SHARE) return undefined;
+  return to && from
+    ? { from: from.level, to: to.level, since: dates[to.start] ?? "" }
+    : undefined;
 }
 
 const PERIOD_DAYS: Record<string, number> = { weekly: 7, biweekly: 14 };
@@ -176,7 +203,10 @@ function classify(days: readonly Day[]): Body | undefined {
   const amounts = days.map((d) => d.amount);
   const dates = days.map((d) => d.date);
   const lastDate = dates[dates.length - 1] ?? "";
-  const anchorDay = Math.max(...dates.map((d) => Number(d.slice(8, 10))));
+  // A last charge on the last day of a month may be a clamped 29th to 31st: keep the billing day.
+  const anchorDay = isMonthEnd(lastDate)
+    ? Math.max(...dates.map((d) => Number(d.slice(8, 10))))
+    : Number(lastDate.slice(8, 10));
   const body = (
     cadence: SeriesCadence,
     typical: Cents,
@@ -222,22 +252,15 @@ function classify(days: readonly Day[]): Body | undefined {
   if (!cadence) return nearYearly(gaps, amounts, body);
   const regular =
     gaps.filter((g) => bucketOf(g) === cadence).length / gaps.length;
-  const k = stepAt(amounts);
-  if (k !== undefined) {
-    const from = median(amounts.slice(0, k));
-    const to = median(amounts.slice(k));
+  const change = lastPriceChange(amounts, dates);
+  if (change)
     return body(
       cadence,
-      to,
+      change.to,
       "fixed",
       days.length >= 4 && regular >= 0.8 ? "high" : "medium",
-      {
-        from,
-        to,
-        since: dates[k] ?? lastDate,
-      },
+      change,
     );
-  }
   const fixed =
     amounts.filter((a) => withinTolerance(a, m)).length / amounts.length >=
     FIXED_SHARE;

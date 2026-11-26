@@ -218,6 +218,78 @@ describe("annual", () => {
   });
 });
 
+describe("dates and names (review round 3)", () => {
+  const on = (dates: string[], desc = "RENT CO", amount = -5000) =>
+    dates.map((d) => tx(d, desc, amount));
+  test("one early posting does not move the next date by a month", () => {
+    const early = only(
+      on(["2025-01-01", "2025-01-31", "2025-03-01", "2025-04-01"]),
+    );
+    expect(early.nextExpected).toBe("2025-05-01");
+  });
+  test("a weekend shift follows the last charge; a clamped last charge keeps the billing day", () => {
+    const shifted = only(
+      on([
+        "2025-01-31",
+        "2025-02-28",
+        "2025-03-31",
+        "2025-04-30",
+        "2025-06-02",
+      ]),
+    );
+    expect(shifted.nextExpected).toBe("2025-07-02");
+    const clamped = only(
+      on(["2025-01-31", "2025-02-28", "2025-03-31", "2025-04-30"]),
+    );
+    expect(clamped.nextExpected).toBe("2025-05-31");
+  });
+  test("a possible yearly charge is dated from its own last charge", () => {
+    const s = only(
+      on(["2024-04-02", "2024-04-20", "2025-04-01"], "BEST BUY", -20000),
+    );
+    expect(s.nextExpected).toBe("2026-04-01");
+  });
+  test("two price rises give the latest one; a rise then one odd charge keeps the rise", () => {
+    const two = only(
+      monthly("STREAMLY", [
+        ...same(3, -1500),
+        ...same(3, -1700),
+        ...same(3, -1900),
+      ]),
+    );
+    expect(two.priceChange).toEqual({
+      from: 1700,
+      to: 1900,
+      since: "2025-07-10",
+    });
+    expect(two.typicalAmount).toBe(1900);
+    const odd = only(
+      monthly("STREAMLY", [...same(3, -4500), ...same(3, -4900), -6000]),
+    );
+    expect(odd.priceChange).toEqual({
+      from: 4500,
+      to: 4900,
+      since: "2025-04-10",
+    });
+    expect(odd.typicalAmount).toBe(4900);
+  });
+  test("a prorated first charge before a real rise still finds the rise", () => {
+    const s = only(
+      monthly("STREAMLY", [-500, ...same(3, -1500), ...same(3, -1700)]),
+    );
+    expect(s.priceChange).toEqual({
+      from: 1500,
+      to: 1700,
+      since: "2025-05-10",
+    });
+  });
+  test("abbreviated card payments are not charges", () => {
+    expect(
+      detectRecurring(monthly("TD VISA PREAUTH PYMT", same(6, -50000)), ctx),
+    ).toEqual([]);
+  });
+});
+
 describe("dates and names", () => {
   test("an end-of-month series keeps its day", () => {
     const s = only(monthly("NIGHT OWL", same(4, -2000), "2025-01-31"));
