@@ -204,3 +204,20 @@ test("two CSVs of one account chain; a missing first row of the second is report
     fullPage: true,
   });
 });
+
+test("a PDF reader worker that fails to load fails with a reason, and the next file starts a fresh one", async ({
+  page,
+}) => {
+  const offenders = watchRequests(page);
+  const workerUrl = "**/pdf.worker*";
+  await page.route(workerUrl, (route) => route.abort());
+  await page.goto("/");
+  await page.getByTestId("file-input").setInputFiles(pdf("td.pdf", tdPdf));
+  await expect(page.getByRole("alert")).toContainText(
+    "the PDF reader could not start; reload the page and try again",
+  );
+  await page.unroute(workerUrl);
+  await page.getByTestId("file-input").setInputFiles(pdf("td.pdf", tdPdf));
+  await expect(page.getByText("Transactions (2)")).toBeVisible();
+  expect(offenders).toEqual([]);
+});
