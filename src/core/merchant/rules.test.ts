@@ -105,3 +105,33 @@ describe("clean", () => {
     );
   });
 });
+
+describe("opaque reference suffixes", () => {
+  const key = (d: string): string => clean(d).merchantKey;
+  const code3 = fc.stringMatching(/^[A-Za-z0-9]{3}$/);
+
+  test("masked e-transfer codes are cut, in and out stay apart", () => {
+    expect(key("E-TRANSFER ***Ab3")).toBe("E-TRANSFER");
+    expect(key("E-TRANSFER ***Zq7")).toBe("E-TRANSFER");
+    expect(key("SEND E-TFR ***xY9")).toBe("SEND E-TFR");
+    expect(key("SEND E-TFR ***xY9")).not.toBe(key("E-TRANSFER ***Ab3"));
+  });
+
+  test("any 3-character code gives the same e-transfer key", () => {
+    fc.assert(
+      fc.property(code3, code3, (a, b) => {
+        expect(key(`E-TRANSFER ***${a}`)).toBe(key(`E-TRANSFER ***${b}`));
+        expect(key(`SEND E-TFR ***${a}`)).toBe("SEND E-TFR");
+      }),
+    );
+  });
+
+  test("an opaque slash code is cut, a readable one stays", () => {
+    expect(key("TRANSITCO/SW27V5HP2Z _T")).toBe("TRANSITCO");
+    expect(key("TRANSITCO/SWXKQVTR9P _T")).toBe("TRANSITCO");
+    expect(key("TRANSITCO/BCDFGHJKLMN")).toBe("TRANSITCO");
+    expect(key("TRANSITCO")).toBe("TRANSITCO");
+    expect(key("UBER CANADA/UBE")).toBe("UBER CANADA/UBE");
+    expect(key("ACME/COFFEEHOUSE")).toBe("ACME/COFFEEHOUSE");
+  });
+});

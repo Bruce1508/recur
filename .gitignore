@@ -16,3 +16,4 @@ private/
 
 # Built by the tools/ scripts (npm run fixture:dump, fixtures:check)
 .tooling/
+.playwright-mcp/

@@ -107,6 +107,11 @@ function cleanOnce(description: string): Cleaned {
 
   cut("leading asterisk", /^\*+/);
   cut("amount", /\*?\s*\$?\b\d+\.\d{2}\b/g);
+  cut("masked reference", /\*{2,}\s*[A-Z0-9]{3}\b/g);
+  cut(
+    "opaque code",
+    /\/(?:(?=[A-Z0-9]*[A-Z])(?=[A-Z0-9]*\d)[A-Z0-9]{9,12}|[BCDFGHJKLMNPQRSTVWXZ]{9,12})\b/g,
+  );
   text = tidy(text.replaceAll("*", " "));
   cut("store number", /#\s*\d+|\bSTORE\s*\d+\b/g);
   cut(
