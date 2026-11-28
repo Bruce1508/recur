@@ -7,6 +7,7 @@ import type { LabelFile } from "../core/merchant/types";
 import { formatCents } from "../core/money";
 import { annualHistoryNote, detectRecurring } from "../core/recurring/detect";
 import { CONFIDENCE_LABEL, cadenceLabel } from "../core/recurring/labels";
+import { splitSingleCharge } from "../core/recurring/split";
 import type { RecurringSeries } from "../core/recurring/types";
 import type { Transaction } from "../core/types";
 
@@ -90,6 +91,25 @@ function Row({
   );
 }
 
+function ColumnHeads() {
+  return (
+    <thead>
+      <tr>
+        <th className={TH}>Charge</th>
+        <th className={TH}>How often</th>
+        <th className={TH}>Amount</th>
+        <th className={`${TH} text-right`}>Per month</th>
+        <th className={`${TH} text-right`}>Per year</th>
+        <th className={TH}>Next expected</th>
+        <th className={TH}>Confidence</th>
+        <th className="pb-2 text-left font-bold print:hidden">
+          <span className="sr-only">Actions</span>
+        </th>
+      </tr>
+    </thead>
+  );
+}
+
 /**
  * The recurring charges the detector found (FR-7, FR-8, FR-14, FR-15), each with its evidence.
  * "Not recurring" hides a false positive for this visit only (FR-9): nothing is stored.
@@ -118,7 +138,8 @@ export function Recurring({
     [series, dismissed],
   );
   const hidden = series.filter((s) => dismissed.has(s.merchantKey));
-  const confirmed = shown.filter((s) => s.cadence !== "annual-possible");
+  const { main, singles } = useMemo(() => splitSingleCharge(shown), [shown]);
+  const confirmed = main.filter((s) => s.cadence !== "annual-possible");
   const perMonth = confirmed.reduce((sum, s) => sum + s.monthlyEquivalent, 0);
   const perYear = confirmed.reduce((sum, s) => sum + s.annualCost, 0);
   const stamp =
@@ -128,13 +149,23 @@ export function Recurring({
       .at(-1) ?? "0001-01-01";
   const csvHref = useMemo(
     () =>
-      `data:text/csv;charset=utf-8,${encodeURIComponent(exportRecurringCsv(shown).toWellFormed())}`,
-    [shown],
+      `data:text/csv;charset=utf-8,${encodeURIComponent(exportRecurringCsv(main).toWellFormed())}`,
+    [main],
   );
   const icsHref = useMemo(
     () =>
-      `data:text/calendar;charset=utf-8,${encodeURIComponent(exportIcs(shown, stamp).toWellFormed())}`,
-    [shown, stamp],
+      `data:text/calendar;charset=utf-8,${encodeURIComponent(exportIcs(main, stamp).toWellFormed())}`,
+    [main, stamp],
+  );
+  const renderRow = (s: RecurringSeries) => (
+    <Row
+      key={s.merchantKey}
+      s={s}
+      verified={s.occurrences.every((t) =>
+        verifiedStatementIds.has(t.source.statementId),
+      )}
+      onDismiss={() => set(s.merchantKey, true)}
+    />
   );
   const set = (key: string, hide: boolean) =>
     setDismissed((prev) => {
@@ -153,7 +184,7 @@ export function Recurring({
         it. Three or more months of history work best.
       </p>
       {note && <p className={`mt-2 ${FINE}`}>{note}</p>}
-      {shown.length > 0 && (
+      {main.length > 0 && (
         <div className="mt-3 flex flex-wrap items-center gap-3 print:hidden">
           <a
             href={csvHref}
@@ -174,39 +205,15 @@ export function Recurring({
           </button>
         </div>
       )}
-      {shown.length === 0 ? (
+      {main.length === 0 ? (
         <p className="mt-3" data-testid="recurring-empty">
           No recurring charges found in these files.
         </p>
       ) : (
         <div className="overflow-x-auto">
           <table className="mt-3 text-[15px]">
-            <thead>
-              <tr>
-                <th className={TH}>Charge</th>
-                <th className={TH}>How often</th>
-                <th className={TH}>Amount</th>
-                <th className={`${TH} text-right`}>Per month</th>
-                <th className={`${TH} text-right`}>Per year</th>
-                <th className={TH}>Next expected</th>
-                <th className={TH}>Confidence</th>
-                <th className="pb-2 text-left font-bold print:hidden">
-                  <span className="sr-only">Actions</span>
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {shown.map((s) => (
-                <Row
-                  key={s.merchantKey}
-                  s={s}
-                  verified={s.occurrences.every((t) =>
-                    verifiedStatementIds.has(t.source.statementId),
-                  )}
-                  onDismiss={() => set(s.merchantKey, true)}
-                />
-              ))}
-            </tbody>
+            <ColumnHeads />
+            <tbody>{main.map(renderRow)}</tbody>
             <tfoot>
               <tr>
                 <th className={`${TD} text-left`} scope="row" colSpan={3}>
@@ -224,6 +231,24 @@ export function Recurring({
             </tfoot>
           </table>
         </div>
+      )}
+      {singles.length > 0 && (
+        <details className="mt-4 print:hidden" data-testid="recurring-singles">
+          <summary className="cursor-pointer font-bold">
+            Large charges seen only once ({singles.length}) — could be yearly
+          </summary>
+          <p className={`mt-1 ${FINE}`}>
+            One charge cannot show a schedule, so these are not in the list
+            above, the totals, the CSV or the calendar. If one of them comes
+            back next year, it will move up.
+          </p>
+          <div className="overflow-x-auto">
+            <table className="mt-3 text-[15px]">
+              <ColumnHeads />
+              <tbody>{singles.map(renderRow)}</tbody>
+            </table>
+          </div>
+        </details>
       )}
       {hidden.length > 0 && (
         <div className="mt-4 print:hidden" data-testid="recurring-hidden">

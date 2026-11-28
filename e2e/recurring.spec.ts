@@ -172,3 +172,84 @@ test("a charge name with a lone surrogate still renders and its downloads exist"
     rec(page).getByRole("link", { name: /Download calendar/ }),
   ).toHaveAttribute("href", /^data:text\/calendar/);
 });
+
+test("a large one-off sits in a collapsed section, outside the list, the total and the calendar", async ({
+  page,
+}) => {
+  const csv = [
+    "Date,Description,Debit,Credit,Balance",
+    "2025-01-01,PAY,,2000.00,2000.00",
+    "2025-01-05,GYMCLUB,20.00,,1980.00",
+    "2025-02-05,GYMCLUB,20.00,,1960.00",
+    "2025-02-20,FURNITURE DEPOT,900.00,,1060.00",
+    "2025-03-05,GYMCLUB,20.00,,1040.00",
+    "2025-04-05,GYMCLUB,20.00,,1020.00",
+  ].join("\n");
+  await page.goto("/");
+  await page.getByTestId("file-input").setInputFiles({
+    name: "a.csv",
+    mimeType: "text/csv",
+    buffer: Buffer.from(csv),
+  });
+  const mainRows = rec(page)
+    .locator("table")
+    .first()
+    .getByTestId("recurring-row");
+  await expect(mainRows).toHaveCount(1);
+  await expect(mainRows).toContainText("Gym");
+  await expect(rec(page).getByTestId("recurring-total")).toContainText(
+    "$20.00",
+  );
+
+  const singles = rec(page).getByTestId("recurring-singles");
+  await expect(singles).toBeVisible();
+  await expect(singles).not.toHaveAttribute("open", "");
+  await expect(singles.locator("summary").first()).toContainText(
+    "Large charges seen only once (1)",
+  );
+  await expect(singles.getByRole("row", { name: /Furniture/i })).toBeHidden();
+
+  await singles.locator("summary").first().focus();
+  await page.keyboard.press("Enter");
+  await expect(singles).toHaveAttribute("open", "");
+  const single = singles.getByRole("row", { name: /Furniture/i });
+  await expect(single).toContainText("Yearly?");
+  await expect(single).toContainText("$900.00");
+  await expect(rec(page).getByTestId("recurring-total")).toContainText(
+    "$20.00",
+  );
+  await rec(page).screenshot({
+    path: "docs/evidence/recurring-singles-open.png",
+  });
+  await scan(page);
+
+  const csvDownload = page.waitForEvent("download");
+  await rec(page)
+    .getByRole("link", { name: /Download list/ })
+    .click();
+  expect(readFileSync(await (await csvDownload).path(), "utf8")).not.toMatch(
+    /furniture/i,
+  );
+  const icsDownload = page.waitForEvent("download");
+  await rec(page)
+    .getByRole("link", { name: /Download calendar/ })
+    .click();
+  const ics = readFileSync(await (await icsDownload).path(), "utf8");
+  expect(ics).not.toMatch(/furniture/i);
+  expect(ics.match(/BEGIN:VEVENT/g)).toHaveLength(1);
+
+  await single.getByRole("button", { name: /Not recurring/ }).click();
+  await expect(singles).toHaveCount(0);
+  await expect(rec(page).getByTestId("recurring-hidden")).toContainText(
+    "Furniture",
+  );
+});
+
+test("the sample keeps its confirmed yearly charge in the main list", async ({
+  page,
+}) => {
+  await page.goto("/");
+  await page.getByRole("button", { name: "Try with sample data" }).click();
+  await expect(row(page, "Domainhouse")).toContainText("Yearly");
+  await expect(rec(page).getByTestId("recurring-singles")).toHaveCount(0);
+});
