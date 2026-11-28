@@ -7,10 +7,16 @@ import type { PlainDate } from "./types";
 
 const encoder = new TextEncoder();
 
-// Controls other than a line break cannot be written in a text value (they would end the line).
+// Controls other than a line break cannot be written in a text value (they would end the line); U+0085, U+2028 and U+2029 are line breaks to some calendar readers.
 const isControl = (ch: string): boolean => {
   const c = ch.codePointAt(0) ?? 0;
-  return (c < 0x20 && c !== 0x0a) || c === 0x7f;
+  return (
+    (c < 0x20 && c !== 0x0a) ||
+    c === 0x7f ||
+    c === 0x85 ||
+    c === 0x2028 ||
+    c === 0x2029
+  );
 };
 
 /** RFC 5545 section 3.3.11: escape backslash, semicolon, comma and line breaks; drop other controls. */
@@ -64,7 +70,7 @@ export function exportIcs(
     if (s.cadence === "annual-possible") continue;
     lines.push(
       "BEGIN:VEVENT",
-      `UID:${hash53(`${s.merchantKey}|${s.nextExpected}`)}@recur.invalid`,
+      `UID:${hash53(s.merchantKey)}@recur.invalid`,
       `DTSTAMP:${compact(stamp)}T000000Z`,
       `DTSTART;VALUE=DATE:${compact(s.nextExpected)}`,
       `DTEND;VALUE=DATE:${compact(addDays(s.nextExpected, 1))}`,
