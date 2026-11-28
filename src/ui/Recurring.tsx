@@ -113,7 +113,10 @@ export function Recurring({
     [transactions, labels],
   );
   const note = useMemo(() => annualHistoryNote(transactions), [transactions]);
-  const shown = series.filter((s) => !dismissed.has(s.merchantKey));
+  const shown = useMemo(
+    () => series.filter((s) => !dismissed.has(s.merchantKey)),
+    [series, dismissed],
+  );
   const hidden = series.filter((s) => dismissed.has(s.merchantKey));
   const confirmed = shown.filter((s) => s.cadence !== "annual-possible");
   const perMonth = confirmed.reduce((sum, s) => sum + s.monthlyEquivalent, 0);
@@ -123,6 +126,16 @@ export function Recurring({
       .map((t) => t.date)
       .sort()
       .at(-1) ?? "0001-01-01";
+  const csvHref = useMemo(
+    () =>
+      `data:text/csv;charset=utf-8,${encodeURIComponent(exportRecurringCsv(shown).toWellFormed())}`,
+    [shown],
+  );
+  const icsHref = useMemo(
+    () =>
+      `data:text/calendar;charset=utf-8,${encodeURIComponent(exportIcs(shown, stamp).toWellFormed())}`,
+    [shown, stamp],
+  );
   const set = (key: string, hide: boolean) =>
     setDismissed((prev) => {
       const next = new Set(prev);
@@ -143,17 +156,13 @@ export function Recurring({
       {shown.length > 0 && (
         <div className="mt-3 flex flex-wrap items-center gap-3 print:hidden">
           <a
-            href={`data:text/csv;charset=utf-8,${encodeURIComponent(exportRecurringCsv(shown))}`}
+            href={csvHref}
             download="recur-recurring-charges.csv"
             className={BTN}
           >
             Download list (CSV)
           </a>
-          <a
-            href={`data:text/calendar;charset=utf-8,${encodeURIComponent(exportIcs(shown, stamp))}`}
-            download="recur-next-charges.ics"
-            className={BTN}
-          >
+          <a href={icsHref} download="recur-next-charges.ics" className={BTN}>
             Download calendar (.ics)
           </a>
           <button

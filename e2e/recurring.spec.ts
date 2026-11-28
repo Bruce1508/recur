@@ -140,3 +140,35 @@ test("printing shows the recurring list and hides the rest", async ({
   ).toBeHidden();
   await expect(page.getByRole("link", { name: /Download list/ })).toBeHidden();
 });
+
+test("a charge name with a lone surrogate still renders and its downloads exist", async ({
+  page,
+}) => {
+  await page.addInitScript(() => {
+    const text = Blob.prototype.text;
+    Blob.prototype.text = async function (this: Blob) {
+      return (await text.call(this)).replaceAll("LONE", "\uD800");
+    };
+  });
+  const csv = [
+    "Date,Description,Debit,Credit,Balance",
+    "2025-01-01,PAY,,1000.00,1000.00",
+    "2025-01-05,GYMLONE,20.00,,980.00",
+    "2025-02-05,GYMLONE,20.00,,960.00",
+    "2025-03-05,GYMLONE,20.00,,940.00",
+    "2025-04-05,GYMLONE,20.00,,920.00",
+  ].join("\n");
+  await page.goto("/");
+  await page.getByTestId("file-input").setInputFiles({
+    name: "a.csv",
+    mimeType: "text/csv",
+    buffer: Buffer.from(csv),
+  });
+  await expect(rec(page).getByTestId("recurring-row")).toHaveCount(1);
+  await expect(
+    rec(page).getByRole("link", { name: /Download list/ }),
+  ).toHaveAttribute("href", /^data:text\/csv/);
+  await expect(
+    rec(page).getByRole("link", { name: /Download calendar/ }),
+  ).toHaveAttribute("href", /^data:text\/calendar/);
+});

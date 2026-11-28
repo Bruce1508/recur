@@ -316,7 +316,7 @@ export function Importer() {
   // A data: URL, not a blob: one, so there is no object URL to revoke and nothing that looks like a request.
   const csvHref = useMemo(
     () =>
-      `data:text/csv;charset=utf-8,${encodeURIComponent(exportLedgerCsv(summary.rows))}`,
+      `data:text/csv;charset=utf-8,${encodeURIComponent(exportLedgerCsv(summary.rows).toWellFormed())}`,
     [summary],
   );
 
@@ -396,7 +396,7 @@ export function Importer() {
         <p
           key={m}
           role="alert"
-          className="flex gap-2 rounded-2xl bg-salmon-wash px-4 py-2 text-ink"
+          className="flex gap-2 rounded-2xl bg-salmon-wash px-4 py-2 text-ink print:hidden"
         >
           <span aria-hidden="true" className="font-bold">
             {"\u26A0"}

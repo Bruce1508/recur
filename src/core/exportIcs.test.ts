@@ -132,12 +132,30 @@ describe("exportIcs", () => {
         const clean = [...name.replace(/\r\n|\r/g, "\n")]
           .filter((ch) => {
             const c = ch.codePointAt(0) ?? 0;
-            return !((c < 0x20 && c !== 0x0a) || c === 0x7f);
+            return !(
+              (c < 0x20 && c !== 0x0a) ||
+              c === 0x7f ||
+              c === 0x85 ||
+              c === 0x2028 ||
+              c === 0x2029
+            );
           })
           .join("");
         expect(e?.summary).toBe(clean);
       }),
     );
+  });
+  test("U+2028, U+2029 and U+0085 are dropped from text values", () => {
+    const [e] = readBack(
+      exportIcs([series("a\u2028b\u2029c\u0085d", "2026-01-05")], "2025-12-31"),
+    );
+    expect(e?.summary).toBe("abcd");
+  });
+  test("the UID follows the series key, not the next expected date", () => {
+    const uid = (name: string, next: string) =>
+      readBack(exportIcs([series(name, next)], "2025-12-31"))[0]?.uid;
+    expect(uid("Streamly", "2026-01-05")).toBe(uid("Streamly", "2026-02-05"));
+    expect(uid("Streamly", "2026-01-05")).not.toBe(uid("Gym", "2026-01-05"));
   });
   test("each event has a stable, distinct UID", () => {
     const list = [
