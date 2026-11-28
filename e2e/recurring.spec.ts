@@ -245,6 +245,31 @@ test("a large one-off sits in a collapsed section, outside the list, the total a
   );
 });
 
+test("when every candidate is a single charge the section does not point at a list above", async ({
+  page,
+}) => {
+  const csv = [
+    "Date,Description,Debit,Credit,Balance",
+    "2025-01-01,PAY,,2000.00,2000.00",
+    "2025-02-20,FURNITURE DEPOT,900.00,,1100.00",
+  ].join("\n");
+  await page.goto("/");
+  await page.getByTestId("file-input").setInputFiles({
+    name: "a.csv",
+    mimeType: "text/csv",
+    buffer: Buffer.from(csv),
+  });
+  const singles = rec(page).getByTestId("recurring-singles");
+  await expect(singles).toBeVisible();
+  await singles.locator("summary").first().focus();
+  await page.keyboard.press("Enter");
+  await expect(singles).toContainText("may move up");
+  await expect(singles).not.toContainText("list above");
+  await expect(singles.getByRole("row", { name: /Furniture/i })).toContainText(
+    "Yearly? (one charge so far)",
+  );
+});
+
 test("the sample keeps its confirmed yearly charge in the main list", async ({
   page,
 }) => {

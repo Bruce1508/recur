@@ -6,10 +6,13 @@ const LABEL: Record<SeriesCadence, string> = {
   monthly: "Monthly",
   quarterly: "Every three months",
   annual: "Yearly",
-  "annual-possible": "Yearly? (one charge so far)",
+  "annual-possible": "Possibly yearly",
 };
 
-export const cadenceLabel = (c: SeriesCadence): string => LABEL[c];
+export const cadenceLabel = (c: SeriesCadence, singleCharge = false): string =>
+  singleCharge && c === "annual-possible"
+    ? "Yearly? (one charge so far)"
+    : LABEL[c];
 
 export const CONFIDENCE_LABEL = {
   high: "High",
