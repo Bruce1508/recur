@@ -25,10 +25,12 @@ function Row({
   s,
   verified,
   onDismiss,
+  single = false,
 }: {
   s: RecurringSeries;
   verified: boolean;
   onDismiss: () => void;
+  single?: boolean;
 }) {
   const lines = [...new Map(s.occurrences.map((t) => [t.id, t])).values()];
   return (
@@ -59,7 +61,7 @@ function Row({
           </ul>
         </details>
       </td>
-      <td className={TD}>{cadenceLabel(s.cadence)}</td>
+      <td className={TD}>{cadenceLabel(s.cadence, single)}</td>
       <td className={TD}>
         {formatCents(s.typicalAmount)}
         {s.amountKind === "variable" && (
@@ -157,8 +159,9 @@ export function Recurring({
       `data:text/calendar;charset=utf-8,${encodeURIComponent(exportIcs(main, stamp).toWellFormed())}`,
     [main, stamp],
   );
-  const renderRow = (s: RecurringSeries) => (
+  const renderRow = (s: RecurringSeries, single = false) => (
     <Row
+      single={single}
       key={s.merchantKey}
       s={s}
       verified={s.occurrences.every((t) =>
@@ -213,7 +216,7 @@ export function Recurring({
         <div className="overflow-x-auto">
           <table className="mt-3 text-[15px]">
             <ColumnHeads />
-            <tbody>{main.map(renderRow)}</tbody>
+            <tbody>{main.map((s) => renderRow(s))}</tbody>
             <tfoot>
               <tr>
                 <th className={`${TD} text-left`} scope="row" colSpan={3}>
@@ -238,14 +241,15 @@ export function Recurring({
             Large charges seen only once ({singles.length}) — could be yearly
           </summary>
           <p className={`mt-1 ${FINE}`}>
-            One charge cannot show a schedule, so these are not in the list
-            above, the totals, the CSV or the calendar. If one of them comes
-            back next year, it will move up.
+            One charge cannot show a schedule, so these are not in{" "}
+            {main.length > 0 ? "the list above, the totals, " : "the "}
+            CSV or the calendar. If one of them comes back about a year later,
+            it may move up to the list.
           </p>
           <div className="overflow-x-auto">
             <table className="mt-3 text-[15px]">
               <ColumnHeads />
-              <tbody>{singles.map(renderRow)}</tbody>
+              <tbody>{singles.map((s) => renderRow(s, true))}</tbody>
             </table>
           </div>
         </details>

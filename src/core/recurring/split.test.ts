@@ -1,4 +1,6 @@
+import fc from "fast-check";
 import { describe, expect, test } from "vitest";
+import { addDays } from "../plainDate";
 import type { Transaction } from "../types";
 import { detectRecurring } from "./detect";
 import { isSingleChargeCandidate, splitSingleCharge } from "./split";
@@ -60,5 +62,27 @@ describe("splitSingleCharge", () => {
     );
     expect(series[0]?.cadence).toBe("annual");
     expect(splitSingleCharge(series).singles).toEqual([]);
+  });
+
+  test("main and singles are an exact, order-preserving partition of the input", () => {
+    const txs = fc.array(
+      fc
+        .tuple(
+          fc.integer({ min: 0, max: 400 }),
+          fc.constantFrom("A SHOP", "B GYM", "C CLOUD", "D FUEL", "E CLUB"),
+          fc.integer({ min: -20000, max: 5000 }),
+        )
+        .map(([d, de, a]) => tx(addDays("2025-01-01", d), de, a)),
+      { maxLength: 40 },
+    );
+    fc.assert(
+      fc.property(txs, (list) => {
+        const series = detectRecurring(list, ctx);
+        const { main, singles } = splitSingleCharge(series);
+        expect(main).toEqual(series.filter((s) => !isSingleChargeCandidate(s)));
+        expect(singles).toEqual(series.filter(isSingleChargeCandidate));
+        expect(main.length + singles.length).toBe(series.length);
+      }),
+    );
   });
 });
