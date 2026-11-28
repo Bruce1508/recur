@@ -8,6 +8,11 @@ import {
 } from "pdfjs-dist/legacy/build/pdf.mjs";
 import workerUrl from "pdfjs-dist/legacy/build/pdf.worker.min.mjs?url";
 import type { RawDocument, RawItem, RawPage } from "../core/types";
+import {
+  READER_START_FAILED,
+  type WorkerWatch,
+  watchWorker,
+} from "./workerGuard";
 
 export type ExtractResult =
   | { ok: true; doc: RawDocument }
@@ -18,10 +23,26 @@ export type ExtractResult =
 // The worker is passed to getDocument rather than set as workerPort: a task destroys only a worker
 // it created, so one PDF finishing cannot tear down another that is still being read.
 GlobalWorkerOptions.workerSrc ||= workerUrl;
-const worker =
-  typeof Worker === "undefined"
-    ? undefined
-    : PDFWorker.create({ port: new Worker(workerUrl, { type: "module" }) });
+
+interface Reader {
+  worker: PDFWorker;
+  watch: WorkerWatch;
+}
+
+function startReader(): Reader | undefined {
+  if (typeof Worker === "undefined") return undefined;
+  const port = new Worker(workerUrl, { type: "module" });
+  return { worker: PDFWorker.create({ port }), watch: watchWorker(port) };
+}
+
+let reader = startReader();
+
+// A failed worker is discarded so the next file starts a fresh one.
+function discard(failed: Reader) {
+  failed.watch.stop();
+  if (!failed.worker.destroyed) failed.worker.destroy();
+  if (reader === failed) reader = undefined;
+}
 
 const round = (n: number) => Math.round(n * 100) / 100;
 const text = (v: unknown) =>
@@ -32,15 +53,20 @@ const text = (v: unknown) =>
  * made of the error's class name only, because a library message can quote the file.
  */
 export async function extractPdf(data: Uint8Array): Promise<ExtractResult> {
+  reader ??= startReader();
+  const used = reader;
+  let readerFailed = false;
   // pdf.js takes ownership of the buffer it is given, so hand it a copy.
   const task = getDocument({
     data: data.slice(),
     disableFontFace: true,
     verbosity: 0,
-    ...(worker === undefined ? {} : { worker }),
+    ...(used === undefined ? {} : { worker: used.worker }),
   });
   try {
-    const pdf = await task.promise;
+    const pdf = await (used === undefined
+      ? task.promise
+      : Promise.race([task.promise, used.watch.failed]));
     const info = ((await pdf.getMetadata()).info ?? {}) as Record<
       string,
       unknown
@@ -83,9 +109,20 @@ export async function extractPdf(data: Uint8Array): Promise<ExtractResult> {
       },
     };
   } catch (e) {
+    if (
+      used !== undefined &&
+      e instanceof Error &&
+      e.message === READER_START_FAILED
+    ) {
+      readerFailed = true;
+      discard(used);
+      return { ok: false, reason: READER_START_FAILED };
+    }
     const name = e instanceof Error ? e.name : "Error";
     return { ok: false, reason: `cannot read this PDF (${name})` };
   } finally {
-    await task.destroy();
+    // A dead worker never answers the destroy request, so do not wait for it.
+    if (readerFailed) task.destroy().catch(() => {});
+    else await task.destroy();
   }
 }
